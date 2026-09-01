@@ -1,3 +1,4 @@
+```jsx
 import { useState } from "react";
 
 import Sidebar from "./components/Sidebar";
@@ -18,7 +19,12 @@ function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem("pos_current_user");
 
-    return saved ? JSON.parse(saved) : null;
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      localStorage.removeItem("pos_current_user");
+      return null;
+    }
   });
 
   const [currentPage, setCurrentPage] = useState("Dashboard");
@@ -30,7 +36,10 @@ function App() {
   const handleLogin = (employee) => {
     setCurrentUser(employee);
 
-    localStorage.setItem("pos_current_user", JSON.stringify(employee));
+    localStorage.setItem(
+      "pos_current_user",
+      JSON.stringify(employee)
+    );
 
     setCurrentPage("Dashboard");
   };
@@ -40,13 +49,21 @@ function App() {
   // =========================
 
   const handleLogout = () => {
-    const confirmLogout = window.confirm("ต้องการออกจากระบบใช่หรือไม่?");
+    const confirmLogout = window.confirm(
+      "ต้องการออกจากระบบใช่หรือไม่?"
+    );
 
     if (!confirmLogout) return;
 
     const savedLogs = localStorage.getItem("pos_audit_logs");
 
-    const logs = savedLogs ? JSON.parse(savedLogs) : [];
+    let logs = [];
+
+    try {
+      logs = savedLogs ? JSON.parse(savedLogs) : [];
+    } catch {
+      logs = [];
+    }
 
     logs.unshift({
       id: Date.now(),
@@ -58,7 +75,10 @@ function App() {
       type: "logout",
     });
 
-    localStorage.setItem("pos_audit_logs", JSON.stringify(logs));
+    localStorage.setItem(
+      "pos_audit_logs",
+      JSON.stringify(logs)
+    );
 
     localStorage.removeItem("pos_current_user");
 
@@ -75,11 +95,33 @@ function App() {
   }
 
   // =========================
+  // NORMALIZE ROLE
+  // รองรับทั้งภาษาไทยและภาษาอังกฤษ
+  // =========================
+
+  const roleMap = {
+    admin: "ผู้ดูแลระบบ",
+    staff: "พนักงาน",
+    manager: "ผู้จัดการ",
+
+    "ผู้ดูแลระบบ": "ผู้ดูแลระบบ",
+    "พนักงาน": "พนักงาน",
+    "ผู้จัดการ": "ผู้จัดการ",
+  };
+
+  const normalizedRole =
+    roleMap[String(currentUser?.role || "").trim()] || "";
+
+  // =========================
   // PERMISSION
   // =========================
 
   const allowedPages = {
-    พนักงาน: ["Dashboard", "หน้าคิดเงิน", "สมาชิก"],
+    พนักงาน: [
+      "Dashboard",
+      "หน้าคิดเงิน",
+      "สมาชิก",
+    ],
 
     ผู้จัดการ: [
       "Dashboard",
@@ -106,7 +148,8 @@ function App() {
     ],
   };
 
-  const userAllowedPages = allowedPages[currentUser.role] || [];
+  const userAllowedPages =
+    allowedPages[normalizedRole] || [];
 
   // =========================
   // RENDER PAGE
@@ -162,13 +205,19 @@ function App() {
       <Sidebar
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
-        currentUser={currentUser}
+        currentUser={{
+          ...currentUser,
+          role: normalizedRole,
+        }}
         onLogout={handleLogout}
       />
 
-      <main className="flex-1">{renderPage()}</main>
+      <main className="flex-1">
+        {renderPage()}
+      </main>
     </div>
   );
 }
 
 export default App;
+```
