@@ -1,65 +1,25 @@
-```jsx
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Users,
+  Tag,
+  Boxes,
+  Truck,
+  Building2,
+  UserCog,
+  ClipboardList,
+  LogOut,
+} from "lucide-react";
+
 export default function Sidebar({
   currentPage,
   setCurrentPage,
   currentUser,
   onLogout,
 }) {
-  const menus = [
-    {
-      icon: "📊",
-      name: "Dashboard",
-      roles: ["พนักงาน", "ผู้จัดการ", "ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "🛒",
-      name: "หน้าคิดเงิน",
-      roles: ["พนักงาน", "ผู้จัดการ", "ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "📦",
-      name: "สินค้า",
-      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "👤",
-      name: "สมาชิก",
-      roles: ["พนักงาน", "ผู้จัดการ", "ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "🏷️",
-      name: "โปรโมชั่น",
-      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "📦",
-      name: "สต๊อกสินค้า",
-      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "🚚",
-      name: "จัดซื้อ / รับสินค้า",
-      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "🏪",
-      name: "สาขา",
-      roles: ["ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "👨‍💼",
-      name: "พนักงาน",
-      roles: ["ผู้ดูแลระบบ"],
-    },
-    {
-      icon: "🔐",
-      name: "Audit Log",
-      roles: ["ผู้ดูแลระบบ", "ผู้จัดการ"],
-    },
-  ];
-
   // =========================
-  // NORMALIZE ROLE
+  // ROLE MAP
   // รองรับทั้งภาษาไทยและภาษาอังกฤษ
   // =========================
 
@@ -77,80 +37,141 @@ export default function Sidebar({
     roleMap[String(currentUser?.role || "").trim()] || "";
 
   // =========================
-  // FILTER MENU
+  // MENU
   // =========================
+
+  const menus = [
+    {
+      name: "Dashboard",
+      icon: LayoutDashboard,
+      roles: ["พนักงาน", "ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+    {
+      name: "หน้าคิดเงิน",
+      icon: ShoppingCart,
+      roles: ["พนักงาน", "ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+    {
+      name: "สินค้า",
+      icon: Package,
+      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+    {
+      name: "สมาชิก",
+      icon: Users,
+      roles: ["พนักงาน", "ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+    {
+      name: "โปรโมชั่น",
+      icon: Tag,
+      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+    {
+      name: "สต๊อกสินค้า",
+      icon: Boxes,
+      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+    {
+      name: "จัดซื้อ / รับสินค้า",
+      icon: Truck,
+      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+    {
+      name: "สาขา",
+      icon: Building2,
+      roles: ["ผู้ดูแลระบบ"],
+    },
+    {
+      name: "พนักงาน",
+      icon: UserCog,
+      roles: ["ผู้ดูแลระบบ"],
+    },
+    {
+      name: "Audit Log",
+      icon: ClipboardList,
+      roles: ["ผู้จัดการ", "ผู้ดูแลระบบ"],
+    },
+  ];
 
   const visibleMenus = menus.filter((menu) =>
     menu.roles.includes(userRole)
   );
 
+  // =========================
+  // LOGO
+  // =========================
+
   return (
-    <aside className="w-64 min-h-screen bg-slate-900 text-white p-4 flex flex-col">
-      {/* LOGO */}
-      <div className="mb-6 px-3">
+    <aside className="w-64 min-h-screen bg-slate-900 text-white flex flex-col">
+      {/* HEADER */}
+
+      <div className="px-6 py-5 border-b border-slate-700">
         <h1 className="text-xl font-bold">
-          🏪 Convenience POS
+          Convenience POS
         </h1>
 
         <p className="text-sm text-slate-400 mt-1">
-          ระบบจัดการร้านสะดวกซื้อ
+          ระบบจัดการร้านค้า
         </p>
       </div>
 
       {/* USER */}
-      <div className="bg-slate-800 rounded-xl p-4 mb-5">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-lg">
-            👤
-          </div>
 
-          <div className="min-w-0">
-            <p className="font-bold truncate">
-              {currentUser?.name || "ผู้ใช้งาน"}
-            </p>
+      <div className="px-5 py-4 border-b border-slate-700">
+        <p className="font-semibold truncate">
+          {currentUser?.name || "ผู้ใช้งาน"}
+        </p>
 
-            <p className="text-xs text-slate-400">
-              {userRole || "ไม่ทราบสิทธิ์"}
-            </p>
-          </div>
-        </div>
+        <p className="text-sm text-slate-400 mt-1">
+          {userRole || "ไม่ระบุสิทธิ์"}
+        </p>
       </div>
 
       {/* MENU */}
-      <nav className="space-y-1 flex-1">
-        {visibleMenus.map((menu) => {
-          const active = currentPage === menu.name;
 
-          return (
-            <button
-              key={menu.name}
-              onClick={() => setCurrentPage(menu.name)}
-              className={`
-                w-full flex items-center gap-3
-                px-4 py-3 rounded-lg text-left
-                transition
-                ${
+      <nav className="flex-1 p-3 overflow-y-auto">
+        <div className="space-y-1">
+          {visibleMenus.map((menu) => {
+            const Icon = menu.icon;
+            const active = currentPage === menu.name;
+
+            return (
+              <button
+                key={menu.name}
+                type="button"
+                onClick={() => setCurrentPage(menu.name)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition ${
                   active
-                    ? "bg-blue-600"
-                    : "hover:bg-slate-700"
-                }
-              `}
-            >
-              <span>{menu.icon}</span>
-              <span>{menu.name}</span>
-            </button>
-          );
-        })}
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+              >
+                <Icon size={20} />
+
+                <span className="text-sm font-medium">
+                  {menu.name}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* LOGOUT */}
-      <button
-        onClick={onLogout}
-        className="w-full mt-4 bg-red-600 hover:bg-red-700 px-4 py-3 rounded-lg font-bold"
-      >
-        🚪 ออกจากระบบ
-      </button>
+
+      <div className="p-3 border-t border-slate-700">
+        <button
+          type="button"
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition"
+        >
+          <LogOut size={20} />
+
+          <span className="text-sm font-medium">
+            ออกจากระบบ
+          </span>
+        </button>
+      </div>
     </aside>
   );
 }
-```

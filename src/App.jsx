@@ -1,4 +1,3 @@
-```jsx
 import { useState } from "react";
 
 import Sidebar from "./components/Sidebar";
@@ -95,7 +94,7 @@ function App() {
   }
 
   // =========================
-  // NORMALIZE ROLE
+  // ROLE MAP
   // รองรับทั้งภาษาไทยและภาษาอังกฤษ
   // =========================
 
@@ -220,4 +219,3 @@ function App() {
 }
 
 export default App;
-```
