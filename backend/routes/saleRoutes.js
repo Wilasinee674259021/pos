@@ -9,6 +9,60 @@ import Member from "../models/Member.js";
 const router = express.Router();
 
 // ======================================
+// DASHBOARD
+// ======================================
+
+router.get("/dashboard", async (req, res) => {
+  try {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const salesToday = await Sale.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [startOfDay, endOfDay],
+        },
+      },
+    });
+
+    const totalSales = salesToday.reduce(
+      (sum, sale) => sum + Number(sale.totalAmount || 0),
+      0
+    );
+
+    const billCount = salesToday.length;
+
+    const lowStockProducts = await Product.count({
+      where: {
+        stock: {
+          [Op.lte]: 10,
+        },
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        totalSales,
+        billCount,
+        lowStockProducts,
+      },
+    });
+  } catch (error) {
+    console.error("DASHBOARD ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "ไม่สามารถโหลดข้อมูล Dashboard ได้",
+      error: error.message,
+    });
+  }
+});
+
+// ======================================
 // GET SALES
 // ======================================
 
@@ -41,11 +95,17 @@ router.post("/", async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const { memberId, items, paymentMethod, receivedAmount } = req.body;
+    const {
+      memberId,
+      items,
+      paymentMethod,
+      receivedAmount,
+      usePoints,
+    } = req.body;
 
-    // ----------------------------------
+    // ======================================
     // CHECK ITEMS
-    // ----------------------------------
+    // ======================================
 
     if (!Array.isArray(items) || items.length === 0) {
       await transaction.rollback();
@@ -56,11 +116,15 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // ----------------------------------
-    // PAYMENT
-    // ----------------------------------
+    // ======================================
+    // PAYMENT METHOD
+    // ======================================
 
-    const allowedPaymentMethods = ["cash", "qr", "card"];
+    const allowedPaymentMethods = [
+      "cash",
+      "qr",
+      "card",
+    ];
 
     if (!allowedPaymentMethods.includes(paymentMethod)) {
       await transaction.rollback();
@@ -71,14 +135,16 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // ----------------------------------
+    // ======================================
     // MEMBER
-    // ----------------------------------
+    // ======================================
 
     let member = null;
 
     if (memberId) {
-      member = await Member.findByPk(memberId, { transaction });
+      member = await Member.findByPk(memberId, {
+        transaction,
+      });
 
       if (!member) {
         await transaction.rollback();
@@ -90,15 +156,21 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // ----------------------------------
+    // ======================================
     // CALCULATE TOTAL
-    // ----------------------------------
+    // ======================================
 
     let totalAmount = 0;
+
     const saleItems = [];
 
     for (const item of items) {
-      const product = await Product.findByPk(item.productId, { transaction });
+      const product = await Product.findByPk(
+        item.productId,
+        {
+          transaction,
+        }
+      );
 
       if (!product) {
         await transaction.rollback();
@@ -111,7 +183,10 @@ router.post("/", async (req, res) => {
 
       const quantity = Number(item.quantity);
 
-      if (!Number.isInteger(quantity) || quantity <= 0) {
+      if (
+        !Number.isInteger(quantity) ||
+        quantity <= 0
+      ) {
         await transaction.rollback();
 
         return res.status(400).json({
@@ -120,9 +195,9 @@ router.post("/", async (req, res) => {
         });
       }
 
-      // --------------------------------
+      // ======================================
       // CHECK STOCK
-      // --------------------------------
+      // ======================================
 
       if (Number(product.stock) < quantity) {
         await transaction.rollback();
@@ -148,111 +223,244 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // ----------------------------------
-    // PAYMENT AMOUNT
-    // ----------------------------------
+    // ======================================
+    // USE POINTS
+    // 1 Point = 1 Baht
+    // ======================================
 
-    const received = Number(receivedAmount || totalAmount);
+    let requestedPoints = Number(usePoints || 0);
+
+    if (!Number.isFinite(requestedPoints)) {
+      requestedPoints = 0;
+    }
+
+    requestedPoints = Math.floor(requestedPoints);
+
+    if (requestedPoints < 0) {
+      requestedPoints = 0;
+    }
+
+    if (requestedPoints > 0 && !member) {
+      await transaction.rollback();
+
+      return res.status(400).json({
+        success: false,
+        message: "กรุณาเลือกสมาชิกก่อนใช้ Points",
+      });
+    }
+
+    const memberCurrentPoints = Number(
+      member?.points || 0
+    );
+
+    if (
+      member &&
+      requestedPoints > memberCurrentPoints
+    ) {
+      await transaction.rollback();
+
+      return res.status(400).json({
+        success: false,
+        message: "Points ของสมาชิกไม่เพียงพอ",
+        availablePoints: memberCurrentPoints,
+        requestedPoints,
+      });
+    }
+
+    // ใช้แต้มได้ไม่เกินยอดสินค้า
+    const usedPoints = Math.min(
+      requestedPoints,
+      totalAmount
+    );
+
+    // 1 Point = 1 Baht
+    const pointsDiscount = usedPoints;
+
+    // ยอดสุทธิหลังหักแต้ม
+    const netTotal = Math.max(
+      totalAmount - pointsDiscount,
+      0
+    );
+
+    // ======================================
+    // PAYMENT AMOUNT
+    // ======================================
+
+    const received = Number(
+      receivedAmount || netTotal
+    );
 
     if (paymentMethod === "cash") {
-      if (received < totalAmount) {
+      if (received < netTotal) {
         await transaction.rollback();
 
         return res.status(400).json({
           success: false,
           message: "จำนวนเงินที่รับมาไม่เพียงพอ",
           totalAmount,
+          pointsDiscount,
+          netTotal,
           receivedAmount: received,
         });
       }
     }
 
-    const changeAmount = paymentMethod === "cash" ? received - totalAmount : 0;
+    const changeAmount =
+      paymentMethod === "cash"
+        ? received - netTotal
+        : 0;
 
-    // ----------------------------------
-    // POINTS
-    // ----------------------------------
-
+    // ======================================
+    // EARN POINTS
     // ทุก 100 บาท = 10 Points
-    const earnedPoints = member ? Math.floor(totalAmount / 100) * 10 : 0;
+    // คำนวณจากยอดสุทธิ
+    // ======================================
 
-    // ----------------------------------
+    const earnedPoints = member
+      ? Math.floor(netTotal / 100) * 10
+      : 0;
+
+    // ======================================
     // CREATE SALE ID
-    // ----------------------------------
+    // ======================================
 
     const count = await Sale.count({
       transaction,
     });
 
-    const saleId = "S" + String(count + 1).padStart(5, "0");
+    const saleId =
+      "S" +
+      String(count + 1).padStart(5, "0");
 
-    // ----------------------------------
+    // ======================================
     // CREATE SALE
-    // ----------------------------------
+    // ======================================
 
     const sale = await Sale.create(
       {
         id: saleId,
-        memberId: member ? member.id : null,
+
+        memberId: member
+          ? member.id
+          : null,
+
+        // เก็บยอดสินค้าก่อนหัก Points
         totalAmount,
+
         paymentMethod,
+
         receivedAmount: received,
+
         changeAmount,
+
         earnedPoints,
       },
-      { transaction },
+      {
+        transaction,
+      }
     );
 
-    // ----------------------------------
+    // ======================================
     // UPDATE STOCK
-    // ----------------------------------
+    // ======================================
 
     for (const item of saleItems) {
       await item.product.update(
         {
-          stock: Number(item.product.stock) - item.quantity,
+          stock:
+            Number(item.product.stock) -
+            item.quantity,
         },
-        { transaction },
+        {
+          transaction,
+        }
       );
     }
 
-    // ----------------------------------
-    // ADD MEMBER POINTS
-    // ----------------------------------
+    // ======================================
+    // UPDATE MEMBER POINTS
+    // ======================================
 
-    if (member && earnedPoints > 0) {
+    if (member) {
+      const newPoints =
+        memberCurrentPoints -
+        usedPoints +
+        earnedPoints;
+
       await member.update(
         {
-          points: Number(member.points || 0) + earnedPoints,
+          points: newPoints,
         },
-        { transaction },
+        {
+          transaction,
+        }
       );
     }
 
-    // ----------------------------------
+    // ======================================
     // COMMIT
-    // ----------------------------------
+    // ======================================
 
     await transaction.commit();
+
+    // ======================================
+    // RESPONSE
+    // ======================================
 
     res.status(201).json({
       success: true,
       message: "ชำระเงินเรียบร้อย",
+
       data: {
         saleId: sale.id,
+
         memberId: sale.memberId,
+
+        // ยอดก่อนหักแต้ม
         totalAmount,
+
+        // แต้มที่ใช้
+        usedPoints,
+
+        // ส่วนลดจากแต้ม
+        pointsDiscount,
+
+        // ยอดสุทธิ
+        netTotal,
+
         paymentMethod,
+
         receivedAmount: received,
+
         changeAmount,
+
         earnedPoints,
-        items: saleItems.map((item) => ({
-          productId: item.product.id,
-          name: item.product.name,
-          quantity: item.quantity,
-          price: item.price,
-          total: item.itemTotal,
-        })),
+
+        // แต้มคงเหลือหลังขาย
+        remainingPoints: member
+          ? memberCurrentPoints -
+            usedPoints +
+            earnedPoints
+          : 0,
+
+        items: saleItems.map(
+          (item) => ({
+            productId:
+              item.product.id,
+
+            name:
+              item.product.name,
+
+            quantity:
+              item.quantity,
+
+            price:
+              item.price,
+
+            total:
+              item.itemTotal,
+          })
+        ),
       },
     });
   } catch (error) {
@@ -260,11 +468,15 @@ router.post("/", async (req, res) => {
       await transaction.rollback();
     } catch {}
 
-    console.error("CREATE SALE ERROR:", error);
+    console.error(
+      "CREATE SALE ERROR:",
+      error
+    );
 
     res.status(500).json({
       success: false,
-      message: "ไม่สามารถทำรายการขายได้",
+      message:
+        "ไม่สามารถทำรายการขายได้",
       error: error.message,
     });
   }
