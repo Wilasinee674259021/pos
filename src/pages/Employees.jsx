@@ -30,9 +30,14 @@ export default function Employees() {
     const saved =
       localStorage.getItem("pos_employees");
 
-    return saved
-      ? JSON.parse(saved)
-      : defaultEmployees;
+    try {
+      return saved
+        ? JSON.parse(saved)
+        : defaultEmployees;
+    } catch {
+      localStorage.removeItem("pos_employees");
+      return defaultEmployees;
+    }
   });
 
   const [branches, setBranches] = useState([]);
@@ -73,10 +78,13 @@ export default function Employees() {
     const savedBranches =
       localStorage.getItem("pos_branches");
 
-    if (savedBranches) {
-      setBranches(
-        JSON.parse(savedBranches)
-      );
+    if (!savedBranches) return;
+
+    try {
+      setBranches(JSON.parse(savedBranches));
+    } catch {
+      localStorage.removeItem("pos_branches");
+      setBranches([]);
     }
   }, []);
 
@@ -161,9 +169,9 @@ export default function Employees() {
     const duplicateCode =
       employees.some(
         (employee) =>
-          employee.employeeCode
+          String(employee.employeeCode || "")
             .toLowerCase() ===
-            form.employeeCode
+            String(form.employeeCode || "")
               .toLowerCase() &&
           employee.id !==
             editingEmployee?.id
@@ -180,9 +188,9 @@ export default function Employees() {
     const duplicateUsername =
       employees.some(
         (employee) =>
-          employee.username
+          String(employee.username || "")
             .toLowerCase() ===
-            form.username
+            String(form.username || "")
               .toLowerCase() &&
           employee.id !==
             editingEmployee?.id
@@ -293,19 +301,19 @@ export default function Employees() {
   const filteredEmployees =
     employees.filter((employee) => {
       const keyword =
-        search.toLowerCase();
+        String(search || "").toLowerCase();
 
       return (
-        employee.employeeCode
+        String(employee.employeeCode || "")
           .toLowerCase()
           .includes(keyword) ||
-        employee.name
+        String(employee.name || "")
           .toLowerCase()
           .includes(keyword) ||
-        employee.username
+        String(employee.username || "")
           .toLowerCase()
           .includes(keyword) ||
-        employee.position
+        String(employee.position || "")
           .toLowerCase()
           .includes(keyword)
       );
@@ -318,21 +326,21 @@ export default function Employees() {
   const activeEmployees =
     employees.filter(
       (employee) =>
-        employee.status ===
+        String(employee.status || "") ===
         "เปิดใช้งาน"
     ).length;
 
   const inactiveEmployees =
     employees.filter(
       (employee) =>
-        employee.status ===
+        String(employee.status || "") ===
         "ปิดใช้งาน"
     ).length;
 
   const adminEmployees =
     employees.filter(
       (employee) =>
-        employee.role ===
+        String(employee.role || "") ===
         "ผู้ดูแลระบบ"
     ).length;
 

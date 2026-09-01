@@ -109,18 +109,21 @@ const startServer = async () => {
 
     console.log("Database tables synchronized");
     console.log("================================");
-
-    app.listen(PORT, () => {
-      console.log("Convenience POS Backend");
-      console.log(`Server: http://localhost:${PORT}`);
-      console.log("================================");
-    });
   } catch (error) {
     console.error("================================");
     console.error("DATABASE ERROR");
-    console.error(error);
+    console.error(error.message || error);
     console.error("================================");
+    console.warn(
+      "Backend will continue running without a connected PostgreSQL database."
+    );
   }
+
+  app.listen(PORT, () => {
+    console.log("Convenience POS Backend");
+    console.log(`Server: http://localhost:${PORT}`);
+    console.log("================================");
+  });
 };
 
 startServer();
