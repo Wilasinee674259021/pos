@@ -1,3 +1,4 @@
+```jsx
 export default function Sidebar({
   currentPage,
   setCurrentPage,
@@ -57,18 +58,43 @@ export default function Sidebar({
     },
   ];
 
-  // รองรับกรณี role มีช่องว่างติดมาจากฐานข้อมูล
-  const userRole = String(currentUser?.role || "").trim();
+  // =========================
+  // NORMALIZE ROLE
+  // รองรับทั้งภาษาไทยและภาษาอังกฤษ
+  // =========================
 
-  const visibleMenus = menus.filter((menu) => menu.roles.includes(userRole));
+  const roleMap = {
+    admin: "ผู้ดูแลระบบ",
+    staff: "พนักงาน",
+    manager: "ผู้จัดการ",
+
+    "ผู้ดูแลระบบ": "ผู้ดูแลระบบ",
+    "พนักงาน": "พนักงาน",
+    "ผู้จัดการ": "ผู้จัดการ",
+  };
+
+  const userRole =
+    roleMap[String(currentUser?.role || "").trim()] || "";
+
+  // =========================
+  // FILTER MENU
+  // =========================
+
+  const visibleMenus = menus.filter((menu) =>
+    menu.roles.includes(userRole)
+  );
 
   return (
     <aside className="w-64 min-h-screen bg-slate-900 text-white p-4 flex flex-col">
       {/* LOGO */}
       <div className="mb-6 px-3">
-        <h1 className="text-xl font-bold">🏪 Convenience POS</h1>
+        <h1 className="text-xl font-bold">
+          🏪 Convenience POS
+        </h1>
 
-        <p className="text-sm text-slate-400 mt-1">ระบบจัดการร้านสะดวกซื้อ</p>
+        <p className="text-sm text-slate-400 mt-1">
+          ระบบจัดการร้านสะดวกซื้อ
+        </p>
       </div>
 
       {/* USER */}
@@ -103,11 +129,14 @@ export default function Sidebar({
                 w-full flex items-center gap-3
                 px-4 py-3 rounded-lg text-left
                 transition
-                ${active ? "bg-blue-600" : "hover:bg-slate-700"}
+                ${
+                  active
+                    ? "bg-blue-600"
+                    : "hover:bg-slate-700"
+                }
               `}
             >
               <span>{menu.icon}</span>
-
               <span>{menu.name}</span>
             </button>
           );
@@ -124,3 +153,4 @@ export default function Sidebar({
     </aside>
   );
 }
+```
