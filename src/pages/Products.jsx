@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:5000/api/products";
+const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_URL = `${API_BASE}/api/products`;
 
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -25,18 +29,45 @@ export default function Products() {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      setError("");
 
-      const response = await fetch(API_URL);
-      const result = await response.json();
+      console.log("Loading products from:", API_URL);
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message);
+      const response = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const text = await response.text();
+
+      console.log("Products API response:", text);
+
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
       }
 
-      setProducts(result.data || []);
-    } catch (error) {
-      console.error("LOAD PRODUCTS ERROR:", error);
-      alert("ไม่สามารถโหลดข้อมูลสินค้าได้");
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "โหลดข้อมูลสินค้าไม่สำเร็จ"
+        );
+      }
+
+      setProducts(
+        Array.isArray(result.data)
+          ? result.data
+          : []
+      );
+    } catch (err) {
+      console.error("LOAD PRODUCTS ERROR:", err);
+
+      setProducts([]);
+      setError(err.message || "ไม่สามารถโหลดข้อมูลสินค้าได้");
     } finally {
       setLoading(false);
     }
@@ -47,7 +78,7 @@ export default function Products() {
   }, []);
 
   // ======================================
-  // OPEN ADD FORM
+  // ADD PRODUCT
   // ======================================
 
   const openAddForm = () => {
@@ -65,7 +96,7 @@ export default function Products() {
   };
 
   // ======================================
-  // OPEN EDIT FORM
+  // EDIT PRODUCT
   // ======================================
 
   const openEditForm = (product) => {
@@ -74,7 +105,7 @@ export default function Products() {
     setForm({
       name: product.name || "",
       barcode: product.barcode || "",
-      price: product.price || "",
+      price: product.price ?? "",
       stock: product.stock ?? "",
       category: product.category || "",
     });
@@ -102,25 +133,38 @@ export default function Products() {
       return;
     }
 
-    if (form.price === "" || price < 0 || Number.isNaN(price)) {
+    if (
+      form.price === "" ||
+      Number.isNaN(price) ||
+      price < 0
+    ) {
       alert("กรุณากรอกราคาสินค้าให้ถูกต้อง");
       return;
     }
 
-    if (stock < 0 || !Number.isInteger(stock) || Number.isNaN(stock)) {
-      alert("กรุณากรอกจำนวน Stock เป็นจำนวนเต็ม");
+    if (
+      Number.isNaN(stock) ||
+      stock < 0 ||
+      !Number.isInteger(stock)
+    ) {
+      alert("กรุณากรอก Stock เป็นจำนวนเต็ม");
       return;
     }
 
     try {
-      const url = editingProduct ? `${API_URL}/${editingProduct.id}` : API_URL;
+      const url = editingProduct
+        ? `${API_URL}/${editingProduct.id}`
+        : API_URL;
 
-      const method = editingProduct ? "PUT" : "POST";
+      const method = editingProduct
+        ? "PUT"
+        : "POST";
 
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           name,
@@ -131,14 +175,29 @@ export default function Products() {
         }),
       });
 
-      const result = await response.json();
+      const text = await response.text();
+
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
+      }
 
       if (!response.ok || !result.success) {
-        alert(result.message || "บันทึกสินค้าไม่สำเร็จ");
+        alert(
+          result.message ||
+            "บันทึกสินค้าไม่สำเร็จ"
+        );
         return;
       }
 
-      alert(editingProduct ? "แก้ไขสินค้าเรียบร้อย" : "เพิ่มสินค้าเรียบร้อย");
+      alert(
+        editingProduct
+          ? "แก้ไขสินค้าเรียบร้อย"
+          : "เพิ่มสินค้าเรียบร้อย"
+      );
 
       setShowForm(false);
       setEditingProduct(null);
@@ -152,9 +211,12 @@ export default function Products() {
       });
 
       await loadProducts();
-    } catch (error) {
-      console.error("SAVE PRODUCT ERROR:", error);
-      alert("ไม่สามารถเชื่อมต่อ Backend ได้");
+    } catch (err) {
+      console.error("SAVE PRODUCT ERROR:", err);
+
+      alert(
+        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`
+      );
     }
   };
 
@@ -163,46 +225,82 @@ export default function Products() {
   // ======================================
 
   const deleteProduct = async (id) => {
-    const confirmDelete = window.confirm("ต้องการลบสินค้านี้ใช่หรือไม่?");
+    const confirmed = window.confirm(
+      "ต้องการลบสินค้านี้ใช่หรือไม่?"
+    );
 
-    if (!confirmDelete) {
+    if (!confirmed) {
       return;
     }
 
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `${API_URL}/${id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
 
-      const result = await response.json();
+      const text = await response.text();
+
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
+      }
 
       if (!response.ok || !result.success) {
-        alert(result.message || "ลบสินค้าไม่สำเร็จ");
+        alert(
+          result.message ||
+            "ลบสินค้าไม่สำเร็จ"
+        );
         return;
       }
 
       alert("ลบสินค้าเรียบร้อย");
 
       await loadProducts();
-    } catch (error) {
-      console.error("DELETE PRODUCT ERROR:", error);
-      alert("ไม่สามารถเชื่อมต่อ Backend ได้");
+    } catch (err) {
+      console.error("DELETE PRODUCT ERROR:", err);
+
+      alert(
+        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`
+      );
     }
   };
 
   // ======================================
-  // FILTER PRODUCTS
+  // FILTER
   // ======================================
 
-  const filteredProducts = products.filter((product) => {
-    const keyword = search.toLowerCase();
+  const filteredProducts = products.filter(
+    (product) => {
+      const keyword = search
+        .toLowerCase()
+        .trim();
 
-    return (
-      product.name?.toLowerCase().includes(keyword) ||
-      product.barcode?.toLowerCase().includes(keyword) ||
-      product.category?.toLowerCase().includes(keyword)
-    );
-  });
+      if (!keyword) {
+        return true;
+      }
+
+      return (
+        String(product.name || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(product.barcode || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(product.category || "")
+          .toLowerCase()
+          .includes(keyword)
+      );
+    }
+  );
 
   // ======================================
   // SUMMARY
@@ -211,12 +309,14 @@ export default function Products() {
   const totalProducts = products.length;
 
   const totalStock = products.reduce(
-    (sum, product) => sum + Number(product.stock || 0),
-    0,
+    (sum, product) =>
+      sum + Number(product.stock || 0),
+    0
   );
 
   const lowStock = products.filter(
-    (product) => Number(product.stock || 0) <= 5,
+    (product) =>
+      Number(product.stock || 0) <= 5
   ).length;
 
   // ======================================
@@ -225,13 +325,18 @@ export default function Products() {
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
+
       {/* HEADER */}
 
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">📦 สินค้า</h1>
+          <h1 className="text-3xl font-bold text-slate-800">
+            📦 สินค้า
+          </h1>
 
-          <p className="text-slate-500 mt-1">จัดการสินค้าและสต๊อก</p>
+          <p className="text-slate-500 mt-1">
+            จัดการสินค้าและสต๊อก
+          </p>
         </div>
 
         <button
@@ -242,158 +347,287 @@ export default function Products() {
         </button>
       </div>
 
+      {/* ERROR */}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-6">
+          <p className="font-bold">
+            โหลดข้อมูลสินค้าไม่สำเร็จ
+          </p>
+
+          <p className="text-sm mt-1">
+            {error}
+          </p>
+
+          <button
+            onClick={loadProducts}
+            className="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg"
+          >
+            🔄 ลองใหม่
+          </button>
+        </div>
+      )}
+
       {/* SUMMARY */}
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <p className="text-slate-500">สินค้าทั้งหมด</p>
-
-          <p className="text-3xl font-bold mt-2">{totalProducts}</p>
-        </div>
 
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <p className="text-slate-500">Stock รวม</p>
+          <p className="text-slate-500">
+            สินค้าทั้งหมด
+          </p>
 
-          <p className="text-3xl font-bold text-blue-600 mt-2">
-            {totalStock.toLocaleString()}
+          <p className="text-3xl font-bold mt-2">
+            {totalProducts}
           </p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-5">
-          <p className="text-slate-500">สินค้าใกล้หมด</p>
+          <p className="text-slate-500">
+            Stock รวม
+          </p>
 
-          <p className="text-3xl font-bold text-red-600 mt-2">{lowStock}</p>
+          <p className="text-3xl font-bold text-blue-600 mt-2">
+            {totalStock.toLocaleString("th-TH")}
+          </p>
         </div>
+
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <p className="text-slate-500">
+            สินค้าใกล้หมด
+          </p>
+
+          <p className="text-3xl font-bold text-red-600 mt-2">
+            {lowStock}
+          </p>
+        </div>
+
       </div>
 
       {/* SEARCH */}
 
       <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
+
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) =>
+            setSearch(e.target.value)
+          }
           placeholder="🔍 ค้นหาชื่อสินค้า / Barcode / หมวดหมู่"
           className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
         />
+
       </div>
 
-      {/* PRODUCT TABLE */}
+      {/* TABLE */}
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+
         <div className="p-5 border-b">
-          <h2 className="font-bold text-lg">รายการสินค้า</h2>
+          <h2 className="font-bold text-lg">
+            รายการสินค้า
+          </h2>
         </div>
 
         <div className="overflow-x-auto">
+
           <table className="w-full">
+
             <thead className="bg-slate-100">
+
               <tr>
-                <th className="text-left p-4">รหัส</th>
 
-                <th className="text-left p-4">สินค้า</th>
+                <th className="text-left p-4">
+                  รหัส
+                </th>
 
-                <th className="text-left p-4">Barcode</th>
+                <th className="text-left p-4">
+                  สินค้า
+                </th>
 
-                <th className="text-left p-4">หมวดหมู่</th>
+                <th className="text-left p-4">
+                  Barcode
+                </th>
 
-                <th className="text-right p-4">ราคา</th>
+                <th className="text-left p-4">
+                  หมวดหมู่
+                </th>
 
-                <th className="text-center p-4">Stock</th>
+                <th className="text-right p-4">
+                  ราคา
+                </th>
 
-                <th className="text-center p-4">จัดการ</th>
+                <th className="text-center p-4">
+                  Stock
+                </th>
+
+                <th className="text-center p-4">
+                  จัดการ
+                </th>
+
               </tr>
+
             </thead>
 
             <tbody>
+
               {loading ? (
+
                 <tr>
-                  <td colSpan="7" className="text-center p-10">
-                    กำลังโหลดข้อมูล...
+                  <td
+                    colSpan="7"
+                    className="text-center p-10"
+                  >
+                    กำลังโหลดข้อมูลสินค้า...
                   </td>
                 </tr>
+
               ) : filteredProducts.length === 0 ? (
+
                 <tr>
-                  <td colSpan="7" className="text-center p-10 text-slate-400">
-                    {search ? "ไม่พบสินค้าที่ค้นหา" : "ยังไม่มีสินค้า"}
+                  <td
+                    colSpan="7"
+                    className="text-center p-10 text-slate-400"
+                  >
+                    {search
+                      ? "ไม่พบสินค้าที่ค้นหา"
+                      : "ยังไม่มีสินค้า"}
                   </td>
                 </tr>
+
               ) : (
-                filteredProducts.map((product) => (
-                  <tr key={product.id} className="border-t hover:bg-slate-50">
-                    <td className="p-4 font-bold">{product.id}</td>
 
-                    <td className="p-4 font-medium">{product.name}</td>
+                filteredProducts.map(
+                  (product) => (
 
-                    <td className="p-4">{product.barcode}</td>
+                    <tr
+                      key={product.id}
+                      className="border-t hover:bg-slate-50"
+                    >
 
-                    <td className="p-4">{product.category || "-"}</td>
+                      <td className="p-4 font-bold">
+                        {product.id}
+                      </td>
 
-                    <td className="p-4 text-right font-bold">
-                      ฿
-                      {Number(product.price).toLocaleString("th-TH", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </td>
+                      <td className="p-4 font-medium">
+                        {product.name}
+                      </td>
 
-                    <td className="p-4 text-center">
-                      <span
-                        className={`px-3 py-1 rounded-full ${
-                          Number(product.stock) <= 5
-                            ? "bg-red-100 text-red-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {product.stock}
-                      </span>
-                    </td>
+                      <td className="p-4">
+                        {product.barcode}
+                      </td>
 
-                    <td className="p-4">
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() => openEditForm(product)}
-                          className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200"
+                      <td className="p-4">
+                        {product.category || "-"}
+                      </td>
+
+                      <td className="p-4 text-right font-bold">
+                        ฿
+                        {Number(
+                          product.price || 0
+                        ).toLocaleString(
+                          "th-TH",
+                          {
+                            minimumFractionDigits: 2,
+                          }
+                        )}
+                      </td>
+
+                      <td className="p-4 text-center">
+
+                        <span
+                          className={`px-3 py-1 rounded-full ${
+                            Number(
+                              product.stock || 0
+                            ) <= 5
+                              ? "bg-red-100 text-red-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
                         >
-                          ✏️
-                        </button>
+                          {product.stock}
+                        </span>
 
-                        <button
-                          onClick={() => deleteProduct(product.id)}
-                          className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+
+                      <td className="p-4">
+
+                        <div className="flex justify-center gap-2">
+
+                          <button
+                            onClick={() =>
+                              openEditForm(product)
+                            }
+                            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200"
+                            title="แก้ไข"
+                          >
+                            ✏️
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              deleteProduct(
+                                product.id
+                              )
+                            }
+                            className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200"
+                            title="ลบ"
+                          >
+                            🗑️
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )
+
               )}
+
             </tbody>
+
           </table>
+
         </div>
+
       </div>
 
       {/* ADD / EDIT MODAL */}
 
       {showForm && (
+
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+
           <div className="bg-white rounded-2xl w-full max-w-lg p-7 shadow-2xl">
+
             <div className="flex justify-between items-center mb-6">
+
               <h2 className="text-2xl font-bold">
-                {editingProduct ? "✏️ แก้ไขสินค้า" : "➕ เพิ่มสินค้า"}
+                {editingProduct
+                  ? "✏️ แก้ไขสินค้า"
+                  : "➕ เพิ่มสินค้า"}
               </h2>
 
               <button
-                onClick={() => setShowForm(false)}
-                className="text-xl text-slate-500"
+                onClick={() =>
+                  setShowForm(false)
+                }
+                className="text-xl text-slate-500 hover:text-slate-800"
               >
                 ✕
               </button>
+
             </div>
 
             {/* NAME */}
 
             <div className="mb-4">
-              <label className="block font-medium mb-2">ชื่อสินค้า</label>
+
+              <label className="block font-medium mb-2">
+                ชื่อสินค้า
+              </label>
 
               <input
                 value={form.name}
@@ -406,30 +640,42 @@ export default function Products() {
                 placeholder="เช่น น้ำดื่ม 600ml"
                 className="w-full border border-slate-300 rounded-lg p-3"
               />
+
             </div>
 
             {/* BARCODE */}
 
             <div className="mb-4">
-              <label className="block font-medium mb-2">Barcode</label>
+
+              <label className="block font-medium mb-2">
+                Barcode
+              </label>
 
               <input
                 value={form.barcode}
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    barcode: e.target.value.replace(/\D/g, ""),
+                    barcode:
+                      e.target.value.replace(
+                        /\D/g,
+                        ""
+                      ),
                   })
                 }
                 placeholder="เช่น 8851234567890"
                 className="w-full border border-slate-300 rounded-lg p-3"
               />
+
             </div>
 
             {/* PRICE */}
 
             <div className="mb-4">
-              <label className="block font-medium mb-2">ราคา (บาท)</label>
+
+              <label className="block font-medium mb-2">
+                ราคา (บาท)
+              </label>
 
               <input
                 type="number"
@@ -445,12 +691,16 @@ export default function Products() {
                 placeholder="0.00"
                 className="w-full border border-slate-300 rounded-lg p-3"
               />
+
             </div>
 
             {/* STOCK */}
 
             <div className="mb-4">
-              <label className="block font-medium mb-2">จำนวน Stock</label>
+
+              <label className="block font-medium mb-2">
+                จำนวน Stock
+              </label>
 
               <input
                 type="number"
@@ -466,12 +716,16 @@ export default function Products() {
                 placeholder="0"
                 className="w-full border border-slate-300 rounded-lg p-3"
               />
+
             </div>
 
             {/* CATEGORY */}
 
             <div className="mb-6">
-              <label className="block font-medium mb-2">หมวดหมู่</label>
+
+              <label className="block font-medium mb-2">
+                หมวดหมู่
+              </label>
 
               <input
                 value={form.category}
@@ -484,14 +738,18 @@ export default function Products() {
                 placeholder="เช่น เครื่องดื่ม"
                 className="w-full border border-slate-300 rounded-lg p-3"
               />
+
             </div>
 
             {/* BUTTONS */}
 
             <div className="flex gap-3">
+
               <button
-                onClick={() => setShowForm(false)}
-                className="flex-1 border border-slate-300 rounded-lg py-3"
+                onClick={() =>
+                  setShowForm(false)
+                }
+                className="flex-1 border border-slate-300 rounded-lg py-3 hover:bg-slate-50"
               >
                 ยกเลิก
               </button>
@@ -502,10 +760,15 @@ export default function Products() {
               >
                 💾 บันทึก
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
+
     </div>
   );
 }
