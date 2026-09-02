@@ -21,6 +21,18 @@ const Sale = sequelize.define(
       defaultValue: 0,
     },
 
+    discountAmount: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    netTotal: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+
     paymentMethod: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -39,6 +51,12 @@ const Sale = sequelize.define(
     },
 
     earnedPoints: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    usedPoints: {
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,

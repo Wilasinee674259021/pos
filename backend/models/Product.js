@@ -21,12 +21,21 @@ const Product = sequelize.define(
       unique: true,
     },
 
+    // ราคาขาย
     price: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
     },
 
+    // ราคาต้นทุน
+    cost: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    // จำนวนสินค้าในสต็อกปัจจุบัน
     stock: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -47,7 +56,7 @@ const Product = sequelize.define(
   {
     tableName: "products",
     timestamps: true,
-  },
+  }
 );
 
 export default Product;

@@ -3,45 +3,34 @@ import { Op } from "sequelize";
 
 import sequelize from "../config/database.js";
 import Sale from "../models/Sale.js";
+import SaleItem from "../models/SaleItem.js";
+import StockMovement from "../models/StockMovement.js";
 import Product from "../models/Product.js";
 import Member from "../models/Member.js";
 
 const router = express.Router();
 
 // ======================================
-// DASHBOARD
+// DASHBOARD SALES
 // ======================================
 
 router.get("/dashboard", async (req, res) => {
   try {
-    // ======================================
-    // วันที่ประเทศไทย
-    // ======================================
-
     const now = new Date();
 
-    const thailandDate = new Intl.DateTimeFormat(
-      "en-CA",
-      {
-        timeZone: "Asia/Bangkok",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }
-    ).format(now);
+    const thailandDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Bangkok",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(now);
 
-    // 00:00:00 ประเทศไทย
     const startOfDay = new Date(
       thailandDate + "T00:00:00+07:00"
     );
 
-    // วันถัดไป 00:00:00
     const endOfDay = new Date(startOfDay);
     endOfDay.setDate(endOfDay.getDate() + 1);
-
-    // ======================================
-    // ดึงยอดขายวันนี้จากฐานข้อมูล
-    // ======================================
 
     const salesToday = await Sale.findAll({
       where: {
@@ -50,110 +39,103 @@ router.get("/dashboard", async (req, res) => {
           [Op.lt]: endOfDay,
         },
       },
-
-      order: [
-        ["createdAt", "DESC"],
-      ],
+      order: [["createdAt", "DESC"]],
     });
 
-    // ======================================
-    // ยอดขายรวมวันนี้
-    // ======================================
+    const totalSales = salesToday.reduce((sum, sale) => {
+      const total = Number(sale.totalAmount || 0);
+      const net = Number(sale.netTotal || 0);
 
-    const totalSales = salesToday.reduce(
-      (sum, sale) => {
-        return (
-          sum +
-          Number(sale.totalAmount || 0)
-        );
-      },
-      0
-    );
-
-    // ======================================
-    // จำนวนบิลวันนี้
-    // ======================================
+      return sum + (net > 0 ? net : total);
+    }, 0);
 
     const billCount = salesToday.length;
 
-    // ======================================
-    // บิลล่าสุด 5 ใบ
-    // ======================================
+    const saleIds = salesToday.map((sale) => sale.id);
 
-    const recentBills = salesToday
-      .slice(0, 5)
-      .map((sale) => ({
-        id: sale.id,
+    let totalCost = 0;
 
-        totalAmount: Number(
-          sale.totalAmount || 0
-        ),
-
-        paymentMethod:
-          sale.paymentMethod || "",
-
-        receivedAmount: Number(
-          sale.receivedAmount || 0
-        ),
-
-        changeAmount: Number(
-          sale.changeAmount || 0
-        ),
-
-        earnedPoints: Number(
-          sale.earnedPoints || 0
-        ),
-
-        memberId:
-          sale.memberId || null,
-
-        createdAt:
-          sale.createdAt,
-      }));
-
-    // ======================================
-    // สินค้าใกล้หมด
-    // Stock <= 10
-    // ======================================
-
-    const lowStockProducts =
-      await Product.count({
+    if (saleIds.length > 0) {
+      const saleItemsToday = await SaleItem.findAll({
         where: {
-          stock: {
-            [Op.lte]: 10,
+          saleId: {
+            [Op.in]: saleIds,
           },
         },
       });
 
-    // ======================================
-    // RESPONSE
-    // ======================================
+      totalCost = saleItemsToday.reduce((sum, item) => {
+        return sum + Number(item.totalCost || 0);
+      }, 0);
+    }
+
+    const recentBills = salesToday.slice(0, 5).map((sale) => {
+      const totalAmount = Number(sale.totalAmount || 0);
+      const discountAmount = Number(
+        sale.discountAmount || 0
+      );
+      const storedNetTotal = Number(
+        sale.netTotal || 0
+      );
+
+      const netTotal =
+        storedNetTotal > 0
+          ? storedNetTotal
+          : Math.max(
+              totalAmount - discountAmount,
+              0
+            );
+
+      return {
+        id: sale.id,
+        totalAmount,
+        discountAmount,
+        netTotal,
+        paymentMethod: sale.paymentMethod || "",
+        receivedAmount: Number(
+          sale.receivedAmount || 0
+        ),
+        changeAmount: Number(
+          sale.changeAmount || 0
+        ),
+        earnedPoints: Number(
+          sale.earnedPoints || 0
+        ),
+        usedPoints: Number(
+          sale.usedPoints || 0
+        ),
+        memberId: sale.memberId || null,
+        createdAt: sale.createdAt,
+      };
+    });
+
+    const lowStockProducts = await Product.count({
+      where: {
+        stock: {
+          [Op.lte]: 10,
+        },
+      },
+    });
+
+    const profit = totalSales - totalCost;
 
     res.json({
       success: true,
-
       data: {
         totalSales,
-
         billCount,
-
+        totalCost,
+        profit,
         lowStockProducts,
-
         recentBills,
       },
     });
   } catch (error) {
-    console.error(
-      "DASHBOARD ERROR:",
-      error
-    );
+    console.error("DASHBOARD ERROR:", error);
 
     res.status(500).json({
       success: false,
-
-      message:
-        "ไม่สามารถโหลดข้อมูล Dashboard ได้",
-
+      message: "ไม่สามารถโหลดข้อมูล Dashboard ได้",
       error: error.message,
     });
   }
@@ -166,28 +148,64 @@ router.get("/dashboard", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const sales = await Sale.findAll({
-      order: [
-        ["createdAt", "DESC"],
-      ],
+      order: [["createdAt", "DESC"]],
+    });
+
+    const result = sales.map((sale) => {
+      const totalAmount = Number(
+        sale.totalAmount || 0
+      );
+
+      const discountAmount = Number(
+        sale.discountAmount || 0
+      );
+
+      const storedNetTotal = Number(
+        sale.netTotal || 0
+      );
+
+      const netTotal =
+        storedNetTotal > 0
+          ? storedNetTotal
+          : Math.max(
+              totalAmount - discountAmount,
+              0
+            );
+
+      return {
+        id: sale.id,
+        memberId: sale.memberId || null,
+        totalAmount,
+        discountAmount,
+        netTotal,
+        paymentMethod: sale.paymentMethod || "",
+        receivedAmount: Number(
+          sale.receivedAmount || 0
+        ),
+        changeAmount: Number(
+          sale.changeAmount || 0
+        ),
+        earnedPoints: Number(
+          sale.earnedPoints || 0
+        ),
+        usedPoints: Number(
+          sale.usedPoints || 0
+        ),
+        createdAt: sale.createdAt,
+        updatedAt: sale.updatedAt,
+      };
     });
 
     res.json({
       success: true,
-
-      data: sales,
+      data: result,
     });
   } catch (error) {
-    console.error(
-      "GET SALES ERROR:",
-      error
-    );
+    console.error("GET SALES ERROR:", error);
 
     res.status(500).json({
       success: false,
-
-      message:
-        "ไม่สามารถโหลดประวัติการขายได้",
-
+      message: "ไม่สามารถโหลดประวัติการขายได้",
       error: error.message,
     });
   }
@@ -198,8 +216,7 @@ router.get("/", async (req, res) => {
 // ======================================
 
 router.post("/", async (req, res) => {
-  const transaction =
-    await sequelize.transaction();
+  const transaction = await sequelize.transaction();
 
   try {
     const {
@@ -222,8 +239,7 @@ router.post("/", async (req, res) => {
 
       return res.status(400).json({
         success: false,
-        message:
-          "ไม่มีสินค้าในรายการขาย",
+        message: "ไม่มีสินค้าในรายการขาย",
       });
     }
 
@@ -246,8 +262,7 @@ router.post("/", async (req, res) => {
 
       return res.status(400).json({
         success: false,
-        message:
-          "วิธีชำระเงินไม่ถูกต้อง",
+        message: "วิธีชำระเงินไม่ถูกต้อง",
       });
     }
 
@@ -258,13 +273,12 @@ router.post("/", async (req, res) => {
     let member = null;
 
     if (memberId) {
-      member =
-        await Member.findByPk(
-          memberId,
-          {
-            transaction,
-          }
-        );
+      member = await Member.findByPk(
+        memberId,
+        {
+          transaction,
+        }
+      );
 
       if (!member) {
         await transaction.rollback();
@@ -281,31 +295,27 @@ router.post("/", async (req, res) => {
     // ======================================
 
     let totalAmount = 0;
-
     const saleItems = [];
 
     for (const item of items) {
-      const product =
-        await Product.findByPk(
-          item.productId,
-          {
-            transaction,
-          }
-        );
+      const product = await Product.findByPk(
+        item.productId,
+        {
+          transaction,
+        }
+      );
 
       if (!product) {
         await transaction.rollback();
 
         return res.status(404).json({
           success: false,
-
           message:
-            `ไม่พบสินค้า ${item.productId}`,
+            "ไม่พบสินค้า " + item.productId,
         });
       }
 
-      const quantity =
-        Number(item.quantity);
+      const quantity = Number(item.quantity);
 
       if (
         !Number.isInteger(quantity) ||
@@ -315,8 +325,7 @@ router.post("/", async (req, res) => {
 
         return res.status(400).json({
           success: false,
-          message:
-            "จำนวนสินค้าไม่ถูกต้อง",
+          message: "จำนวนสินค้าไม่ถูกต้อง",
         });
       }
 
@@ -325,26 +334,28 @@ router.post("/", async (req, res) => {
       // ======================================
 
       if (
-        Number(product.stock) <
-        quantity
+        Number(product.stock) < quantity
       ) {
         await transaction.rollback();
 
         return res.status(400).json({
           success: false,
-
           message:
-            `สินค้า ${product.name} มี Stock ไม่เพียงพอ`,
-
+            "สินค้า " +
+            product.name +
+            " มี Stock ไม่เพียงพอ",
           stock: product.stock,
         });
       }
 
-      const price =
-        Number(product.price);
+      const price = Number(product.price);
+      const cost = Number(product.cost || 0);
 
       const itemTotal =
         price * quantity;
+
+      const itemCost =
+        cost * quantity;
 
       totalAmount += itemTotal;
 
@@ -352,30 +363,29 @@ router.post("/", async (req, res) => {
         product,
         quantity,
         price,
+        cost,
         itemTotal,
+        itemCost,
       });
     }
 
     // ======================================
     // USE POINTS
-    // 1 Point = 1 Baht
+    // 1 POINT = 1 BAHT
     // ======================================
 
-    let requestedPoints =
-      Number(usePoints || 0);
+    let requestedPoints = Number(
+      usePoints || 0
+    );
 
     if (
-      !Number.isFinite(
-        requestedPoints
-      )
+      !Number.isFinite(requestedPoints)
     ) {
       requestedPoints = 0;
     }
 
     requestedPoints =
-      Math.floor(
-        requestedPoints
-      );
+      Math.floor(requestedPoints);
 
     if (requestedPoints < 0) {
       requestedPoints = 0;
@@ -389,16 +399,14 @@ router.post("/", async (req, res) => {
 
       return res.status(400).json({
         success: false,
-
         message:
           "กรุณาเลือกสมาชิกก่อนใช้ Points",
       });
     }
 
-    const memberCurrentPoints =
-      Number(
-        member?.points || 0
-      );
+    const memberCurrentPoints = Number(
+      member?.points || 0
+    );
 
     if (
       member &&
@@ -409,13 +417,10 @@ router.post("/", async (req, res) => {
 
       return res.status(400).json({
         success: false,
-
         message:
           "Points ของสมาชิกไม่เพียงพอ",
-
         availablePoints:
           memberCurrentPoints,
-
         requestedPoints,
       });
     }
@@ -424,11 +429,10 @@ router.post("/", async (req, res) => {
     // POINTS DISCOUNT
     // ======================================
 
-    const usedPoints =
-      Math.min(
-        requestedPoints,
-        totalAmount
-      );
+    const usedPoints = Math.min(
+      requestedPoints,
+      totalAmount
+    );
 
     const pointsDiscount =
       usedPoints;
@@ -437,47 +441,50 @@ router.post("/", async (req, res) => {
     // NET TOTAL
     // ======================================
 
-    const netTotal =
-      Math.max(
-        totalAmount -
-          pointsDiscount,
-        0
-      );
+    const netTotal = Math.max(
+      totalAmount -
+        pointsDiscount,
+      0
+    );
+
+    const discountAmount =
+      pointsDiscount;
 
     // ======================================
-    // PAYMENT AMOUNT
+    // PAYMENT
     // ======================================
 
-    const received =
-      Number(
-        receivedAmount ||
-          netTotal
-      );
+    const received = Number(
+      receivedAmount ?? netTotal
+    );
 
     if (
-      paymentMethod === "cash"
+      !Number.isFinite(received) ||
+      received < 0
     ) {
-      if (
-        received < netTotal
-      ) {
-        await transaction.rollback();
+      await transaction.rollback();
 
-        return res.status(400).json({
-          success: false,
+      return res.status(400).json({
+        success: false,
+        message: "จำนวนเงินไม่ถูกต้อง",
+      });
+    }
 
-          message:
-            "จำนวนเงินที่รับมาไม่เพียงพอ",
+    if (
+      paymentMethod === "cash" &&
+      received < netTotal
+    ) {
+      await transaction.rollback();
 
-          totalAmount,
-
-          pointsDiscount,
-
-          netTotal,
-
-          receivedAmount:
-            received,
-        });
-      }
+      return res.status(400).json({
+        success: false,
+        message:
+          "จำนวนเงินที่รับมาไม่เพียงพอ",
+        totalAmount,
+        discountAmount,
+        netTotal,
+        receivedAmount: received,
+      });
     }
 
     const changeAmount =
@@ -490,12 +497,11 @@ router.post("/", async (req, res) => {
     // ทุก 100 บาท = 10 Points
     // ======================================
 
-    const earnedPoints =
-      member
-        ? Math.floor(
-            netTotal / 100
-          ) * 10
-        : 0;
+    const earnedPoints = member
+      ? Math.floor(
+          netTotal / 100
+        ) * 10
+      : 0;
 
     // ======================================
     // CREATE SALE ID
@@ -521,22 +527,19 @@ router.post("/", async (req, res) => {
         {
           id: saleId,
 
-          memberId:
-            member
-              ? member.id
-              : null,
+          memberId: member
+            ? member.id
+            : null,
 
-          // ยอดก่อนหัก Points
           totalAmount,
-
+          discountAmount,
+          netTotal,
           paymentMethod,
-
           receivedAmount:
             received,
-
           changeAmount,
-
           earnedPoints,
+          usedPoints,
         },
         {
           transaction,
@@ -544,17 +547,73 @@ router.post("/", async (req, res) => {
       );
 
     // ======================================
-    // UPDATE STOCK
+    // CREATE SALE ITEMS
     // ======================================
 
-    for (const item of saleItems) {
+    for (
+      const item of saleItems
+    ) {
+      await SaleItem.create(
+        {
+          saleId: sale.id,
+          productId:
+            item.product.id,
+          productName:
+            item.product.name,
+          quantity:
+            item.quantity,
+          price:
+            item.price,
+          cost:
+            item.cost,
+          subtotal:
+            item.itemTotal,
+          totalCost:
+            item.itemCost,
+        },
+        {
+          transaction,
+        }
+      );
+    }
+
+    // ======================================
+    // UPDATE STOCK + STOCK MOVEMENT
+    // ======================================
+
+    for (
+      const item of saleItems
+    ) {
+      const newStock =
+        Number(
+          item.product.stock
+        ) -
+        item.quantity;
+
       await item.product.update(
         {
-          stock:
-            Number(
-              item.product.stock
-            ) -
+          stock: newStock,
+        },
+        {
+          transaction,
+        }
+      );
+
+      await StockMovement.create(
+        {
+          productId:
+            item.product.id,
+          movementType:
+            "out",
+          reason:
+            "sale",
+          quantity:
             item.quantity,
+          referenceId:
+            sale.id,
+          note:
+            "ขายสินค้า " +
+            item.product.name,
         },
         {
           transaction,
@@ -592,7 +651,7 @@ router.post("/", async (req, res) => {
     // RESPONSE
     // ======================================
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
 
       message:
@@ -600,23 +659,19 @@ router.post("/", async (req, res) => {
 
       data: {
         saleId: sale.id,
-
         memberId:
           sale.memberId,
 
         totalAmount,
-
+        discountAmount,
         usedPoints,
-
         pointsDiscount,
-
         netTotal,
 
         paymentMethod,
 
         receivedAmount:
           received,
-
         changeAmount,
 
         earnedPoints,
@@ -633,18 +688,18 @@ router.post("/", async (req, res) => {
             (item) => ({
               productId:
                 item.product.id,
-
               name:
                 item.product.name,
-
               quantity:
                 item.quantity,
-
               price:
                 item.price,
-
+              cost:
+                item.cost,
               total:
                 item.itemTotal,
+              totalCost:
+                item.itemCost,
             })
           ),
       },
@@ -659,15 +714,17 @@ router.post("/", async (req, res) => {
       error
     );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-
       message:
         "ไม่สามารถทำรายการขายได้",
-
       error: error.message,
     });
   }
 });
+
+// ======================================
+// EXPORT
+// ======================================
 
 export default router;

@@ -11,6 +11,12 @@ import sequelize from "./config/database.js";
 import "./models/Member.js";
 import "./models/Product.js";
 import "./models/Sale.js";
+import "./models/SaleItem.js";
+import "./models/StockMovement.js";
+import "./models/Expense.js";
+import "./models/PurchaseOrder.js";
+import "./models/PurchaseItem.js";
+
 // =========================
 // IMPORT ROUTES
 // =========================
@@ -18,6 +24,10 @@ import "./models/Sale.js";
 import memberRoutes from "./routes/memberRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import saleRoutes from "./routes/saleRoutes.js";
+import expenseRoutes from "./routes/expenseRoutes.js";
+import purchaseRoutes from "./routes/purchaseRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+
 // =========================
 // LOAD ENV
 // =========================
@@ -38,14 +48,7 @@ app.use(cors());
 app.use(express.json());
 
 // =========================
-// ROUTES
-// =========================
-
-app.use("/api/members", memberRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/sales", saleRoutes);
-// =========================
-// TEST SERVER
+// ROOT
 // =========================
 
 app.get("/", (req, res) => {
@@ -90,6 +93,22 @@ app.get("/api/db-test", async (req, res) => {
 });
 
 // =========================
+// API ROUTES
+// =========================
+
+app.use("/api/members", memberRoutes);
+
+app.use("/api/products", productRoutes);
+
+app.use("/api/sales", saleRoutes);
+
+app.use("/api/expenses", expenseRoutes);
+
+app.use("/api/purchases", purchaseRoutes);
+
+app.use("/api/dashboard", dashboardRoutes);
+
+// =========================
 // START SERVER
 // =========================
 
@@ -105,25 +124,24 @@ const startServer = async () => {
     console.log("================================");
 
     // สร้าง/อัปเดตตารางจาก Models
-    await sequelize.sync();
+    await sequelize.sync({
+      alter: true,
+    });
 
     console.log("Database tables synchronized");
     console.log("================================");
+
+    app.listen(PORT, () => {
+      console.log("Convenience POS Backend");
+      console.log(`Server: http://localhost:${PORT}`);
+      console.log("================================");
+    });
   } catch (error) {
     console.error("================================");
     console.error("DATABASE ERROR");
     console.error(error.message || error);
     console.error("================================");
-    console.warn(
-      "Backend will continue running without a connected PostgreSQL database."
-    );
   }
-
-  app.listen(PORT, () => {
-    console.log("Convenience POS Backend");
-    console.log(`Server: http://localhost:${PORT}`);
-    console.log("================================");
-  });
 };
 
 startServer();
