@@ -51,55 +51,39 @@ function getYesterday() {
 }
 
 function getMonthStart() {
-  const date = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth(),
-    1
+  return formatDate(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
-
-  return formatDate(date);
 }
 
 function getMonthEnd() {
-  const date = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth() + 1,
-    0
+  return formatDate(
+    new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
   );
-
-  return formatDate(date);
 }
 
 function getLastMonthStart() {
-  const date = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth() - 1,
-    1
+  return formatDate(
+    new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1)
   );
-
-  return formatDate(date);
 }
 
 function getLastMonthEnd() {
-  const date = new Date(
-    new Date().getFullYear(),
-    new Date().getMonth(),
-    0
+  return formatDate(
+    new Date(new Date().getFullYear(), new Date().getMonth(), 0)
   );
-
-  return formatDate(date);
 }
 
 function getYearStart() {
-  const date = new Date(new Date().getFullYear(), 0, 1);
-
-  return formatDate(date);
+  return formatDate(
+    new Date(new Date().getFullYear(), 0, 1)
+  );
 }
 
 function getYearEnd() {
-  const date = new Date(new Date().getFullYear(), 11, 31);
-
-  return formatDate(date);
+  return formatDate(
+    new Date(new Date().getFullYear(), 11, 31)
+  );
 }
 
 export default function Dashboard() {
@@ -185,7 +169,10 @@ export default function Dashboard() {
       });
     } catch (err) {
       console.error("DASHBOARD ERROR:", err);
-      setError(err.message || "ไม่สามารถเชื่อมต่อ Backend ได้");
+
+      setError(
+        err.message || "ไม่สามารถเชื่อมต่อ Backend ได้"
+      );
     } finally {
       setLoading(false);
     }
@@ -194,14 +181,6 @@ export default function Dashboard() {
   useEffect(() => {
     setLoading(true);
     loadDashboard();
-  }, [startDate, endDate]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadDashboard();
-    }, 5000);
-
-    return () => clearInterval(interval);
   }, [startDate, endDate]);
 
   const paymentTotal = useMemo(() => {
@@ -215,6 +194,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-7xl">
+
         {/* HEADER */}
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -370,16 +350,24 @@ export default function Dashboard() {
             </div>
 
             <div className="mt-2 text-sm">
-              ตรวจสอบว่า Backend กำลังทำงานอยู่ที่:
+              Backend:
               <span className="ml-1 font-medium">
                 {API_URL}
               </span>
             </div>
+
+            <button
+              onClick={loadDashboard}
+              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            >
+              ลองใหม่
+            </button>
           </div>
         )}
 
         {/* MAIN SUMMARY */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">
               ยอดขาย
@@ -400,9 +388,7 @@ export default function Dashboard() {
             </p>
 
             <p className="mt-2 text-2xl font-bold text-blue-600">
-              {Number(dashboard.billCount || 0).toLocaleString(
-                "th-TH"
-              )}
+              {Number(dashboard.billCount || 0).toLocaleString("th-TH")}
             </p>
 
             <p className="mt-1 text-xs text-gray-400">
@@ -443,10 +429,12 @@ export default function Dashboard() {
               หักค่าใช้จ่ายแล้ว
             </p>
           </div>
+
         </div>
 
         {/* FINANCE */}
         <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">
               ต้นทุนสินค้า
@@ -491,26 +479,22 @@ export default function Dashboard() {
             </p>
 
             <p className="mt-2 text-xl font-bold text-red-600">
-              {Number(
-                dashboard.lowStockCount || 0
-              ).toLocaleString("th-TH")}{" "}
-              รายการ
+              {Number(dashboard.lowStockCount || 0).toLocaleString("th-TH")} รายการ
             </p>
           </div>
+
         </div>
 
         {/* STOCK */}
         <div className="mb-6 grid gap-4 md:grid-cols-2">
+
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">
               สินค้าเข้า
             </p>
 
             <p className="mt-2 text-2xl font-bold text-green-600">
-              {Number(
-                dashboard.stockIn || 0
-              ).toLocaleString("th-TH")}{" "}
-              ชิ้น
+              {Number(dashboard.stockIn || 0).toLocaleString("th-TH")} ชิ้น
             </p>
 
             <p className="mt-1 text-xs text-gray-400">
@@ -524,42 +508,38 @@ export default function Dashboard() {
             </p>
 
             <p className="mt-2 text-2xl font-bold text-orange-600">
-              {Number(
-                dashboard.stockOut || 0
-              ).toLocaleString("th-TH")}{" "}
-              ชิ้น
+              {Number(dashboard.stockOut || 0).toLocaleString("th-TH")} ชิ้น
             </p>
 
             <p className="mt-1 text-xs text-gray-400">
               จากการขายสินค้า
             </p>
           </div>
+
         </div>
 
         {/* PAYMENT SUMMARY */}
         <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">
-                ยอดขายตามช่องทางชำระเงิน
-              </h2>
 
-              <p className="text-sm text-gray-500">
-                รวม ฿{formatMoney(paymentTotal)}
-              </p>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              ยอดขายตามช่องทางชำระเงิน
+            </h2>
+
+            <p className="text-sm text-gray-500">
+              รวม ฿{formatMoney(paymentTotal)}
+            </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
+
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-sm text-gray-500">
                 เงินสด
               </p>
 
               <p className="mt-2 text-xl font-bold text-green-600">
-                ฿{formatMoney(
-                  dashboard.paymentSummary.cash
-                )}
+                ฿{formatMoney(dashboard.paymentSummary.cash)}
               </p>
             </div>
 
@@ -569,9 +549,7 @@ export default function Dashboard() {
               </p>
 
               <p className="mt-2 text-xl font-bold text-blue-600">
-                ฿{formatMoney(
-                  dashboard.paymentSummary.qr
-                )}
+                ฿{formatMoney(dashboard.paymentSummary.qr)}
               </p>
             </div>
 
@@ -581,26 +559,24 @@ export default function Dashboard() {
               </p>
 
               <p className="mt-2 text-xl font-bold text-purple-600">
-                ฿{formatMoney(
-                  dashboard.paymentSummary.card
-                )}
+                ฿{formatMoney(dashboard.paymentSummary.card)}
               </p>
             </div>
+
           </div>
         </div>
 
         {/* RECENT BILLS */}
         <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800">
-                รายการขายล่าสุด
-              </h2>
 
-              <p className="text-sm text-gray-500">
-                แสดงสูงสุด 10 รายการ
-              </p>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">
+              รายการขายล่าสุด
+            </h2>
+
+            <p className="text-sm text-gray-500">
+              แสดงสูงสุด 10 รายการ
+            </p>
           </div>
 
           {dashboard.recentBills.length === 0 ? (
@@ -609,9 +585,12 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="overflow-x-auto">
+
               <table className="w-full min-w-[700px]">
+
                 <thead>
                   <tr className="border-b text-left text-sm text-gray-500">
+
                     <th className="px-3 py-3">
                       เลขที่บิล
                     </th>
@@ -631,68 +610,61 @@ export default function Dashboard() {
                     <th className="px-3 py-3 text-right">
                       ยอดสุทธิ
                     </th>
+
                   </tr>
                 </thead>
 
                 <tbody>
-                  {dashboard.recentBills.map(
-                    (bill) => (
-                      <tr
-                        key={bill.id}
-                        className="border-b last:border-0 hover:bg-gray-50"
-                      >
-                        <td className="px-3 py-3 font-medium text-gray-800">
-                          {bill.id}
-                        </td>
 
-                        <td className="px-3 py-3 text-sm text-gray-600">
-                          {bill.createdAt
-                            ? new Date(
-                                bill.createdAt
-                              ).toLocaleString(
-                                "th-TH"
-                              )
-                            : "-"}
-                        </td>
+                  {dashboard.recentBills.map((bill) => (
+                    <tr
+                      key={bill.id}
+                      className="border-b last:border-0 hover:bg-gray-50"
+                    >
 
-                        <td className="px-3 py-3">
-                          {bill.paymentMethod ===
-                          "cash"
-                            ? "เงินสด"
-                            : bill.paymentMethod ===
-                              "qr"
-                            ? "QR Payment"
-                            : bill.paymentMethod ===
-                              "card"
-                            ? "บัตร"
-                            : bill.paymentMethod ||
-                              "-"}
-                        </td>
+                      <td className="px-3 py-3 font-medium text-gray-800">
+                        {bill.id}
+                      </td>
 
-                        <td className="px-3 py-3 text-right text-red-600">
-                          ฿
-                          {formatMoney(
-                            bill.discountAmount
-                          )}
-                        </td>
+                      <td className="px-3 py-3 text-sm text-gray-600">
+                        {bill.createdAt
+                          ? new Date(bill.createdAt).toLocaleString("th-TH")
+                          : "-"}
+                      </td>
 
-                        <td className="px-3 py-3 text-right font-semibold text-green-600">
-                          ฿
-                          {formatMoney(
-                            bill.netTotal
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  )}
+                      <td className="px-3 py-3">
+                        {bill.paymentMethod === "cash"
+                          ? "เงินสด"
+                          : bill.paymentMethod === "qr"
+                          ? "QR Payment"
+                          : bill.paymentMethod === "card"
+                          ? "บัตร"
+                          : bill.paymentMethod || "-"}
+                      </td>
+
+                      <td className="px-3 py-3 text-right text-red-600">
+                        ฿{formatMoney(bill.discountAmount)}
+                      </td>
+
+                      <td className="px-3 py-3 text-right font-semibold text-green-600">
+                        ฿{formatMoney(bill.netTotal)}
+                      </td>
+
+                    </tr>
+                  ))}
+
                 </tbody>
+
               </table>
+
             </div>
           )}
+
         </div>
 
         {/* LOW STOCK */}
         <div className="rounded-xl bg-white p-5 shadow-sm">
+
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-800">
               สินค้าใกล้หมด
@@ -703,16 +675,18 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {dashboard.lowStockProducts.length ===
-          0 ? (
+          {dashboard.lowStockProducts.length === 0 ? (
             <div className="rounded-lg bg-green-50 p-6 text-center text-green-700">
               ไม่มีสินค้าใกล้หมด
             </div>
           ) : (
             <div className="overflow-x-auto">
+
               <table className="w-full min-w-[600px]">
+
                 <thead>
                   <tr className="border-b text-left text-sm text-gray-500">
+
                     <th className="px-3 py-3">
                       รหัสสินค้า
                     </th>
@@ -728,50 +702,52 @@ export default function Dashboard() {
                     <th className="px-3 py-3 text-right">
                       คงเหลือ
                     </th>
+
                   </tr>
                 </thead>
 
                 <tbody>
-                  {dashboard.lowStockProducts.map(
-                    (product) => (
-                      <tr
-                        key={product.id}
-                        className="border-b last:border-0"
+
+                  {dashboard.lowStockProducts.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="border-b last:border-0"
+                    >
+
+                      <td className="px-3 py-3 font-medium">
+                        {product.id}
+                      </td>
+
+                      <td className="px-3 py-3">
+                        {product.name}
+                      </td>
+
+                      <td className="px-3 py-3 text-gray-500">
+                        {product.barcode}
+                      </td>
+
+                      <td
+                        className={`px-3 py-3 text-right font-bold ${
+                          Number(product.stock) <= 5
+                            ? "text-red-600"
+                            : "text-orange-600"
+                        }`}
                       >
-                        <td className="px-3 py-3 font-medium">
-                          {product.id}
-                        </td>
+                        {Number(product.stock || 0).toLocaleString("th-TH")} ชิ้น
+                      </td>
 
-                        <td className="px-3 py-3">
-                          {product.name}
-                        </td>
+                    </tr>
+                  ))}
 
-                        <td className="px-3 py-3 text-gray-500">
-                          {product.barcode}
-                        </td>
-
-                        <td
-                          className={`px-3 py-3 text-right font-bold ${
-                            Number(product.stock) <= 5
-                              ? "text-red-600"
-                              : "text-orange-600"
-                          }`}
-                        >
-                          {Number(
-                            product.stock || 0
-                          ).toLocaleString(
-                            "th-TH"
-                          )}{" "}
-                          ชิ้น
-                        </td>
-                      </tr>
-                    )
-                  )}
                 </tbody>
+
               </table>
+
             </div>
           )}
+
         </div>
+
       </div>
     </div>
   );
