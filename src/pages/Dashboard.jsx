@@ -8,6 +8,7 @@ export default function Dashboard() {
     totalSales: 0,
     billCount: 0,
     lowStockProducts: 0,
+    recentBills: [],
   });
 
   const [loading, setLoading] = useState(true);
@@ -15,151 +16,538 @@ export default function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      setLoading(true);
       setError("");
 
       const response = await fetch(
-        `${API_URL}/api/sales/dashboard`
+        API_URL + "/api/sales/dashboard"
       );
 
       if (!response.ok) {
-        throw new Error("ไม่สามารถเชื่อมต่อ Dashboard API ได้");
+        throw new Error(
+          "ไม่สามารถเชื่อมต่อ Dashboard API ได้"
+        );
       }
 
       const result = await response.json();
 
       if (!result.success) {
         throw new Error(
-          result.message || "ไม่สามารถโหลดข้อมูล Dashboard ได้"
+          result.message ||
+            "ไม่สามารถโหลดข้อมูล Dashboard ได้"
         );
       }
 
       setDashboard({
-        totalSales: Number(result.data?.totalSales || 0),
-        billCount: Number(result.data?.billCount || 0),
+        totalSales: Number(
+          result.data?.totalSales || 0
+        ),
+
+        billCount: Number(
+          result.data?.billCount || 0
+        ),
+
         lowStockProducts: Number(
           result.data?.lowStockProducts || 0
         ),
+
+        recentBills:
+          result.data?.recentBills || [],
       });
     } catch (err) {
       console.error("Dashboard Error:", err);
-      setError(err.message || "เกิดข้อผิดพลาด");
+      setError(
+        err.message || "เกิดข้อผิดพลาด"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // โหลดครั้งแรก + อัปเดตทุก 5 วินาที
   useEffect(() => {
     loadDashboard();
+
+    const interval = setInterval(() => {
+      loadDashboard();
+    }, 5000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   const formatMoney = (value) => {
-    return Number(value || 0).toLocaleString("th-TH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    return Number(value || 0).toLocaleString(
+      "th-TH",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    );
+  };
+
+  const formatTime = (date) => {
+    if (!date) {
+      return "-";
+    }
+
+    return new Date(date).toLocaleTimeString(
+      "th-TH",
+      {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }
+    );
+  };
+
+  const getPaymentName = (method) => {
+    if (method === "cash") {
+      return "เงินสด";
+    }
+
+    if (method === "qr") {
+      return "QR Payment";
+    }
+
+    if (method === "card") {
+      return "บัตร";
+    }
+
+    return method || "-";
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800">
-          Dashboard
-        </h1>
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
 
-        <p className="text-slate-500 mt-1">
-          ภาพรวมระบบร้านค้าประจำวัน
-        </p>
+      {/* HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+
+        <div>
+          <h1 className="text-3xl font-bold text-slate-800">
+            Dashboard
+          </h1>
+
+          <p className="text-slate-500 mt-1">
+            ภาพรวมระบบร้านค้าประจำวัน
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2 text-sm text-green-600">
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+            อัปเดตอัตโนมัติ
+          </div>
+
+          <button
+            onClick={loadDashboard}
+            disabled={loading}
+            className="px-5 py-2.5 rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition disabled:opacity-50"
+          >
+            {loading
+              ? "กำลังโหลด..."
+              : "↻ รีเฟรช"}
+          </button>
+
+        </div>
+
       </div>
 
+      {/* ERROR */}
       {error && (
         <div className="mb-6 rounded-xl bg-red-50 border border-red-200 p-4 text-red-600">
-          {error}
+
+          <div className="font-semibold">
+            เกิดข้อผิดพลาด
+          </div>
+
+          <div className="text-sm mt-1">
+            {error}
+          </div>
+
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+      {/* SUMMARY */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
-        {/* ยอดขาย */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <p className="text-slate-500">
-            ยอดขายวันนี้
+        {/* SALES */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+
+          <div className="flex items-start justify-between">
+
+            <div>
+              <p className="text-slate-500 text-sm">
+                ยอดขายวันนี้
+              </p>
+
+              <h2 className="text-3xl font-bold text-slate-800 mt-2">
+                ฿
+                {loading
+                  ? "..."
+                  : formatMoney(
+                      dashboard.totalSales
+                    )}
+              </h2>
+            </div>
+
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-2xl">
+              💰
+            </div>
+
+          </div>
+
+          <p className="text-green-500 text-sm mt-4">
+            ● ข้อมูลจากฐานข้อมูลจริง
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
-            ฿
-            {loading
-              ? "..."
-              : formatMoney(dashboard.totalSales)}
-          </h2>
-
-          <p className="text-slate-400 text-sm mt-2">
-            ยอดขายจากรายการขายจริง
-          </p>
         </div>
 
-        {/* จำนวนบิล */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <p className="text-slate-500">
-            จำนวนบิล
+        {/* BILLS */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+
+          <div className="flex items-start justify-between">
+
+            <div>
+              <p className="text-slate-500 text-sm">
+                จำนวนบิลวันนี้
+              </p>
+
+              <h2 className="text-3xl font-bold text-slate-800 mt-2">
+                {loading
+                  ? "..."
+                  : dashboard.billCount.toLocaleString(
+                      "th-TH"
+                    )}
+              </h2>
+            </div>
+
+            <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl">
+              🧾
+            </div>
+
+          </div>
+
+          <p className="text-green-500 text-sm mt-4">
+            ● จำนวนบิลจริงจาก PostgreSQL
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
-            {loading
-              ? "..."
-              : dashboard.billCount.toLocaleString("th-TH")}
-          </h2>
-
-          <p className="text-slate-400 text-sm mt-2">
-            จำนวนรายการขายวันนี้
-          </p>
         </div>
 
-        {/* กำไร */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <p className="text-slate-500">
-            กำไรวันนี้
+        {/* PROFIT */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+
+          <div className="flex items-start justify-between">
+
+            <div>
+              <p className="text-slate-500 text-sm">
+                กำไรวันนี้
+              </p>
+
+              <h2 className="text-3xl font-bold text-green-600 mt-2">
+                -
+              </h2>
+            </div>
+
+            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl">
+              📈
+            </div>
+
+          </div>
+
+          <p className="text-slate-400 text-sm mt-4">
+            รอข้อมูลต้นทุนสินค้า
           </p>
 
-          <h2 className="text-3xl font-bold mt-2 text-green-600">
-            -
-          </h2>
-
-          <p className="text-slate-400 text-sm mt-2">
-            ยังไม่มีข้อมูลต้นทุนสินค้า
-          </p>
         </div>
 
-        {/* สินค้าใกล้หมด */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <p className="text-slate-500">
-            สินค้าใกล้หมด
+        {/* LOW STOCK */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+
+          <div className="flex items-start justify-between">
+
+            <div>
+              <p className="text-slate-500 text-sm">
+                สินค้าใกล้หมด
+              </p>
+
+              <h2 className="text-3xl font-bold text-red-500 mt-2">
+                {loading
+                  ? "..."
+                  : dashboard.lowStockProducts.toLocaleString(
+                      "th-TH"
+                    )}
+              </h2>
+            </div>
+
+            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-2xl">
+              📦
+            </div>
+
+          </div>
+
+          <p className="text-red-400 text-sm mt-4">
+            Stock ≤ 10
           </p>
 
-          <h2 className="text-3xl font-bold mt-2 text-red-500">
-            {loading
-              ? "..."
-              : dashboard.lowStockProducts.toLocaleString("th-TH")}
-          </h2>
-
-          <p className="text-red-500 text-sm mt-2">
-            สินค้าที่มี Stock ≤ 10
-          </p>
         </div>
 
       </div>
 
-      <div className="mt-6">
-        <button
-          onClick={loadDashboard}
-          disabled={loading}
-          className="px-4 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50"
-        >
-          {loading
-            ? "กำลังโหลด..."
-            : "รีเฟรชข้อมูล"}
-        </button>
+      {/* SALES + PAYMENT */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+
+        {/* SALES */}
+        <div className="xl:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+
+          <div className="flex items-center justify-between mb-6">
+
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">
+                ยอดขายวันนี้
+              </h2>
+
+              <p className="text-sm text-slate-400 mt-1">
+                ข้อมูลจากรายการขายจริง
+              </p>
+            </div>
+
+            <span className="px-3 py-1 rounded-lg bg-green-50 text-green-600 text-sm">
+              Real-time
+            </span>
+
+          </div>
+
+          <div className="h-56 flex items-center justify-center">
+
+            <div className="text-center">
+
+              <p className="text-sm text-slate-400">
+                ยอดขายรวมวันนี้
+              </p>
+
+              <p className="text-5xl font-bold text-slate-800 mt-3">
+                ฿
+                {loading
+                  ? "..."
+                  : formatMoney(
+                      dashboard.totalSales
+                    )}
+              </p>
+
+              <p className="text-slate-400 mt-4">
+                {dashboard.billCount.toLocaleString(
+                  "th-TH"
+                )} บิล
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* PAYMENT */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+
+          <h2 className="text-xl font-bold text-slate-800">
+            ช่องทางการชำระเงิน
+          </h2>
+
+          <p className="text-sm text-slate-400 mt-1">
+            รายการขายวันนี้
+          </p>
+
+          <div className="space-y-4 mt-7">
+
+            <div className="flex justify-between items-center p-4 rounded-xl bg-slate-50">
+              <span className="text-slate-600">
+                💵 เงินสด
+              </span>
+
+              <span className="font-semibold">
+                {dashboard.recentBills.filter(
+                  (bill) =>
+                    bill.paymentMethod === "cash"
+                ).length}{" "}
+                รายการ
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center p-4 rounded-xl bg-slate-50">
+              <span className="text-slate-600">
+                📱 QR Payment
+              </span>
+
+              <span className="font-semibold">
+                {dashboard.recentBills.filter(
+                  (bill) =>
+                    bill.paymentMethod === "qr"
+                ).length}{" "}
+                รายการ
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center p-4 rounded-xl bg-slate-50">
+              <span className="text-slate-600">
+                💳 บัตร
+              </span>
+
+              <span className="font-semibold">
+                {dashboard.recentBills.filter(
+                  (bill) =>
+                    bill.paymentMethod === "card"
+                ).length}{" "}
+                รายการ
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
+
+      {/* RECENT BILLS */}
+      <div className="mt-6 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+
+        <div className="p-6 flex items-center justify-between">
+
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">
+              🧾 บิลล่าสุด
+            </h2>
+
+            <p className="text-sm text-slate-400 mt-1">
+              อัปเดตอัตโนมัติทุก 5 วินาที
+            </p>
+          </div>
+
+          <span className="px-3 py-1 rounded-lg bg-green-50 text-green-600 text-sm">
+            ● Live
+          </span>
+
+        </div>
+
+        {dashboard.recentBills.length === 0 ? (
+
+          <div className="p-10 text-center">
+
+            <div className="text-4xl">
+              🧾
+            </div>
+
+            <p className="font-semibold text-slate-600 mt-3">
+              ยังไม่มีบิลวันนี้
+            </p>
+
+            <p className="text-sm text-slate-400 mt-1">
+              เมื่อมีการขาย บิลจะแสดงที่นี่ทันที
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="overflow-x-auto">
+
+            <table className="w-full">
+
+              <thead>
+                <tr className="border-t border-b border-slate-100 bg-slate-50">
+
+                  <th className="text-left p-4 text-sm font-semibold text-slate-500">
+                    เลขที่บิล
+                  </th>
+
+                  <th className="text-left p-4 text-sm font-semibold text-slate-500">
+                    เวลา
+                  </th>
+
+                  <th className="text-left p-4 text-sm font-semibold text-slate-500">
+                    ช่องทาง
+                  </th>
+
+                  <th className="text-right p-4 text-sm font-semibold text-slate-500">
+                    ยอดรวม
+                  </th>
+
+                  <th className="text-center p-4 text-sm font-semibold text-slate-500">
+                    สถานะ
+                  </th>
+
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {dashboard.recentBills.map(
+                  (bill) => (
+
+                    <tr
+                      key={bill.id}
+                      className="border-b border-slate-100 hover:bg-slate-50"
+                    >
+
+                      <td className="p-4">
+
+                        <span className="font-semibold text-slate-700">
+                          {bill.id}
+                        </span>
+
+                      </td>
+
+                      <td className="p-4 text-slate-500">
+                        {formatTime(
+                          bill.createdAt
+                        )}
+                      </td>
+
+                      <td className="p-4">
+
+                        <span className="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-sm">
+                          {getPaymentName(
+                            bill.paymentMethod
+                          )}
+                        </span>
+
+                      </td>
+
+                      <td className="p-4 text-right">
+
+                        <span className="font-bold text-slate-800">
+                          ฿
+                          {formatMoney(
+                            bill.totalAmount
+                          )}
+                        </span>
+
+                      </td>
+
+                      <td className="p-4 text-center">
+
+                        <span className="px-3 py-1 rounded-lg bg-green-50 text-green-600 text-sm">
+                          สำเร็จ
+                        </span>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        )}
+
+      </div>
+
     </div>
   );
 }
