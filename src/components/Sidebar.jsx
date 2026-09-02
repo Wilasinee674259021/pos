@@ -19,8 +19,7 @@ export default function Sidebar({
   onLogout,
 }) {
   // =========================
-  // ROLE MAP
-  // รองรับทั้งภาษาไทยและภาษาอังกฤษ
+  // แปลง Role ให้เป็นมาตรฐาน
   // =========================
 
   const roleMap = {
@@ -37,7 +36,7 @@ export default function Sidebar({
     roleMap[String(currentUser?.role || "").trim()] || "";
 
   // =========================
-  // MENU
+  // รายการเมนู
   // =========================
 
   const menus = [
@@ -93,17 +92,24 @@ export default function Sidebar({
     },
   ];
 
+  // =========================
+  // กรองเมนูตามสิทธิ์
+  // =========================
+
   const visibleMenus = menus.filter((menu) =>
     menu.roles.includes(userRole)
   );
 
   // =========================
-  // LOGO
+  // SIDEBAR
   // =========================
 
   return (
-    <aside className="w-64 min-h-screen bg-slate-900 text-white flex flex-col">
-      {/* HEADER */}
+    <aside className="w-64 min-h-screen bg-slate-900 text-white flex flex-col shrink-0">
+      
+      {/* =========================
+          LOGO
+      ========================= */}
 
       <div className="px-6 py-5 border-b border-slate-700">
         <h1 className="text-xl font-bold">
@@ -115,7 +121,9 @@ export default function Sidebar({
         </p>
       </div>
 
-      {/* USER */}
+      {/* =========================
+          USER
+      ========================= */}
 
       <div className="px-5 py-4 border-b border-slate-700">
         <p className="font-semibold truncate">
@@ -127,10 +135,13 @@ export default function Sidebar({
         </p>
       </div>
 
-      {/* MENU */}
+      {/* =========================
+          MENU
+      ========================= */}
 
       <nav className="flex-1 p-3 overflow-y-auto">
         <div className="space-y-1">
+
           {visibleMenus.map((menu) => {
             const Icon = menu.icon;
             const active = currentPage === menu.name;
@@ -139,12 +150,25 @@ export default function Sidebar({
               <button
                 key={menu.name}
                 type="button"
-                onClick={() => setCurrentPage(menu.name)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition ${
-                  active
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
+                onClick={() => {
+                  setCurrentPage(menu.name);
+                }}
+                className={`
+                  w-full
+                  flex
+                  items-center
+                  gap-3
+                  px-4
+                  py-3
+                  rounded-lg
+                  text-left
+                  transition
+                  ${
+                    active
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                  }
+                `}
               >
                 <Icon size={20} />
 
@@ -154,16 +178,38 @@ export default function Sidebar({
               </button>
             );
           })}
+
+          {/* กรณีไม่มีสิทธิ์ */}
+          {visibleMenus.length === 0 && (
+            <div className="px-4 py-3 text-sm text-slate-500">
+              ไม่พบเมนูสำหรับสิทธิ์นี้
+            </div>
+          )}
+
         </div>
       </nav>
 
-      {/* LOGOUT */}
+      {/* =========================
+          LOGOUT
+      ========================= */}
 
       <div className="p-3 border-t border-slate-700">
         <button
           type="button"
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition"
+          className="
+            w-full
+            flex
+            items-center
+            gap-3
+            px-4
+            py-3
+            rounded-lg
+            text-red-400
+            hover:bg-red-500/10
+            hover:text-red-300
+            transition
+          "
         >
           <LogOut size={20} />
 
@@ -172,6 +218,7 @@ export default function Sidebar({
           </span>
         </button>
       </div>
+
     </aside>
   );
 }
