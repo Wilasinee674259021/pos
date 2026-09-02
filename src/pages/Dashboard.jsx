@@ -19,7 +19,7 @@ export default function Dashboard() {
       setError("");
 
       const response = await fetch(
-        API_URL + "/api/sales/dashboard"
+        `${API_URL}/api/sales/dashboard`
       );
 
       if (!response.ok) {
@@ -37,24 +37,65 @@ export default function Dashboard() {
         );
       }
 
-      setDashboard({
-        totalSales: Number(
-          result.data?.totalSales || 0
-        ),
+      const data = result.data || {};
 
-        billCount: Number(
-          result.data?.billCount || 0
-        ),
+      // =====================================================
+      // รวมบิลที่ซ้ำกัน
+      // =====================================================
+      const bills = Array.isArray(data.recentBills)
+        ? data.recentBills
+        : [];
+
+      const billMap = new Map();
+
+      bills.forEach((bill) => {
+        const billId =
+          bill.id ||
+          bill.billNumber ||
+          bill.receiptNumber ||
+          bill.saleId;
+
+        if (!billId) return;
+
+        const key = String(billId);
+
+        if (!billMap.has(key)) {
+          billMap.set(key, {
+            ...bill,
+            id: billId,
+          });
+        }
+      });
+
+      const uniqueBills = Array.from(
+        billMap.values()
+      );
+
+      // =====================================================
+      // จำนวนบิล
+      // ถ้า API ส่ง billCount มา ให้ใช้ค่าจาก PostgreSQL
+      // ถ้าไม่มี ให้ใช้จำนวนบิลที่กรองซ้ำแล้ว
+      // =====================================================
+      const billCount =
+        data.billCount !== undefined &&
+        data.billCount !== null
+          ? Number(data.billCount)
+          : uniqueBills.length;
+
+      setDashboard({
+        totalSales: Number(data.totalSales || 0),
+
+        billCount,
 
         lowStockProducts: Number(
-          result.data?.lowStockProducts || 0
+          data.lowStockProducts || 0
         ),
 
-        recentBills:
-          result.data?.recentBills || [],
+        recentBills: uniqueBills,
       });
     } catch (err) {
       console.error("Dashboard Error:", err);
+
       setError(
         err.message || "เกิดข้อผิดพลาด"
       );
@@ -71,9 +112,7 @@ export default function Dashboard() {
       loadDashboard();
     }, 5000);
 
-    return () => {
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, []);
 
   const formatMoney = (value) => {
@@ -87,11 +126,15 @@ export default function Dashboard() {
   };
 
   const formatTime = (date) => {
-    if (!date) {
+    if (!date) return "-";
+
+    const d = new Date(date);
+
+    if (Number.isNaN(d.getTime())) {
       return "-";
     }
 
-    return new Date(date).toLocaleTimeString(
+    return d.toLocaleTimeString(
       "th-TH",
       {
         hour: "2-digit",
@@ -116,6 +159,24 @@ export default function Dashboard() {
 
     return method || "-";
   };
+
+  // =====================================================
+  // นับช่องทางการชำระเงินจาก "บิลที่ไม่ซ้ำ"
+  // =====================================================
+  const cashBills =
+    dashboard.recentBills.filter(
+      (bill) => bill.paymentMethod === "cash"
+    ).length;
+
+  const qrBills =
+    dashboard.recentBills.filter(
+      (bill) => bill.paymentMethod === "qr"
+    ).length;
+
+  const cardBills =
+    dashboard.recentBills.filter(
+      (bill) => bill.paymentMethod === "card"
+    ).length;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 md:p-8">
@@ -339,7 +400,8 @@ export default function Dashboard() {
               <p className="text-slate-400 mt-4">
                 {dashboard.billCount.toLocaleString(
                   "th-TH"
-                )} บิล
+                )}{" "}
+                บิล
               </p>
 
             </div>
@@ -356,51 +418,48 @@ export default function Dashboard() {
           </h2>
 
           <p className="text-sm text-slate-400 mt-1">
-            รายการขายวันนี้
+            จำนวนบิลวันนี้
           </p>
 
           <div className="space-y-4 mt-7">
 
+            {/* CASH */}
             <div className="flex justify-between items-center p-4 rounded-xl bg-slate-50">
+
               <span className="text-slate-600">
                 💵 เงินสด
               </span>
 
               <span className="font-semibold">
-                {dashboard.recentBills.filter(
-                  (bill) =>
-                    bill.paymentMethod === "cash"
-                ).length}{" "}
-                รายการ
+                {cashBills} บิล
               </span>
+
             </div>
 
+            {/* QR */}
             <div className="flex justify-between items-center p-4 rounded-xl bg-slate-50">
+
               <span className="text-slate-600">
                 📱 QR Payment
               </span>
 
               <span className="font-semibold">
-                {dashboard.recentBills.filter(
-                  (bill) =>
-                    bill.paymentMethod === "qr"
-                ).length}{" "}
-                รายการ
+                {qrBills} บิล
               </span>
+
             </div>
 
+            {/* CARD */}
             <div className="flex justify-between items-center p-4 rounded-xl bg-slate-50">
+
               <span className="text-slate-600">
                 💳 บัตร
               </span>
 
               <span className="font-semibold">
-                {dashboard.recentBills.filter(
-                  (bill) =>
-                    bill.paymentMethod === "card"
-                ).length}{" "}
-                รายการ
+                {cardBills} บิล
               </span>
+
             </div>
 
           </div>
@@ -420,7 +479,7 @@ export default function Dashboard() {
             </h2>
 
             <p className="text-sm text-slate-400 mt-1">
-              อัปเดตอัตโนมัติทุก 5 วินาที
+              แสดงบิลไม่ซ้ำกัน
             </p>
           </div>
 
@@ -486,24 +545,25 @@ export default function Dashboard() {
                   (bill) => (
 
                     <tr
-                      key={bill.id}
-                      className="border-b border-slate-100 hover:bg-slate-50"
+                      key={String(bill.id)}
+                      className="border-b border-slate-100 hover:bg-slate-50 transition"
                     >
 
+                      {/* BILL */}
                       <td className="p-4">
-
                         <span className="font-semibold text-slate-700">
                           {bill.id}
                         </span>
-
                       </td>
 
+                      {/* TIME */}
                       <td className="p-4 text-slate-500">
                         {formatTime(
                           bill.createdAt
                         )}
                       </td>
 
+                      {/* PAYMENT */}
                       <td className="p-4">
 
                         <span className="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 text-sm">
@@ -514,6 +574,7 @@ export default function Dashboard() {
 
                       </td>
 
+                      {/* TOTAL */}
                       <td className="p-4 text-right">
 
                         <span className="font-bold text-slate-800">
@@ -525,6 +586,7 @@ export default function Dashboard() {
 
                       </td>
 
+                      {/* STATUS */}
                       <td className="p-4 text-center">
 
                         <span className="px-3 py-1 rounded-lg bg-green-50 text-green-600 text-sm">
