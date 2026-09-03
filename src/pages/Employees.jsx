@@ -30,14 +30,9 @@ export default function Employees() {
     const saved =
       localStorage.getItem("pos_employees");
 
-    try {
-      return saved
-        ? JSON.parse(saved)
-        : defaultEmployees;
-    } catch {
-      localStorage.removeItem("pos_employees");
-      return defaultEmployees;
-    }
+    return saved
+      ? JSON.parse(saved)
+      : defaultEmployees;
   });
 
   const [branches, setBranches] = useState([]);
@@ -78,13 +73,17 @@ export default function Employees() {
     const savedBranches =
       localStorage.getItem("pos_branches");
 
-    if (!savedBranches) return;
-
-    try {
-      setBranches(JSON.parse(savedBranches));
-    } catch {
-      localStorage.removeItem("pos_branches");
-      setBranches([]);
+    if (savedBranches) {
+      try {
+        setBranches(
+          JSON.parse(savedBranches)
+        );
+      } catch {
+        localStorage.removeItem(
+          "pos_branches"
+        );
+        setBranches([]);
+      }
     }
   }, []);
 
@@ -159,9 +158,7 @@ export default function Employees() {
       !form.branch ||
       !form.role
     ) {
-      alert(
-        "กรุณากรอกข้อมูลให้ครบ"
-      );
+      alert("กรุณากรอกข้อมูลให้ครบ");
       return;
     }
 
@@ -178,9 +175,7 @@ export default function Employees() {
       );
 
     if (duplicateCode) {
-      alert(
-        "รหัสพนักงานนี้มีอยู่แล้ว"
-      );
+      alert("รหัสพนักงานนี้มีอยู่แล้ว");
       return;
     }
 
@@ -197,9 +192,7 @@ export default function Employees() {
       );
 
     if (duplicateUsername) {
-      alert(
-        "Username นี้มีอยู่แล้ว"
-      );
+      alert("Username นี้มีอยู่แล้ว");
       return;
     }
 
@@ -231,9 +224,7 @@ export default function Employees() {
         newEmployee,
       ]);
 
-      alert(
-        "เพิ่มพนักงานเรียบร้อย"
-      );
+      alert("เพิ่มพนักงานเรียบร้อย");
     }
 
     setShowForm(false);
@@ -301,10 +292,12 @@ export default function Employees() {
   const filteredEmployees =
     employees.filter((employee) => {
       const keyword =
-        String(search || "").toLowerCase();
+        search.toLowerCase();
 
       return (
-        String(employee.employeeCode || "")
+        String(
+          employee.employeeCode || ""
+        )
           .toLowerCase()
           .includes(keyword) ||
         String(employee.name || "")
@@ -326,46 +319,56 @@ export default function Employees() {
   const activeEmployees =
     employees.filter(
       (employee) =>
-        String(employee.status || "") ===
+        employee.status ===
         "เปิดใช้งาน"
     ).length;
 
   const inactiveEmployees =
     employees.filter(
       (employee) =>
-        String(employee.status || "") ===
+        employee.status ===
         "ปิดใช้งาน"
     ).length;
 
   const adminEmployees =
     employees.filter(
       (employee) =>
-        String(employee.role || "") ===
+        employee.role ===
         "ผู้ดูแลระบบ"
     ).length;
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
 
       {/* HEADER */}
 
-      <div className="flex justify-between items-center mb-7">
+      <div className="mb-5 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
-
-          <h1 className="text-3xl font-bold text-slate-800">
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">
             👨‍💼 จัดการพนักงาน
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="mt-1 text-sm text-slate-500">
             จัดการบัญชีพนักงาน ตำแหน่ง และสิทธิ์การใช้งาน
           </p>
-
         </div>
 
         <button
           onClick={openAddForm}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700"
+          className="
+            w-full
+            rounded-lg
+            bg-blue-600
+            px-4
+            py-2
+            text-sm
+            font-medium
+            text-white
+            transition
+            hover:bg-blue-700
+            sm:w-auto
+          "
         >
           ＋ เพิ่มพนักงาน
         </button>
@@ -374,61 +377,53 @@ export default function Employees() {
 
       {/* SUMMARY */}
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-
-          <p className="text-slate-500">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">
             พนักงานทั้งหมด
           </p>
 
-          <p className="text-3xl font-bold mt-2">
+          <p className="mt-1 text-2xl font-bold text-slate-800 sm:text-3xl">
             {employees.length}
           </p>
-
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-
-          <p className="text-slate-500">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">
             เปิดใช้งาน
           </p>
 
-          <p className="text-3xl font-bold text-green-600 mt-2">
+          <p className="mt-1 text-2xl font-bold text-green-600 sm:text-3xl">
             {activeEmployees}
           </p>
-
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-
-          <p className="text-slate-500">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">
             ปิดใช้งาน
           </p>
 
-          <p className="text-3xl font-bold text-red-500 mt-2">
+          <p className="mt-1 text-2xl font-bold text-red-500 sm:text-3xl">
             {inactiveEmployees}
           </p>
-
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-
-          <p className="text-slate-500">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-xs text-slate-500 sm:text-sm">
             ผู้ดูแลระบบ
           </p>
 
-          <p className="text-3xl font-bold text-purple-600 mt-2">
+          <p className="mt-1 text-2xl font-bold text-purple-600 sm:text-3xl">
             {adminEmployees}
           </p>
-
         </div>
 
       </div>
 
       {/* SEARCH */}
 
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-6">
+      <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
 
         <input
           value={search}
@@ -436,189 +431,249 @@ export default function Employees() {
             setSearch(e.target.value)
           }
           placeholder="🔍 ค้นหารหัสพนักงาน / ชื่อ / Username / ตำแหน่ง"
-          className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+          className="
+            h-10
+            w-full
+            rounded-lg
+            border
+            border-slate-300
+            px-3
+            text-sm
+            outline-none
+            transition
+            focus:border-blue-500
+            focus:ring-2
+            focus:ring-blue-500/20
+          "
         />
 
       </div>
 
       {/* TABLE */}
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
 
-        <table className="w-full">
+        <div className="overflow-x-auto">
 
-          <thead className="bg-slate-100">
+          <table className="w-full min-w-[900px]">
 
-            <tr>
+            <thead className="bg-slate-100">
 
-              <th className="text-left p-4">
-                รหัส
-              </th>
+              <tr>
 
-              <th className="text-left p-4">
-                พนักงาน
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  รหัส
+                </th>
 
-              <th className="text-left p-4">
-                Username
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  พนักงาน
+                </th>
 
-              <th className="text-left p-4">
-                ตำแหน่ง
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  Username
+                </th>
 
-              <th className="text-left p-4">
-                สาขา
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  ตำแหน่ง
+                </th>
 
-              <th className="text-center p-4">
-                สิทธิ์
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  สาขา
+                </th>
 
-              <th className="text-center p-4">
-                สถานะ
-              </th>
+                <th className="p-3 text-center text-sm font-semibold text-slate-700">
+                  สิทธิ์
+                </th>
 
-              <th className="text-center p-4">
-                จัดการ
-              </th>
+                <th className="p-3 text-center text-sm font-semibold text-slate-700">
+                  สถานะ
+                </th>
 
-            </tr>
+                <th className="p-3 text-center text-sm font-semibold text-slate-700">
+                  จัดการ
+                </th>
 
-          </thead>
+              </tr>
 
-          <tbody>
+            </thead>
 
-            {filteredEmployees.map(
-              (employee) => (
+            <tbody>
 
-                <tr
-                  key={employee.id}
-                  className="border-t hover:bg-slate-50"
-                >
+              {filteredEmployees.map(
+                (employee) => (
 
-                  <td className="p-4 font-bold">
-                    {employee.employeeCode}
-                  </td>
+                  <tr
+                    key={employee.id}
+                    className="border-t border-slate-100 transition hover:bg-slate-50"
+                  >
 
-                  <td className="p-4">
-                    <div className="font-bold">
-                      {employee.name}
-                    </div>
-                  </td>
+                    <td className="p-3 text-sm font-bold text-slate-800">
+                      {employee.employeeCode}
+                    </td>
 
-                  <td className="p-4">
-                    {employee.username}
-                  </td>
+                    <td className="p-3 text-sm">
+                      <div className="font-semibold text-slate-800">
+                        {employee.name}
+                      </div>
+                    </td>
 
-                  <td className="p-4">
-                    {employee.position}
-                  </td>
+                    <td className="p-3 text-sm text-slate-600">
+                      {employee.username}
+                    </td>
 
-                  <td className="p-4">
-                    {employee.branch}
-                  </td>
+                    <td className="p-3 text-sm text-slate-600">
+                      {employee.position}
+                    </td>
 
-                  <td className="p-4 text-center">
+                    <td className="p-3 text-sm text-slate-600">
+                      {employee.branch}
+                    </td>
 
-                    <span
-                      className={
-                        employee.role ===
-                        "ผู้ดูแลระบบ"
-                          ? "bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm"
-                          : "bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm"
-                      }
-                    >
-                      {employee.role}
-                    </span>
+                    <td className="p-3 text-center">
 
-                  </td>
-
-                  <td className="p-4 text-center">
-
-                    <button
-                      onClick={() =>
-                        toggleStatus(
-                          employee.id
-                        )
-                      }
-                      className={
-                        employee.status ===
-                        "เปิดใช้งาน"
-                          ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
-                          : "bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm"
-                      }
-                    >
-                      {employee.status}
-                    </button>
-
-                  </td>
-
-                  <td className="p-4">
-
-                    <div className="flex justify-center gap-2">
-
-                      <button
-                        onClick={() =>
-                          openEditForm(
-                            employee
-                          )
-                        }
-                        className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg"
+                      <span
+                        className={`
+                          inline-flex
+                          rounded-full
+                          px-2.5
+                          py-1
+                          text-xs
+                          font-medium
+                          ${
+                            employee.role ===
+                            "ผู้ดูแลระบบ"
+                              ? "bg-purple-100 text-purple-700"
+                              : "bg-blue-100 text-blue-700"
+                          }
+                        `}
                       >
-                        ✏️
-                      </button>
+                        {employee.role}
+                      </span>
+
+                    </td>
+
+                    <td className="p-3 text-center">
 
                       <button
                         onClick={() =>
-                          deleteEmployee(
+                          toggleStatus(
                             employee.id
                           )
                         }
-                        className="bg-red-100 text-red-600 px-3 py-2 rounded-lg"
+                        className={`
+                          rounded-full
+                          px-2.5
+                          py-1
+                          text-xs
+                          font-medium
+                          transition
+                          ${
+                            employee.status ===
+                            "เปิดใช้งาน"
+                              ? "bg-green-100 text-green-700 hover:bg-green-200"
+                              : "bg-red-100 text-red-700 hover:bg-red-200"
+                          }
+                        `}
                       >
-                        🗑️
+                        {employee.status}
                       </button>
 
-                    </div>
+                    </td>
 
-                  </td>
+                    {/* ACTIONS */}
 
-                </tr>
+                    <td className="p-3">
 
-              )
-            )}
+                      <div className="flex items-center justify-center gap-1.5">
 
-          </tbody>
+                        {/* EDIT */}
+                        <button
+                          onClick={() =>
+                            openEditForm(
+                              employee
+                            )
+                          }
+                          title="แก้ไข"
+                          className="
+                            flex
+                            h-8
+                            w-8
+                            items-center
+                            justify-center
+                            rounded-md
+                            bg-blue-50
+                            text-sm
+                            text-blue-600
+                            transition
+                            hover:bg-blue-100
+                            active:scale-95
+                          "
+                        >
+                          ✏️
+                        </button>
 
-        </table>
+                        {/* DELETE */}
+                        <button
+                          onClick={() =>
+                            deleteEmployee(
+                              employee.id
+                            )
+                          }
+                          title="ลบ"
+                          className="
+                            flex
+                            h-8
+                            w-8
+                            items-center
+                            justify-center
+                            rounded-md
+                            bg-red-50
+                            text-sm
+                            text-red-600
+                            transition
+                            hover:bg-red-100
+                            active:scale-95
+                          "
+                        >
+                          🗑️
+                        </button>
 
-        {filteredEmployees.length ===
-          0 && (
+                      </div>
 
-          <div className="text-center py-12 text-slate-400">
+                    </td>
+
+                  </tr>
+
+                )
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        {filteredEmployees.length === 0 && (
+          <div className="py-12 text-center text-sm text-slate-400">
             ไม่พบพนักงาน
           </div>
-
         )}
 
       </div>
 
-      {/* =========================
-          FORM MODAL
-      ========================= */}
+      {/* FORM MODAL */}
 
       {showForm && (
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-          <div className="bg-white rounded-2xl w-[650px] max-h-[90vh] overflow-y-auto p-7 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-[650px] overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-7">
 
             {/* TITLE */}
 
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-5 flex items-center justify-between">
 
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">
                 {editingEmployee
                   ? "✏️ แก้ไขพนักงาน"
                   : "➕ เพิ่มพนักงาน"}
@@ -628,20 +683,29 @@ export default function Employees() {
                 onClick={() =>
                   setShowForm(false)
                 }
-                className="text-xl text-slate-500"
+                className="
+                  flex
+                  h-8
+                  w-8
+                  items-center
+                  justify-center
+                  rounded-md
+                  text-lg
+                  text-slate-500
+                  hover:bg-slate-100
+                "
               >
                 ✕
               </button>
 
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
               {/* EMPLOYEE CODE */}
 
               <div>
-
-                <label className="block mb-2 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   รหัสพนักงาน
                 </label>
 
@@ -652,16 +716,26 @@ export default function Employees() {
                   }
                   onChange={handleChange}
                   placeholder="เช่น EMP003"
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 />
-
               </div>
 
               {/* NAME */}
 
               <div>
-
-                <label className="block mb-2 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   ชื่อ-นามสกุล
                 </label>
 
@@ -670,16 +744,26 @@ export default function Employees() {
                   value={form.name}
                   onChange={handleChange}
                   placeholder="ชื่อพนักงาน"
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 />
-
               </div>
 
               {/* USERNAME */}
 
               <div>
-
-                <label className="block mb-2 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   Username
                 </label>
 
@@ -688,16 +772,26 @@ export default function Employees() {
                   value={form.username}
                   onChange={handleChange}
                   placeholder="Username สำหรับเข้าสู่ระบบ"
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 />
-
               </div>
 
               {/* PASSWORD */}
 
               <div>
-
-                <label className="block mb-2 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   Password
                 </label>
 
@@ -713,7 +807,20 @@ export default function Employees() {
                     value={form.password}
                     onChange={handleChange}
                     placeholder="รหัสผ่าน"
-                    className="w-full border rounded-lg p-3 pr-12"
+                    className="
+                      h-10
+                      w-full
+                      rounded-lg
+                      border
+                      border-slate-300
+                      px-3
+                      pr-11
+                      text-sm
+                      outline-none
+                      focus:border-blue-500
+                      focus:ring-2
+                      focus:ring-blue-500/20
+                    "
                   />
 
                   <button
@@ -723,7 +830,20 @@ export default function Employees() {
                         !showPassword
                       )
                     }
-                    className="absolute right-3 top-3"
+                    className="
+                      absolute
+                      right-2
+                      top-1/2
+                      flex
+                      h-7
+                      w-7
+                      -translate-y-1/2
+                      items-center
+                      justify-center
+                      rounded-md
+                      text-sm
+                      hover:bg-slate-100
+                    "
                   >
                     {showPassword
                       ? "🙈"
@@ -731,14 +851,12 @@ export default function Employees() {
                   </button>
 
                 </div>
-
               </div>
 
               {/* POSITION */}
 
               <div>
-
-                <label className="block mb-2 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   ตำแหน่ง
                 </label>
 
@@ -746,9 +864,20 @@ export default function Employees() {
                   name="position"
                   value={form.position}
                   onChange={handleChange}
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 >
-
                   <option>
                     พนักงานขาย
                   </option>
@@ -768,16 +897,13 @@ export default function Employees() {
                   <option>
                     ผู้ดูแลระบบ
                   </option>
-
                 </select>
-
               </div>
 
               {/* BRANCH */}
 
               <div>
-
-                <label className="block mb-2 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   สาขา
                 </label>
 
@@ -785,11 +911,21 @@ export default function Employees() {
                   name="branch"
                   value={form.branch}
                   onChange={handleChange}
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 >
-
-                  {branches.length >
-                  0 ? (
+                  {branches.length > 0 ? (
                     branches.map(
                       (branch) => (
                         <option
@@ -805,16 +941,14 @@ export default function Employees() {
                       สาขาหลัก
                     </option>
                   )}
-
                 </select>
-
               </div>
 
               {/* ROLE */}
 
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
 
-                <label className="block mb-2 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   สิทธิ์การใช้งาน
                 </label>
 
@@ -822,9 +956,20 @@ export default function Employees() {
                   name="role"
                   value={form.role}
                   onChange={handleChange}
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 >
-
                   <option>
                     พนักงาน
                   </option>
@@ -836,7 +981,6 @@ export default function Employees() {
                   <option>
                     ผู้ดูแลระบบ
                   </option>
-
                 </select>
 
               </div>
@@ -845,9 +989,9 @@ export default function Employees() {
 
             {/* ROLE INFO */}
 
-            <div className="bg-blue-50 rounded-xl p-4 mt-5 text-sm text-blue-700">
+            <div className="mt-5 rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
 
-              <p className="font-bold mb-2">
+              <p className="mb-2 font-bold">
                 🔐 สิทธิ์การใช้งาน
               </p>
 
@@ -867,20 +1011,41 @@ export default function Employees() {
 
             {/* BUTTON */}
 
-            <div className="flex gap-3 mt-7">
+            <div className="mt-6 flex gap-2">
 
               <button
                 onClick={() =>
                   setShowForm(false)
                 }
-                className="flex-1 border rounded-lg py-3"
+                className="
+                  flex-1
+                  rounded-lg
+                  border
+                  border-slate-300
+                  py-2
+                  text-sm
+                  font-medium
+                  text-slate-600
+                  transition
+                  hover:bg-slate-50
+                "
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={saveEmployee}
-                className="flex-1 bg-blue-600 text-white rounded-lg py-3 font-bold"
+                className="
+                  flex-1
+                  rounded-lg
+                  bg-blue-600
+                  py-2
+                  text-sm
+                  font-medium
+                  text-white
+                  transition
+                  hover:bg-blue-700
+                "
               >
                 💾 บันทึก
               </button>

@@ -209,25 +209,37 @@ export default function Branches() {
     });
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
 
       {/* HEADER */}
 
-      <div className="flex justify-between items-center mb-7">
+      <div className="mb-5 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">
             🏪 จัดการสาขา
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="mt-1 text-sm text-slate-500">
             จัดการข้อมูลและสถานะของแต่ละสาขา
           </p>
         </div>
 
         <button
           onClick={openAddForm}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700"
+          className="
+            w-full
+            rounded-lg
+            bg-blue-600
+            px-4
+            py-2
+            text-sm
+            font-medium
+            text-white
+            transition
+            hover:bg-blue-700
+            sm:w-auto
+          "
         >
           ＋ เพิ่มสาขา
         </button>
@@ -236,27 +248,24 @@ export default function Branches() {
 
       {/* SUMMARY */}
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-
-          <p className="text-slate-500">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-sm text-slate-500">
             สาขาทั้งหมด
           </p>
 
-          <p className="text-3xl font-bold mt-2">
+          <p className="mt-1 text-2xl font-bold text-slate-800 sm:text-3xl">
             {branches.length}
           </p>
-
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-
-          <p className="text-slate-500">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-sm text-slate-500">
             เปิดใช้งาน
           </p>
 
-          <p className="text-3xl font-bold text-green-600 mt-2">
+          <p className="mt-1 text-2xl font-bold text-green-600 sm:text-3xl">
             {
               branches.filter(
                 (branch) =>
@@ -265,16 +274,14 @@ export default function Branches() {
               ).length
             }
           </p>
-
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-
-          <p className="text-slate-500">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <p className="text-sm text-slate-500">
             ปิดใช้งาน
           </p>
 
-          <p className="text-3xl font-bold text-red-500 mt-2">
+          <p className="mt-1 text-2xl font-bold text-red-500 sm:text-3xl">
             {
               branches.filter(
                 (branch) =>
@@ -283,14 +290,13 @@ export default function Branches() {
               ).length
             }
           </p>
-
         </div>
 
       </div>
 
       {/* SEARCH */}
 
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-6">
+      <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
 
         <input
           value={search}
@@ -298,136 +304,190 @@ export default function Branches() {
             setSearch(e.target.value)
           }
           placeholder="🔍 ค้นหารหัสสาขา / ชื่อสาขา / ที่อยู่"
-          className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+          className="
+            h-10
+            w-full
+            rounded-lg
+            border
+            border-slate-300
+            px-3
+            text-sm
+            outline-none
+            transition
+            focus:border-blue-500
+            focus:ring-2
+            focus:ring-blue-500/20
+          "
         />
 
       </div>
 
       {/* TABLE */}
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
 
-        <table className="w-full">
+        <div className="overflow-x-auto">
 
-          <thead className="bg-slate-100">
+          <table className="w-full min-w-[750px]">
 
-            <tr>
+            <thead className="bg-slate-100">
 
-              <th className="text-left p-4">
-                รหัส
-              </th>
+              <tr>
 
-              <th className="text-left p-4">
-                ชื่อสาขา
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  รหัส
+                </th>
 
-              <th className="text-left p-4">
-                ที่อยู่
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  ชื่อสาขา
+                </th>
 
-              <th className="text-left p-4">
-                เบอร์โทร
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  ที่อยู่
+                </th>
 
-              <th className="text-center p-4">
-                สถานะ
-              </th>
+                <th className="p-3 text-left text-sm font-semibold text-slate-700">
+                  เบอร์โทร
+                </th>
 
-              <th className="text-center p-4">
-                จัดการ
-              </th>
+                <th className="p-3 text-center text-sm font-semibold text-slate-700">
+                  สถานะ
+                </th>
 
-            </tr>
+                <th className="p-3 text-center text-sm font-semibold text-slate-700">
+                  จัดการ
+                </th>
 
-          </thead>
+              </tr>
 
-          <tbody>
+            </thead>
 
-            {filteredBranches.map(
-              (branch) => (
+            <tbody>
 
-                <tr
-                  key={branch.id}
-                  className="border-t hover:bg-slate-50"
-                >
+              {filteredBranches.map(
+                (branch) => (
 
-                  <td className="p-4 font-bold">
-                    {branch.code}
-                  </td>
+                  <tr
+                    key={branch.id}
+                    className="border-t border-slate-100 transition hover:bg-slate-50"
+                  >
 
-                  <td className="p-4 font-medium">
-                    {branch.name}
-                  </td>
+                    <td className="p-3 text-sm font-bold text-slate-800">
+                      {branch.code}
+                    </td>
 
-                  <td className="p-4">
-                    {branch.address}
-                  </td>
+                    <td className="p-3 text-sm font-medium text-slate-700">
+                      {branch.name}
+                    </td>
 
-                  <td className="p-4">
-                    {branch.phone}
-                  </td>
+                    <td className="max-w-[250px] truncate p-3 text-sm text-slate-600">
+                      {branch.address}
+                    </td>
 
-                  <td className="p-4 text-center">
+                    <td className="p-3 text-sm text-slate-600">
+                      {branch.phone}
+                    </td>
 
-                    <button
-                      onClick={() =>
-                        toggleStatus(
-                          branch.id
-                        )
-                      }
-                      className={
-                        branch.status ===
-                        "เปิดใช้งาน"
-                          ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
-                          : "bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm"
-                      }
-                    >
-                      {branch.status}
-                    </button>
-
-                  </td>
-
-                  <td className="p-4">
-
-                    <div className="flex justify-center gap-2">
+                    <td className="p-3 text-center">
 
                       <button
                         onClick={() =>
-                          openEditForm(
-                            branch
-                          )
-                        }
-                        className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg"
-                      >
-                        ✏️
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          deleteBranch(
+                          toggleStatus(
                             branch.id
                           )
                         }
-                        className="bg-red-100 text-red-600 px-3 py-2 rounded-lg"
+                        className={`
+                          rounded-full
+                          px-2.5
+                          py-1
+                          text-xs
+                          font-medium
+                          transition
+                          ${
+                            branch.status ===
+                            "เปิดใช้งาน"
+                              ? "bg-green-100 text-green-700 hover:bg-green-200"
+                              : "bg-red-100 text-red-700 hover:bg-red-200"
+                          }
+                        `}
                       >
-                        🗑️
+                        {branch.status}
                       </button>
 
-                    </div>
+                    </td>
 
-                  </td>
+                    <td className="p-3">
 
-                </tr>
+                      {/* ปุ่มเล็กลง */}
+                      <div className="flex items-center justify-center gap-1.5">
 
-              )
-            )}
+                        <button
+                          onClick={() =>
+                            openEditForm(
+                              branch
+                            )
+                          }
+                          title="แก้ไข"
+                          className="
+                            flex
+                            h-8
+                            w-8
+                            items-center
+                            justify-center
+                            rounded-md
+                            bg-blue-50
+                            text-sm
+                            text-blue-600
+                            transition
+                            hover:bg-blue-100
+                            active:scale-95
+                          "
+                        >
+                          ✏️
+                        </button>
 
-          </tbody>
+                        <button
+                          onClick={() =>
+                            deleteBranch(
+                              branch.id
+                            )
+                          }
+                          title="ลบ"
+                          className="
+                            flex
+                            h-8
+                            w-8
+                            items-center
+                            justify-center
+                            rounded-md
+                            bg-red-50
+                            text-sm
+                            text-red-600
+                            transition
+                            hover:bg-red-100
+                            active:scale-95
+                          "
+                        >
+                          🗑️
+                        </button>
 
-        </table>
+                      </div>
+
+                    </td>
+
+                  </tr>
+
+                )
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
 
         {filteredBranches.length === 0 && (
-          <div className="text-center py-12 text-slate-400">
+          <div className="py-12 text-center text-sm text-slate-400">
             ไม่พบสาขา
           </div>
         )}
@@ -438,13 +498,13 @@ export default function Branches() {
 
       {showForm && (
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
 
-          <div className="bg-white rounded-2xl w-[550px] p-7 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-[550px] overflow-y-auto rounded-2xl bg-white p-5 shadow-xl sm:p-7">
 
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-5 flex items-center justify-between">
 
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-xl font-bold text-slate-800 sm:text-2xl">
                 {editingBranch
                   ? "✏️ แก้ไขสาขา"
                   : "➕ เพิ่มสาขา"}
@@ -454,7 +514,17 @@ export default function Branches() {
                 onClick={() =>
                   setShowForm(false)
                 }
-                className="text-xl text-slate-500"
+                className="
+                  flex
+                  h-8
+                  w-8
+                  items-center
+                  justify-center
+                  rounded-md
+                  text-lg
+                  text-slate-500
+                  hover:bg-slate-100
+                "
               >
                 ✕
               </button>
@@ -464,8 +534,7 @@ export default function Branches() {
             <div className="space-y-4">
 
               <div>
-
-                <label className="block mb-1 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   รหัสสาขา
                 </label>
 
@@ -474,14 +543,24 @@ export default function Branches() {
                   value={form.code}
                   onChange={handleChange}
                   placeholder="เช่น BR001"
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 />
-
               </div>
 
               <div>
-
-                <label className="block mb-1 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   ชื่อสาขา
                 </label>
 
@@ -490,14 +569,24 @@ export default function Branches() {
                   value={form.name}
                   onChange={handleChange}
                   placeholder="เช่น สาขานครปฐม"
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 />
-
               </div>
 
               <div>
-
-                <label className="block mb-1 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   ที่อยู่
                 </label>
 
@@ -506,14 +595,25 @@ export default function Branches() {
                   value={form.address}
                   onChange={handleChange}
                   placeholder="กรอกที่อยู่สาขา"
-                  className="w-full border rounded-lg p-3 h-24"
+                  className="
+                    h-24
+                    w-full
+                    resize-none
+                    rounded-lg
+                    border
+                    border-slate-300
+                    p-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 />
-
               </div>
 
               <div>
-
-                <label className="block mb-1 font-medium">
+                <label className="mb-1 block text-sm font-medium text-slate-700">
                   เบอร์โทรศัพท์
                 </label>
 
@@ -522,27 +622,59 @@ export default function Branches() {
                   value={form.phone}
                   onChange={handleChange}
                   placeholder="เช่น 034-123-456"
-                  className="w-full border rounded-lg p-3"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-300
+                    px-3
+                    text-sm
+                    outline-none
+                    focus:border-blue-500
+                    focus:ring-2
+                    focus:ring-blue-500/20
+                  "
                 />
-
               </div>
 
             </div>
 
-            <div className="flex gap-3 mt-7">
+            <div className="mt-6 flex gap-2">
 
               <button
                 onClick={() =>
                   setShowForm(false)
                 }
-                className="flex-1 border rounded-lg py-3"
+                className="
+                  flex-1
+                  rounded-lg
+                  border
+                  border-slate-300
+                  py-2
+                  text-sm
+                  font-medium
+                  text-slate-600
+                  transition
+                  hover:bg-slate-50
+                "
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={saveBranch}
-                className="flex-1 bg-blue-600 text-white rounded-lg py-3 font-bold"
+                className="
+                  flex-1
+                  rounded-lg
+                  bg-blue-600
+                  py-2
+                  text-sm
+                  font-medium
+                  text-white
+                  transition
+                  hover:bg-blue-700
+                "
               >
                 💾 บันทึก
               </button>

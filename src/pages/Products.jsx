@@ -54,20 +54,23 @@ export default function Products() {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.message || "โหลดข้อมูลสินค้าไม่สำเร็จ"
+          result.message || "โหลดข้อมูลสินค้าไม่สำเร็จ",
         );
       }
 
       setProducts(
         Array.isArray(result.data)
           ? result.data
-          : []
+          : [],
       );
     } catch (err) {
       console.error("LOAD PRODUCTS ERROR:", err);
 
       setProducts([]);
-      setError(err.message || "ไม่สามารถโหลดข้อมูลสินค้าได้");
+      setError(
+        err.message ||
+          "ไม่สามารถโหลดข้อมูลสินค้าได้",
+      );
     } finally {
       setLoading(false);
     }
@@ -111,6 +114,23 @@ export default function Products() {
     });
 
     setShowForm(true);
+  };
+
+  // ======================================
+  // CLOSE FORM
+  // ======================================
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingProduct(null);
+
+    setForm({
+      name: "",
+      barcode: "",
+      price: "",
+      stock: "",
+      category: "",
+    });
   };
 
   // ======================================
@@ -182,13 +202,15 @@ export default function Products() {
       try {
         result = JSON.parse(text);
       } catch {
-        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
+        throw new Error(
+          "Backend ส่งข้อมูลไม่ใช่ JSON",
+        );
       }
 
       if (!response.ok || !result.success) {
         alert(
           result.message ||
-            "บันทึกสินค้าไม่สำเร็จ"
+            "บันทึกสินค้าไม่สำเร็จ",
         );
         return;
       }
@@ -196,26 +218,17 @@ export default function Products() {
       alert(
         editingProduct
           ? "แก้ไขสินค้าเรียบร้อย"
-          : "เพิ่มสินค้าเรียบร้อย"
+          : "เพิ่มสินค้าเรียบร้อย",
       );
 
-      setShowForm(false);
-      setEditingProduct(null);
-
-      setForm({
-        name: "",
-        barcode: "",
-        price: "",
-        stock: "",
-        category: "",
-      });
+      closeForm();
 
       await loadProducts();
     } catch (err) {
       console.error("SAVE PRODUCT ERROR:", err);
 
       alert(
-        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`
+        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`,
       );
     }
   };
@@ -226,7 +239,7 @@ export default function Products() {
 
   const deleteProduct = async (id) => {
     const confirmed = window.confirm(
-      "ต้องการลบสินค้านี้ใช่หรือไม่?"
+      "ต้องการลบสินค้านี้ใช่หรือไม่?",
     );
 
     if (!confirmed) {
@@ -241,7 +254,7 @@ export default function Products() {
           headers: {
             Accept: "application/json",
           },
-        }
+        },
       );
 
       const text = await response.text();
@@ -251,13 +264,15 @@ export default function Products() {
       try {
         result = JSON.parse(text);
       } catch {
-        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
+        throw new Error(
+          "Backend ส่งข้อมูลไม่ใช่ JSON",
+        );
       }
 
       if (!response.ok || !result.success) {
         alert(
           result.message ||
-            "ลบสินค้าไม่สำเร็จ"
+            "ลบสินค้าไม่สำเร็จ",
         );
         return;
       }
@@ -269,7 +284,7 @@ export default function Products() {
       console.error("DELETE PRODUCT ERROR:", err);
 
       alert(
-        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`
+        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`,
       );
     }
   };
@@ -299,7 +314,7 @@ export default function Products() {
           .toLowerCase()
           .includes(keyword)
       );
-    }
+    },
   );
 
   // ======================================
@@ -311,12 +326,12 @@ export default function Products() {
   const totalStock = products.reduce(
     (sum, product) =>
       sum + Number(product.stock || 0),
-    0
+    0,
   );
 
   const lowStock = products.filter(
     (product) =>
-      Number(product.stock || 0) <= 5
+      Number(product.stock || 0) <= 5,
   ).length;
 
   // ======================================
@@ -324,89 +339,115 @@ export default function Products() {
   // ======================================
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
 
-      {/* HEADER */}
+      {/* ==================================
+          HEADER
+      ================================== */}
 
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 sm:mb-6">
+
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
             📦 สินค้า
           </h1>
 
-          <p className="text-slate-500 mt-1">
+          <p className="text-sm sm:text-base text-slate-500 mt-1">
             จัดการสินค้าและสต๊อก
           </p>
         </div>
 
         <button
           onClick={openAddForm}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-bold"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-bold transition"
         >
           ＋ เพิ่มสินค้า
         </button>
+
       </div>
 
-      {/* ERROR */}
+      {/* ==================================
+          ERROR
+      ================================== */}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-5 sm:mb-6">
+
           <p className="font-bold">
             โหลดข้อมูลสินค้าไม่สำเร็จ
           </p>
 
-          <p className="text-sm mt-1">
+          <p className="text-sm mt-1 break-words">
             {error}
           </p>
 
           <button
             onClick={loadProducts}
-            className="mt-3 bg-red-600 text-white px-4 py-2 rounded-lg"
+            className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold"
           >
             🔄 ลองใหม่
           </button>
+
         </div>
       )}
 
-      {/* SUMMARY */}
+      {/* ==================================
+          SUMMARY
+      ================================== */}
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
 
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <p className="text-slate-500">
+        {/* TOTAL PRODUCTS */}
+
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+
+          <p className="text-sm sm:text-base text-slate-500">
             สินค้าทั้งหมด
           </p>
 
-          <p className="text-3xl font-bold mt-2">
+          <p className="text-2xl sm:text-3xl font-bold mt-2">
             {totalProducts}
           </p>
+
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <p className="text-slate-500">
+        {/* TOTAL STOCK */}
+
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+
+          <p className="text-sm sm:text-base text-slate-500">
             Stock รวม
           </p>
 
-          <p className="text-3xl font-bold text-blue-600 mt-2">
-            {totalStock.toLocaleString("th-TH")}
+          <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">
+            {totalStock.toLocaleString(
+              "th-TH",
+            )}
           </p>
+
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-5">
-          <p className="text-slate-500">
+        {/* LOW STOCK */}
+
+        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+
+          <p className="text-sm sm:text-base text-slate-500">
             สินค้าใกล้หมด
           </p>
 
-          <p className="text-3xl font-bold text-red-600 mt-2">
+          <p className="text-2xl sm:text-3xl font-bold text-red-600 mt-2">
             {lowStock}
           </p>
+
         </div>
 
       </div>
 
-      {/* SEARCH */}
+      {/* ==================================
+          SEARCH
+      ================================== */}
 
-      <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 mb-5 sm:mb-6">
 
         <input
           value={search}
@@ -417,51 +458,69 @@ export default function Products() {
           className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
         />
 
+        {search && (
+          <div className="text-sm text-slate-500 mt-2">
+            พบ {filteredProducts.length} รายการ
+          </div>
+        )}
+
       </div>
 
-      {/* TABLE */}
+      {/* ==================================
+          TABLE
+      ================================== */}
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
 
-        <div className="p-5 border-b">
-          <h2 className="font-bold text-lg">
-            รายการสินค้า
-          </h2>
+        <div className="p-4 sm:p-5 border-b">
+
+          <div className="flex items-center justify-between gap-3">
+
+            <h2 className="font-bold text-lg">
+              รายการสินค้า
+            </h2>
+
+            <span className="text-sm text-slate-400">
+              {filteredProducts.length} รายการ
+            </span>
+
+          </div>
+
         </div>
 
         <div className="overflow-x-auto">
 
-          <table className="w-full">
+          <table className="w-full min-w-[850px]">
 
             <thead className="bg-slate-100">
 
               <tr>
 
-                <th className="text-left p-4">
+                <th className="text-left p-4 whitespace-nowrap">
                   รหัส
                 </th>
 
-                <th className="text-left p-4">
+                <th className="text-left p-4 whitespace-nowrap">
                   สินค้า
                 </th>
 
-                <th className="text-left p-4">
+                <th className="text-left p-4 whitespace-nowrap">
                   Barcode
                 </th>
 
-                <th className="text-left p-4">
+                <th className="text-left p-4 whitespace-nowrap">
                   หมวดหมู่
                 </th>
 
-                <th className="text-right p-4">
+                <th className="text-right p-4 whitespace-nowrap">
                   ราคา
                 </th>
 
-                <th className="text-center p-4">
+                <th className="text-center p-4 whitespace-nowrap">
                   Stock
                 </th>
 
-                <th className="text-center p-4">
+                <th className="text-center p-4 whitespace-nowrap">
                   จัดการ
                 </th>
 
@@ -474,25 +533,43 @@ export default function Products() {
               {loading ? (
 
                 <tr>
+
                   <td
                     colSpan="7"
-                    className="text-center p-10"
+                    className="text-center p-10 text-slate-500"
                   >
-                    กำลังโหลดข้อมูลสินค้า...
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="text-2xl">
+                        ⏳
+                      </div>
+
+                      <div>
+                        กำลังโหลดข้อมูลสินค้า...
+                      </div>
+                    </div>
                   </td>
+
                 </tr>
 
               ) : filteredProducts.length === 0 ? (
 
                 <tr>
+
                   <td
                     colSpan="7"
                     className="text-center p-10 text-slate-400"
                   >
-                    {search
-                      ? "ไม่พบสินค้าที่ค้นหา"
-                      : "ยังไม่มีสินค้า"}
+                    <div className="text-3xl mb-2">
+                      📦
+                    </div>
+
+                    <div>
+                      {search
+                        ? "ไม่พบสินค้าที่ค้นหา"
+                        : "ยังไม่มีสินค้า"}
+                    </div>
                   </td>
+
                 </tr>
 
               ) : (
@@ -502,43 +579,62 @@ export default function Products() {
 
                     <tr
                       key={product.id}
-                      className="border-t hover:bg-slate-50"
+                      className="border-t hover:bg-slate-50 transition"
                     >
 
-                      <td className="p-4 font-bold">
+                      {/* ID */}
+
+                      <td className="p-4 font-bold whitespace-nowrap">
                         {product.id}
                       </td>
 
-                      <td className="p-4 font-medium">
-                        {product.name}
+                      {/* NAME */}
+
+                      <td className="p-4 font-medium max-w-[220px]">
+                        <div
+                          className="truncate"
+                          title={product.name}
+                        >
+                          {product.name}
+                        </div>
                       </td>
 
-                      <td className="p-4">
+                      {/* BARCODE */}
+
+                      <td className="p-4 whitespace-nowrap">
                         {product.barcode}
                       </td>
 
+                      {/* CATEGORY */}
+
                       <td className="p-4">
-                        {product.category || "-"}
+                        <span className="inline-block max-w-[160px] truncate">
+                          {product.category || "-"}
+                        </span>
                       </td>
 
-                      <td className="p-4 text-right font-bold">
+                      {/* PRICE */}
+
+                      <td className="p-4 text-right font-bold whitespace-nowrap">
                         ฿
                         {Number(
-                          product.price || 0
+                          product.price || 0,
                         ).toLocaleString(
                           "th-TH",
                           {
                             minimumFractionDigits: 2,
-                          }
+                          },
                         )}
                       </td>
+
+                      {/* STOCK */}
 
                       <td className="p-4 text-center">
 
                         <span
-                          className={`px-3 py-1 rounded-full ${
+                          className={`inline-block min-w-[55px] px-3 py-1 rounded-full text-sm font-bold ${
                             Number(
-                              product.stock || 0
+                              product.stock || 0,
                             ) <= 5
                               ? "bg-red-100 text-red-700"
                               : "bg-green-100 text-green-700"
@@ -549,15 +645,19 @@ export default function Products() {
 
                       </td>
 
+                      {/* ACTION */}
+
                       <td className="p-4">
 
                         <div className="flex justify-center gap-2">
 
                           <button
                             onClick={() =>
-                              openEditForm(product)
+                              openEditForm(
+                                product,
+                              )
                             }
-                            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200"
+                            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200 transition"
                             title="แก้ไข"
                           >
                             ✏️
@@ -566,10 +666,10 @@ export default function Products() {
                           <button
                             onClick={() =>
                               deleteProduct(
-                                product.id
+                                product.id,
                               )
                             }
-                            className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200"
+                            className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition"
                             title="ลบ"
                           >
                             🗑️
@@ -581,7 +681,7 @@ export default function Products() {
 
                     </tr>
 
-                  )
+                  ),
                 )
 
               )}
@@ -594,27 +694,29 @@ export default function Products() {
 
       </div>
 
-      {/* ADD / EDIT MODAL */}
+      {/* ==================================
+          ADD / EDIT MODAL
+      ================================== */}
 
       {showForm && (
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
 
-          <div className="bg-white rounded-2xl w-full max-w-lg p-7 shadow-2xl">
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto p-4 sm:p-6 lg:p-7 shadow-2xl">
 
-            <div className="flex justify-between items-center mb-6">
+            {/* MODAL HEADER */}
 
-              <h2 className="text-2xl font-bold">
+            <div className="flex items-center justify-between gap-3 mb-5 sm:mb-6">
+
+              <h2 className="text-xl sm:text-2xl font-bold">
                 {editingProduct
                   ? "✏️ แก้ไขสินค้า"
                   : "➕ เพิ่มสินค้า"}
               </h2>
 
               <button
-                onClick={() =>
-                  setShowForm(false)
-                }
-                className="text-xl text-slate-500 hover:text-slate-800"
+                onClick={closeForm}
+                className="flex-shrink-0 w-9 h-9 rounded-lg text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
               >
                 ✕
               </button>
@@ -638,7 +740,7 @@ export default function Products() {
                   })
                 }
                 placeholder="เช่น น้ำดื่ม 600ml"
-                className="w-full border border-slate-300 rounded-lg p-3"
+                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
             </div>
@@ -659,12 +761,13 @@ export default function Products() {
                     barcode:
                       e.target.value.replace(
                         /\D/g,
-                        ""
+                        "",
                       ),
                   })
                 }
                 placeholder="เช่น 8851234567890"
-                className="w-full border border-slate-300 rounded-lg p-3"
+                inputMode="numeric"
+                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
             </div>
@@ -689,7 +792,7 @@ export default function Products() {
                   })
                 }
                 placeholder="0.00"
-                className="w-full border border-slate-300 rounded-lg p-3"
+                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
             </div>
@@ -714,7 +817,7 @@ export default function Products() {
                   })
                 }
                 placeholder="0"
-                className="w-full border border-slate-300 rounded-lg p-3"
+                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
             </div>
@@ -736,27 +839,25 @@ export default function Products() {
                   })
                 }
                 placeholder="เช่น เครื่องดื่ม"
-                className="w-full border border-slate-300 rounded-lg p-3"
+                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
             </div>
 
             {/* BUTTONS */}
 
-            <div className="flex gap-3">
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
 
               <button
-                onClick={() =>
-                  setShowForm(false)
-                }
-                className="flex-1 border border-slate-300 rounded-lg py-3 hover:bg-slate-50"
+                onClick={closeForm}
+                className="w-full sm:flex-1 border border-slate-300 rounded-lg py-3 hover:bg-slate-50 font-medium transition"
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={saveProduct}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-bold"
+                className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-bold transition"
               >
                 💾 บันทึก
               </button>

@@ -19,7 +19,6 @@ export default function Login({ onLogin }) {
     // ===============================
     // สร้างบัญชีเริ่มต้น
     // ===============================
-
     const savedEmployees =
       localStorage.getItem("pos_employees");
 
@@ -59,7 +58,6 @@ export default function Login({ onLogin }) {
     // ===============================
     // ตรวจสอบ Username + Password
     // ===============================
-
     const employee = employees.find(
       (item) =>
         item.username.toLowerCase() ===
@@ -75,7 +73,6 @@ export default function Login({ onLogin }) {
     // ===============================
     // ตรวจสอบสถานะบัญชี
     // ===============================
-
     if (employee.status !== "เปิดใช้งาน") {
       setError(
         "บัญชีนี้ถูกปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ"
@@ -86,7 +83,6 @@ export default function Login({ onLogin }) {
     // ===============================
     // บันทึกผู้ใช้งานปัจจุบัน
     // ===============================
-
     localStorage.setItem(
       "pos_current_user",
       JSON.stringify(employee)
@@ -95,7 +91,6 @@ export default function Login({ onLogin }) {
     // ===============================
     // บันทึก Audit Log
     // ===============================
-
     const savedLogs =
       localStorage.getItem("pos_audit_logs");
 
@@ -121,88 +116,145 @@ export default function Login({ onLogin }) {
     // ===============================
     // เข้าสู่ระบบ
     // ===============================
-
     onLogin(employee);
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-6 sm:px-6">
 
-      <div className="w-full max-w-md">
+      {/* Background Decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -right-32 w-72 h-72 sm:w-96 sm:h-96 bg-blue-600/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-72 h-72 sm:w-96 sm:h-96 bg-cyan-500/10 rounded-full blur-3xl" />
+      </div>
 
-        {/* LOGO */}
-        <div className="text-center mb-8">
+      <div className="relative w-full max-w-md">
 
-          <div className="text-6xl mb-4">
-            🏪
+        {/* =========================
+            BRAND
+        ========================= */}
+        <div className="text-center mb-6 sm:mb-8">
+
+          {/* Logo */}
+          <div className="mx-auto mb-4 sm:mb-5 w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-blue-600 flex items-center justify-center shadow-xl shadow-blue-900/30 rotate-0">
+            <span className="text-4xl sm:text-5xl">
+              🏪
+            </span>
           </div>
 
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
             Convenience POS
           </h1>
 
-          <p className="text-slate-400 mt-2">
+          <p className="text-sm sm:text-base text-slate-400 mt-2">
             ระบบจัดการร้านสะดวกซื้อ
           </p>
-
         </div>
 
-        {/* LOGIN CARD */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        {/* =========================
+            LOGIN CARD
+        ========================= */}
+        <div className="bg-white rounded-3xl shadow-2xl shadow-black/30 overflow-hidden">
 
-          <h2 className="text-2xl font-bold text-slate-800 mb-2">
-            เข้าสู่ระบบ
-          </h2>
+          {/* Card Header */}
+          <div className="px-5 pt-6 pb-3 sm:px-8 sm:pt-8 sm:pb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+              ยินดีต้อนรับ 👋
+            </h2>
 
-          <p className="text-slate-500 mb-6">
-            กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ
-          </p>
+            <p className="text-sm text-slate-500 mt-1">
+              เข้าสู่ระบบเพื่อเริ่มใช้งาน
+            </p>
+          </div>
 
+          {/* Form */}
           <form
             onSubmit={handleLogin}
-            className="space-y-5"
+            className="px-5 pb-6 sm:px-8 sm:pb-8 space-y-4 sm:space-y-5"
           >
 
             {/* USERNAME */}
             <div>
-
-              <label className="block font-medium mb-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Username
               </label>
 
-              <input
-                type="text"
-                value={username}
-                onChange={(e) =>
-                  setUsername(e.target.value)
-                }
-                placeholder="กรอก Username"
-                className="w-full border border-slate-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">
+                  👤
+                </span>
 
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="กรอก Username"
+                  autoComplete="username"
+                  className="
+                    w-full
+                    h-12
+                    sm:h-[52px]
+                    bg-slate-50
+                    border border-slate-200
+                    rounded-2xl
+                    pl-11
+                    pr-4
+                    text-sm sm:text-base
+                    text-slate-800
+                    placeholder:text-slate-400
+                    outline-none
+                    transition
+                    focus:bg-white
+                    focus:border-blue-500
+                    focus:ring-4
+                    focus:ring-blue-500/10
+                  "
+                />
+              </div>
             </div>
 
             {/* PASSWORD */}
             <div>
-
-              <label className="block font-medium mb-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Password
               </label>
 
               <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">
+                  🔒
+                </span>
 
                 <input
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError("");
+                  }}
                   placeholder="กรอก Password"
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-blue-500"
+                  autoComplete="current-password"
+                  className="
+                    w-full
+                    h-12
+                    sm:h-[52px]
+                    bg-slate-50
+                    border border-slate-200
+                    rounded-2xl
+                    pl-11
+                    pr-12
+                    text-sm sm:text-base
+                    text-slate-800
+                    placeholder:text-slate-400
+                    outline-none
+                    transition
+                    focus:bg-white
+                    focus:border-blue-500
+                    focus:ring-4
+                    focus:ring-blue-500/10
+                  "
                 />
 
                 <button
@@ -210,37 +262,91 @@ export default function Login({ onLogin }) {
                   onClick={() =>
                     setShowPassword(!showPassword)
                   }
-                  className="absolute right-4 top-3"
+                  aria-label={
+                    showPassword
+                      ? "ซ่อน Password"
+                      : "แสดง Password"
+                  }
+                  className="
+                    absolute
+                    right-3
+                    top-1/2
+                    -translate-y-1/2
+                    w-9
+                    h-9
+                    rounded-xl
+                    flex
+                    items-center
+                    justify-center
+                    text-lg
+                    hover:bg-slate-200
+                    active:bg-slate-300
+                    transition
+                  "
                 >
                   {showPassword ? "🙈" : "👁️"}
                 </button>
-
               </div>
-
             </div>
 
             {/* ERROR */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 text-sm">
-                ⚠️ {error}
+              <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-600 rounded-2xl px-4 py-3 text-sm">
+                <span className="shrink-0">
+                  ⚠️
+                </span>
+
+                <span className="leading-5">
+                  {error}
+                </span>
               </div>
             )}
 
             {/* LOGIN BUTTON */}
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition"
+              className="
+                w-full
+                h-12
+                sm:h-[52px]
+                bg-blue-600
+                hover:bg-blue-700
+                active:bg-blue-800
+                text-white
+                rounded-2xl
+                font-bold
+                text-sm sm:text-base
+                shadow-lg
+                shadow-blue-600/20
+                transition-all
+                duration-200
+                hover:-translate-y-0.5
+                active:translate-y-0
+              "
             >
-              🔐 เข้าสู่ระบบ
+              <span className="flex items-center justify-center gap-2">
+                <span>🔐</span>
+                <span>เข้าสู่ระบบ</span>
+              </span>
             </button>
 
           </form>
 
-        
+          {/* Card Footer */}
+          <div className="border-t border-slate-100 bg-slate-50 px-5 py-4 sm:px-8">
+            <p className="text-center text-xs text-slate-400">
+              Convenience POS System
+            </p>
+          </div>
+
         </div>
 
-      </div>
+        {/* Bottom Text */}
+        <p className="text-center text-xs text-slate-500 mt-5">
+          ระบบจัดการร้านสะดวกซื้อ
+        </p>
 
+      </div>
     </div>
   );
 }

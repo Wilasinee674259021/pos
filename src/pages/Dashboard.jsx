@@ -86,6 +86,13 @@ function getYearEnd() {
   );
 }
 
+function paymentLabel(method) {
+  if (method === "cash") return "เงินสด";
+  if (method === "qr") return "QR Payment";
+  if (method === "card") return "บัตร";
+  return method || "-";
+}
+
 export default function Dashboard() {
   const [filter, setFilter] = useState("today");
 
@@ -151,7 +158,8 @@ export default function Dashboard() {
 
       if (!result.success) {
         throw new Error(
-          result.message || "ไม่สามารถโหลดข้อมูล Dashboard ได้"
+          result.message ||
+            "ไม่สามารถโหลดข้อมูล Dashboard ได้"
         );
       }
 
@@ -171,7 +179,8 @@ export default function Dashboard() {
       console.error("DASHBOARD ERROR:", err);
 
       setError(
-        err.message || "ไม่สามารถเชื่อมต่อ Backend ได้"
+        err.message ||
+          "ไม่สามารถเชื่อมต่อ Backend ได้"
       );
     } finally {
       setLoading(false);
@@ -191,109 +200,240 @@ export default function Dashboard() {
     );
   }, [dashboard.paymentSummary]);
 
+  const summaryCards = [
+    {
+      title: "ยอดขาย",
+      value: `฿${formatMoney(dashboard.totalSales)}`,
+      subtitle: "ยอดขายสุทธิ",
+      icon: "💰",
+      valueClass: "text-green-600",
+      iconBg: "bg-green-50",
+    },
+    {
+      title: "จำนวนบิล",
+      value: Number(
+        dashboard.billCount || 0
+      ).toLocaleString("th-TH"),
+      subtitle: "รายการขาย",
+      icon: "🧾",
+      valueClass: "text-blue-600",
+      iconBg: "bg-blue-50",
+    },
+    {
+      title: "กำไรขั้นต้น",
+      value: `฿${formatMoney(
+        dashboard.grossProfit
+      )}`,
+      subtitle: "ยอดขาย - ต้นทุนสินค้า",
+      icon: "📈",
+      valueClass: "text-indigo-600",
+      iconBg: "bg-indigo-50",
+    },
+    {
+      title: "กำไรสุทธิ",
+      value: `฿${formatMoney(
+        dashboard.netProfit
+      )}`,
+      subtitle: "หักค่าใช้จ่ายแล้ว",
+      icon: "💵",
+      valueClass:
+        Number(dashboard.netProfit || 0) >= 0
+          ? "text-green-600"
+          : "text-red-600",
+      iconBg:
+        Number(dashboard.netProfit || 0) >= 0
+          ? "bg-green-50"
+          : "bg-red-50",
+    },
+  ];
+
+  const financeCards = [
+    {
+      title: "ต้นทุนสินค้า",
+      value: `฿${formatMoney(
+        dashboard.totalCost
+      )}`,
+      subtitle: "",
+      icon: "📦",
+      valueClass: "text-orange-600",
+      iconBg: "bg-orange-50",
+    },
+    {
+      title: "ค่าใช้จ่าย",
+      value: `฿${formatMoney(
+        dashboard.totalExpense
+      )}`,
+      subtitle: `${dashboard.expenseCount || 0} รายการ`,
+      icon: "💸",
+      valueClass: "text-red-600",
+      iconBg: "bg-red-50",
+    },
+    {
+      title: "ยอดซื้อสินค้า",
+      value: `฿${formatMoney(
+        dashboard.purchaseTotal
+      )}`,
+      subtitle: `${dashboard.purchaseCount || 0} ใบสั่งซื้อ`,
+      icon: "🛒",
+      valueClass: "text-purple-600",
+      iconBg: "bg-purple-50",
+    },
+    {
+      title: "สินค้าใกล้หมด",
+      value: `${Number(
+        dashboard.lowStockCount || 0
+      ).toLocaleString("th-TH")} รายการ`,
+      subtitle: "ควรตรวจสอบสต็อก",
+      icon: "⚠️",
+      valueClass: "text-red-600",
+      iconBg: "bg-red-50",
+    },
+  ];
+
+  const paymentCards = [
+    {
+      title: "เงินสด",
+      value: dashboard.paymentSummary.cash,
+      icon: "💵",
+      valueClass: "text-green-600",
+    },
+    {
+      title: "QR Payment",
+      value: dashboard.paymentSummary.qr,
+      icon: "📱",
+      valueClass: "text-blue-600",
+    },
+    {
+      title: "บัตร",
+      value: dashboard.paymentSummary.card,
+      icon: "💳",
+      valueClass: "text-purple-600",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-slate-100 px-3 py-4 sm:px-5 sm:py-6 lg:px-6">
       <div className="mx-auto max-w-7xl">
 
         {/* HEADER */}
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">
-              Dashboard
-            </h1>
+        <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-            <p className="mt-1 text-gray-500">
-              ภาพรวมระบบ Convenience POS
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xl sm:h-11 sm:w-11">
+                📊
+              </div>
+
+              <div>
+                <h1 className="text-xl font-bold text-slate-800 sm:text-2xl lg:text-3xl">
+                  Dashboard
+                </h1>
+
+                <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+                  ภาพรวมระบบ Convenience POS
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={loadDashboard}
+              disabled={loading}
+              className="
+                flex
+                h-10
+                w-full
+                items-center
+                justify-center
+                gap-2
+                rounded-lg
+                bg-blue-600
+                px-4
+                text-sm
+                font-medium
+                text-white
+                transition
+                hover:bg-blue-700
+                active:scale-[0.98]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+                sm:w-auto
+              "
+            >
+              <span>{loading ? "⏳" : "🔄"}</span>
+
+              <span>
+                {loading
+                  ? "กำลังโหลด..."
+                  : "รีเฟรชข้อมูล"}
+              </span>
+            </button>
+
           </div>
-
-          <button
-            onClick={loadDashboard}
-            disabled={loading}
-            className="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "กำลังโหลด..." : "รีเฟรชข้อมูล"}
-          </button>
         </div>
 
         {/* FILTER */}
-        <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-800">
-            เลือกช่วงเวลา
-          </h2>
+        <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm sm:p-5">
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => updateFilter("today")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                filter === "today"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              วันนี้
-            </button>
+          <div className="mb-3">
+            <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
+              เลือกช่วงเวลา
+            </h2>
 
-            <button
-              onClick={() => updateFilter("yesterday")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                filter === "yesterday"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              เมื่อวาน
-            </button>
-
-            <button
-              onClick={() => updateFilter("thisMonth")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                filter === "thisMonth"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              เดือนนี้
-            </button>
-
-            <button
-              onClick={() => updateFilter("lastMonth")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                filter === "lastMonth"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              เดือนที่แล้ว
-            </button>
-
-            <button
-              onClick={() => updateFilter("thisYear")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                filter === "thisYear"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              ปีนี้
-            </button>
-
-            <button
-              onClick={() => setFilter("custom")}
-              className={`rounded-lg px-4 py-2 text-sm font-medium ${
-                filter === "custom"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              กำหนดเอง
-            </button>
+            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+              เลือกช่วงเวลาที่ต้องการดูข้อมูล
+            </p>
           </div>
 
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+
+            {[
+              ["today", "วันนี้"],
+              ["yesterday", "เมื่อวาน"],
+              ["thisMonth", "เดือนนี้"],
+              ["lastMonth", "เดือนที่แล้ว"],
+              ["thisYear", "ปีนี้"],
+              ["custom", "กำหนดเอง"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => {
+                  if (value === "custom") {
+                    setFilter("custom");
+                  } else {
+                    updateFilter(value);
+                  }
+                }}
+                className={`
+                  min-h-0
+                  rounded-md
+                  px-2.5
+                  py-1
+                  text-[11px]
+                  font-medium
+                  leading-5
+                  transition
+                  sm:px-3
+                  sm:py-1
+                  sm:text-xs
+                  ${
+                    filter === value
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }
+                `}
+              >
+                {label}
+              </button>
+            ))}
+
+          </div>
+
+          {/* CUSTOM DATE */}
           {filter === "custom" && (
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1.5 block text-xs font-medium text-slate-600 sm:text-sm">
                   วันที่เริ่มต้น
                 </label>
 
@@ -304,12 +444,28 @@ export default function Dashboard() {
                     setStartDate(e.target.value);
                     setFilter("custom");
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-200
+                    bg-slate-50
+                    px-3
+                    text-sm
+                    text-slate-700
+                    outline-none
+                    transition
+                    focus:border-blue-500
+                    focus:bg-white
+                    focus:ring-2
+                    focus:ring-blue-500/10
+                  "
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1.5 block text-xs font-medium text-slate-600 sm:text-sm">
                   วันที่สิ้นสุด
                 </label>
 
@@ -320,430 +476,707 @@ export default function Dashboard() {
                     setEndDate(e.target.value);
                     setFilter("custom");
                   }}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
+                  className="
+                    h-10
+                    w-full
+                    rounded-lg
+                    border
+                    border-slate-200
+                    bg-slate-50
+                    px-3
+                    text-sm
+                    text-slate-700
+                    outline-none
+                    transition
+                    focus:border-blue-500
+                    focus:bg-white
+                    focus:ring-2
+                    focus:ring-blue-500/10
+                  "
                 />
               </div>
+
             </div>
           )}
 
-          <div className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
-            แสดงข้อมูลวันที่{" "}
-            <span className="font-semibold text-gray-800">
+          <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 sm:px-4 sm:text-sm">
+            📅 วันที่{" "}
+            <span className="font-semibold text-slate-800">
               {startDate}
             </span>{" "}
             ถึง{" "}
-            <span className="font-semibold text-gray-800">
+            <span className="font-semibold text-slate-800">
               {endDate}
             </span>
           </div>
+
         </div>
 
         {/* ERROR */}
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-            <div className="font-semibold">
-              เกิดข้อผิดพลาด
+          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
+
+            <div className="flex items-start gap-3">
+              <div className="text-xl">
+                ⚠️
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold">
+                  เกิดข้อผิดพลาด
+                </div>
+
+                <div className="mt-1 break-words text-sm">
+                  {error}
+                </div>
+
+                <div className="mt-2 break-all text-xs text-red-600">
+                  Backend: {API_URL}
+                </div>
+
+                <button
+                  onClick={loadDashboard}
+                  className="
+                    mt-3
+                    rounded-lg
+                    bg-red-600
+                    px-4
+                    py-2
+                    text-sm
+                    font-medium
+                    text-white
+                    hover:bg-red-700
+                  "
+                >
+                  ลองใหม่
+                </button>
+              </div>
             </div>
 
-            <div className="mt-1 text-sm">
-              {error}
-            </div>
-
-            <div className="mt-2 text-sm">
-              Backend:
-              <span className="ml-1 font-medium">
-                {API_URL}
-              </span>
-            </div>
-
-            <button
-              onClick={loadDashboard}
-              className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-            >
-              ลองใหม่
-            </button>
           </div>
         )}
 
         {/* MAIN SUMMARY */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              ยอดขาย
-            </p>
-
-            <p className="mt-2 text-2xl font-bold text-green-600">
-              ฿{formatMoney(dashboard.totalSales)}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              ยอดขายสุทธิ
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              จำนวนบิล
-            </p>
-
-            <p className="mt-2 text-2xl font-bold text-blue-600">
-              {Number(dashboard.billCount || 0).toLocaleString("th-TH")}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              รายการขาย
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              กำไรขั้นต้น
-            </p>
-
-            <p className="mt-2 text-2xl font-bold text-indigo-600">
-              ฿{formatMoney(dashboard.grossProfit)}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              ยอดขาย - ต้นทุนสินค้า
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              กำไรสุทธิ
-            </p>
-
-            <p
-              className={`mt-2 text-2xl font-bold ${
-                Number(dashboard.netProfit || 0) >= 0
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
+          {summaryCards.map((card) => (
+            <div
+              key={card.title}
+              className="
+                rounded-2xl
+                bg-white
+                p-4
+                shadow-sm
+                transition
+                hover:shadow-md
+                sm:p-5
+              "
             >
-              ฿{formatMoney(dashboard.netProfit)}
-            </p>
+              <div className="flex items-start justify-between gap-2">
 
-            <p className="mt-1 text-xs text-gray-400">
-              หักค่าใช้จ่ายแล้ว
-            </p>
-          </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-slate-500 sm:text-sm">
+                    {card.title}
+                  </p>
+
+                  <p
+                    className={`
+                      mt-2
+                      break-words
+                      text-lg
+                      font-bold
+                      sm:text-2xl
+                      ${card.valueClass}
+                    `}
+                  >
+                    {card.value}
+                  </p>
+
+                  <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">
+                    {card.subtitle}
+                  </p>
+                </div>
+
+                <div
+                  className={`
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    text-lg
+                    sm:h-10
+                    sm:w-10
+                    sm:text-xl
+                    ${card.iconBg}
+                  `}
+                >
+                  {card.icon}
+                </div>
+
+              </div>
+            </div>
+          ))}
 
         </div>
 
         {/* FINANCE */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              ต้นทุนสินค้า
-            </p>
+          {financeCards.map((card) => (
+            <div
+              key={card.title}
+              className="
+                rounded-2xl
+                bg-white
+                p-4
+                shadow-sm
+                transition
+                hover:shadow-md
+                sm:p-5
+              "
+            >
+              <div className="flex items-start justify-between gap-2">
 
-            <p className="mt-2 text-xl font-bold text-orange-600">
-              ฿{formatMoney(dashboard.totalCost)}
-            </p>
-          </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-slate-500 sm:text-sm">
+                    {card.title}
+                  </p>
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              ค่าใช้จ่าย
-            </p>
+                  <p
+                    className={`
+                      mt-2
+                      break-words
+                      text-base
+                      font-bold
+                      sm:text-xl
+                      ${card.valueClass}
+                    `}
+                  >
+                    {card.value}
+                  </p>
 
-            <p className="mt-2 text-xl font-bold text-red-600">
-              ฿{formatMoney(dashboard.totalExpense)}
-            </p>
+                  {card.subtitle && (
+                    <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">
+                      {card.subtitle}
+                    </p>
+                  )}
+                </div>
 
-            <p className="mt-1 text-xs text-gray-400">
-              {dashboard.expenseCount || 0} รายการ
-            </p>
-          </div>
+                <div
+                  className={`
+                    flex
+                    h-8
+                    w-8
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    text-base
+                    sm:h-10
+                    sm:w-10
+                    sm:text-lg
+                    ${card.iconBg}
+                  `}
+                >
+                  {card.icon}
+                </div>
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              ยอดซื้อสินค้า
-            </p>
-
-            <p className="mt-2 text-xl font-bold text-purple-600">
-              ฿{formatMoney(dashboard.purchaseTotal)}
-            </p>
-
-            <p className="mt-1 text-xs text-gray-400">
-              {dashboard.purchaseCount || 0} ใบสั่งซื้อ
-            </p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              สินค้าใกล้หมด
-            </p>
-
-            <p className="mt-2 text-xl font-bold text-red-600">
-              {Number(dashboard.lowStockCount || 0).toLocaleString("th-TH")} รายการ
-            </p>
-          </div>
+              </div>
+            </div>
+          ))}
 
         </div>
 
         {/* STOCK */}
-        <div className="mb-6 grid gap-4 md:grid-cols-2">
+        <div className="mb-5 grid gap-3 sm:grid-cols-2 sm:gap-4">
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              สินค้าเข้า
-            </p>
+          <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex items-center gap-3">
 
-            <p className="mt-2 text-2xl font-bold text-green-600">
-              {Number(dashboard.stockIn || 0).toLocaleString("th-TH")} ชิ้น
-            </p>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-lg sm:h-11 sm:w-11">
+                📥
+              </div>
 
-            <p className="mt-1 text-xs text-gray-400">
-              จากการรับสินค้า/เพิ่มสต็อก
-            </p>
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 sm:text-sm">
+                  สินค้าเข้า
+                </p>
+
+                <p className="mt-1 text-xl font-bold text-green-600 sm:text-2xl">
+                  {Number(
+                    dashboard.stockIn || 0
+                  ).toLocaleString("th-TH")}{" "}
+                  ชิ้น
+                </p>
+
+                <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">
+                  จากการรับสินค้า/เพิ่มสต็อก
+                </p>
+              </div>
+
+            </div>
           </div>
 
-          <div className="rounded-xl bg-white p-5 shadow-sm">
-            <p className="text-sm text-gray-500">
-              สินค้าออก
-            </p>
+          <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+            <div className="flex items-center gap-3">
 
-            <p className="mt-2 text-2xl font-bold text-orange-600">
-              {Number(dashboard.stockOut || 0).toLocaleString("th-TH")} ชิ้น
-            </p>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-lg sm:h-11 sm:w-11">
+                📤
+              </div>
 
-            <p className="mt-1 text-xs text-gray-400">
-              จากการขายสินค้า
-            </p>
+              <div className="min-w-0">
+                <p className="text-xs text-slate-500 sm:text-sm">
+                  สินค้าออก
+                </p>
+
+                <p className="mt-1 text-xl font-bold text-orange-600 sm:text-2xl">
+                  {Number(
+                    dashboard.stockOut || 0
+                  ).toLocaleString("th-TH")}{" "}
+                  ชิ้น
+                </p>
+
+                <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">
+                  จากการขายสินค้า
+                </p>
+              </div>
+
+            </div>
           </div>
 
         </div>
 
         {/* PAYMENT SUMMARY */}
-        <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
+        <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm sm:p-5 lg:p-6">
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              ยอดขายตามช่องทางชำระเงิน
-            </h2>
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
 
-            <p className="text-sm text-gray-500">
-              รวม ฿{formatMoney(paymentTotal)}
-            </p>
-          </div>
+            <div>
+              <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
+                ยอดขายตามช่องทางชำระเงิน
+              </h2>
 
-          <div className="grid gap-4 md:grid-cols-3">
-
-            <div className="rounded-lg bg-gray-50 p-4">
-              <p className="text-sm text-gray-500">
-                เงินสด
-              </p>
-
-              <p className="mt-2 text-xl font-bold text-green-600">
-                ฿{formatMoney(dashboard.paymentSummary.cash)}
+              <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+                สรุปยอดรวมแต่ละช่องทาง
               </p>
             </div>
 
-            <div className="rounded-lg bg-gray-50 p-4">
-              <p className="text-sm text-gray-500">
-                QR Payment
-              </p>
-
-              <p className="mt-2 text-xl font-bold text-blue-600">
-                ฿{formatMoney(dashboard.paymentSummary.qr)}
-              </p>
-            </div>
-
-            <div className="rounded-lg bg-gray-50 p-4">
-              <p className="text-sm text-gray-500">
-                บัตร
-              </p>
-
-              <p className="mt-2 text-xl font-bold text-purple-600">
-                ฿{formatMoney(dashboard.paymentSummary.card)}
-              </p>
+            <div className="text-sm font-semibold text-slate-700 sm:text-base">
+              รวม{" "}
+              <span className="text-blue-600">
+                ฿{formatMoney(paymentTotal)}
+              </span>
             </div>
 
           </div>
+
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
+
+            {paymentCards.map((card) => (
+              <div
+                key={card.title}
+                className="rounded-xl bg-slate-50 p-3 sm:p-4"
+              >
+                <div className="mb-2 text-lg sm:text-xl">
+                  {card.icon}
+                </div>
+
+                <p className="truncate text-[11px] text-slate-500 sm:text-sm">
+                  {card.title}
+                </p>
+
+                <p
+                  className={`
+                    mt-1
+                    break-words
+                    text-sm
+                    font-bold
+                    sm:text-xl
+                    ${card.valueClass}
+                  `}
+                >
+                  ฿{formatMoney(card.value)}
+                </p>
+              </div>
+            ))}
+
+          </div>
+
         </div>
 
         {/* RECENT BILLS */}
-        <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
+        <div className="mb-5 rounded-2xl bg-white p-4 shadow-sm sm:p-5 lg:p-6">
 
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
+            <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
               รายการขายล่าสุด
             </h2>
 
-            <p className="text-sm text-gray-500">
+            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
               แสดงสูงสุด 10 รายการ
             </p>
           </div>
 
           {dashboard.recentBills.length === 0 ? (
-            <div className="rounded-lg bg-gray-50 p-8 text-center text-gray-500">
+            <div className="rounded-xl bg-slate-50 p-8 text-center text-sm text-slate-500">
               ไม่พบรายการขายในช่วงเวลานี้
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* MOBILE */}
+              <div className="space-y-3 md:hidden">
 
-              <table className="w-full min-w-[700px]">
+                {dashboard.recentBills.map((bill) => (
+                  <div
+                    key={bill.id}
+                    className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
 
-                <thead>
-                  <tr className="border-b text-left text-sm text-gray-500">
+                      <div className="min-w-0">
+                        <p className="text-[10px] text-slate-400">
+                          เลขที่บิล
+                        </p>
 
-                    <th className="px-3 py-3">
-                      เลขที่บิล
-                    </th>
+                        <p className="mt-1 truncate text-sm font-semibold text-slate-800">
+                          {bill.id}
+                        </p>
+                      </div>
 
-                    <th className="px-3 py-3">
-                      วันที่
-                    </th>
+                      <div className="shrink-0 rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600">
+                        {paymentLabel(
+                          bill.paymentMethod
+                        )}
+                      </div>
 
-                    <th className="px-3 py-3">
-                      ช่องทางชำระ
-                    </th>
+                    </div>
 
-                    <th className="px-3 py-3 text-right">
-                      ส่วนลด
-                    </th>
+                    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-3">
 
-                    <th className="px-3 py-3 text-right">
-                      ยอดสุทธิ
-                    </th>
+                      <div>
+                        <p className="text-[10px] text-slate-400">
+                          วันที่
+                        </p>
 
-                  </tr>
-                </thead>
+                        <p className="mt-1 text-xs text-slate-600">
+                          {bill.createdAt
+                            ? new Date(
+                                bill.createdAt
+                              ).toLocaleString(
+                                "th-TH"
+                              )
+                            : "-"}
+                        </p>
+                      </div>
 
-                <tbody>
+                      <div className="text-right">
+                        <p className="text-[10px] text-slate-400">
+                          ส่วนลด
+                        </p>
 
-                  {dashboard.recentBills.map((bill) => (
-                    <tr
-                      key={bill.id}
-                      className="border-b last:border-0 hover:bg-gray-50"
-                    >
+                        <p className="mt-1 text-xs font-medium text-red-600">
+                          ฿
+                          {formatMoney(
+                            bill.discountAmount
+                          )}
+                        </p>
+                      </div>
 
-                      <td className="px-3 py-3 font-medium text-gray-800">
-                        {bill.id}
-                      </td>
+                    </div>
 
-                      <td className="px-3 py-3 text-sm text-gray-600">
-                        {bill.createdAt
-                          ? new Date(bill.createdAt).toLocaleString("th-TH")
-                          : "-"}
-                      </td>
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3">
 
-                      <td className="px-3 py-3">
-                        {bill.paymentMethod === "cash"
-                          ? "เงินสด"
-                          : bill.paymentMethod === "qr"
-                          ? "QR Payment"
-                          : bill.paymentMethod === "card"
-                          ? "บัตร"
-                          : bill.paymentMethod || "-"}
-                      </td>
+                      <span className="text-xs text-slate-500">
+                        ยอดสุทธิ
+                      </span>
 
-                      <td className="px-3 py-3 text-right text-red-600">
-                        ฿{formatMoney(bill.discountAmount)}
-                      </td>
+                      <span className="text-base font-bold text-green-600">
+                        ฿
+                        {formatMoney(
+                          bill.netTotal
+                        )}
+                      </span>
 
-                      <td className="px-3 py-3 text-right font-semibold text-green-600">
-                        ฿{formatMoney(bill.netTotal)}
-                      </td>
+                    </div>
+
+                  </div>
+                ))}
+
+              </div>
+
+              {/* DESKTOP */}
+              <div className="hidden overflow-x-auto md:block">
+
+                <table className="w-full min-w-[700px]">
+
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left text-xs text-slate-500 sm:text-sm">
+
+                      <th className="px-3 py-3">
+                        เลขที่บิล
+                      </th>
+
+                      <th className="px-3 py-3">
+                        วันที่
+                      </th>
+
+                      <th className="px-3 py-3">
+                        ช่องทางชำระ
+                      </th>
+
+                      <th className="px-3 py-3 text-right">
+                        ส่วนลด
+                      </th>
+
+                      <th className="px-3 py-3 text-right">
+                        ยอดสุทธิ
+                      </th>
 
                     </tr>
-                  ))}
+                  </thead>
 
-                </tbody>
+                  <tbody>
 
-              </table>
+                    {dashboard.recentBills.map(
+                      (bill) => (
+                        <tr
+                          key={bill.id}
+                          className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                        >
 
-            </div>
+                          <td className="px-3 py-3 font-medium text-slate-800">
+                            {bill.id}
+                          </td>
+
+                          <td className="px-3 py-3 text-sm text-slate-600">
+                            {bill.createdAt
+                              ? new Date(
+                                  bill.createdAt
+                                ).toLocaleString(
+                                  "th-TH"
+                                )
+                              : "-"}
+                          </td>
+
+                          <td className="px-3 py-3 text-sm">
+                            {paymentLabel(
+                              bill.paymentMethod
+                            )}
+                          </td>
+
+                          <td className="px-3 py-3 text-right text-sm font-medium text-red-600">
+                            ฿
+                            {formatMoney(
+                              bill.discountAmount
+                            )}
+                          </td>
+
+                          <td className="px-3 py-3 text-right text-sm font-bold text-green-600">
+                            ฿
+                            {formatMoney(
+                              bill.netTotal
+                            )}
+                          </td>
+
+                        </tr>
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+            </>
           )}
 
         </div>
 
         {/* LOW STOCK */}
-        <div className="rounded-xl bg-white p-5 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5 lg:p-6">
 
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              สินค้าใกล้หมด
-            </h2>
+          <div className="mb-4 flex items-start gap-3">
 
-            <p className="text-sm text-gray-500">
-              สินค้าที่มีสต็อกไม่เกิน 10 ชิ้น
-            </p>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-lg sm:h-11 sm:w-11">
+              ⚠️
+            </div>
+
+            <div>
+              <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
+                สินค้าใกล้หมด
+              </h2>
+
+              <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+                สินค้าที่มีสต็อกไม่เกิน 10 ชิ้น
+              </p>
+            </div>
+
           </div>
 
           {dashboard.lowStockProducts.length === 0 ? (
-            <div className="rounded-lg bg-green-50 p-6 text-center text-green-700">
-              ไม่มีสินค้าใกล้หมด
+            <div className="rounded-xl bg-green-50 p-6 text-center text-sm font-medium text-green-700">
+              ✅ ไม่มีสินค้าใกล้หมด
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              {/* MOBILE */}
+              <div className="space-y-3 md:hidden">
 
-              <table className="w-full min-w-[600px]">
-
-                <thead>
-                  <tr className="border-b text-left text-sm text-gray-500">
-
-                    <th className="px-3 py-3">
-                      รหัสสินค้า
-                    </th>
-
-                    <th className="px-3 py-3">
-                      ชื่อสินค้า
-                    </th>
-
-                    <th className="px-3 py-3">
-                      Barcode
-                    </th>
-
-                    <th className="px-3 py-3 text-right">
-                      คงเหลือ
-                    </th>
-
-                  </tr>
-                </thead>
-
-                <tbody>
-
-                  {dashboard.lowStockProducts.map((product) => (
-                    <tr
+                {dashboard.lowStockProducts.map(
+                  (product) => (
+                    <div
                       key={product.id}
-                      className="border-b last:border-0"
+                      className="rounded-xl border border-slate-100 bg-slate-50 p-4"
                     >
+                      <div className="flex items-start justify-between gap-3">
 
-                      <td className="px-3 py-3 font-medium">
-                        {product.id}
-                      </td>
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-slate-400">
+                            รหัสสินค้า
+                          </p>
 
-                      <td className="px-3 py-3">
-                        {product.name}
-                      </td>
+                          <p className="mt-1 font-semibold text-slate-800">
+                            {product.id}
+                          </p>
 
-                      <td className="px-3 py-3 text-gray-500">
-                        {product.barcode}
-                      </td>
+                          <p className="mt-1 truncate text-sm text-slate-600">
+                            {product.name}
+                          </p>
+                        </div>
 
-                      <td
-                        className={`px-3 py-3 text-right font-bold ${
-                          Number(product.stock) <= 5
-                            ? "text-red-600"
-                            : "text-orange-600"
-                        }`}
-                      >
-                        {Number(product.stock || 0).toLocaleString("th-TH")} ชิ้น
-                      </td>
+                        <div
+                          className={`
+                            shrink-0
+                            rounded-lg
+                            px-3
+                            py-2
+                            text-center
+                            ${
+                              Number(
+                                product.stock
+                              ) <= 5
+                                ? "bg-red-50 text-red-600"
+                                : "bg-orange-50 text-orange-600"
+                            }
+                          `}
+                        >
+                          <p className="text-[10px]">
+                            คงเหลือ
+                          </p>
+
+                          <p className="mt-0.5 text-sm font-bold">
+                            {Number(
+                              product.stock || 0
+                            ).toLocaleString(
+                              "th-TH"
+                            )}{" "}
+                            ชิ้น
+                          </p>
+                        </div>
+
+                      </div>
+
+                      <div className="mt-3 border-t border-slate-200 pt-3">
+                        <p className="text-[10px] text-slate-400">
+                          Barcode
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-600">
+                          {product.barcode || "-"}
+                        </p>
+                      </div>
+
+                    </div>
+                  )
+                )}
+
+              </div>
+
+              {/* DESKTOP */}
+              <div className="hidden overflow-x-auto md:block">
+
+                <table className="w-full min-w-[600px]">
+
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left text-xs text-slate-500 sm:text-sm">
+
+                      <th className="px-3 py-3">
+                        รหัสสินค้า
+                      </th>
+
+                      <th className="px-3 py-3">
+                        ชื่อสินค้า
+                      </th>
+
+                      <th className="px-3 py-3">
+                        Barcode
+                      </th>
+
+                      <th className="px-3 py-3 text-right">
+                        คงเหลือ
+                      </th>
 
                     </tr>
-                  ))}
+                  </thead>
 
-                </tbody>
+                  <tbody>
 
-              </table>
+                    {dashboard.lowStockProducts.map(
+                      (product) => (
+                        <tr
+                          key={product.id}
+                          className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                        >
 
-            </div>
+                          <td className="px-3 py-3 font-semibold text-slate-800">
+                            {product.id}
+                          </td>
+
+                          <td className="px-3 py-3 text-sm text-slate-700">
+                            {product.name}
+                          </td>
+
+                          <td className="px-3 py-3 text-sm text-slate-500">
+                            {product.barcode || "-"}
+                          </td>
+
+                          <td
+                            className={`
+                              px-3
+                              py-3
+                              text-right
+                              text-sm
+                              font-bold
+                              ${
+                                Number(
+                                  product.stock
+                                ) <= 5
+                                  ? "text-red-600"
+                                  : "text-orange-600"
+                              }
+                            `}
+                          >
+                            {Number(
+                              product.stock || 0
+                            ).toLocaleString(
+                              "th-TH"
+                            )}{" "}
+                            ชิ้น
+                          </td>
+
+                        </tr>
+                      )
+                    )}
+
+                  </tbody>
+
+                </table>
+
+              </div>
+            </>
           )}
 
         </div>

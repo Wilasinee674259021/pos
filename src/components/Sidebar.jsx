@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -10,6 +11,8 @@ import {
   UserCog,
   ClipboardList,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 
 export default function Sidebar({
@@ -18,6 +21,8 @@ export default function Sidebar({
   currentUser,
   onLogout,
 }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   // =========================
   // แปลง Role ให้เป็นมาตรฐาน
   // =========================
@@ -101,124 +106,157 @@ export default function Sidebar({
   );
 
   // =========================
-  // SIDEBAR
+  // เปลี่ยนหน้า
   // =========================
 
+  const handleMenuClick = (page) => {
+    setCurrentPage(page);
+    setMobileOpen(false);
+  };
+
+  // =========================
+  // LOGOUT
+  // =========================
+
+  const handleLogout = () => {
+    setMobileOpen(false);
+    onLogout();
+  };
+
   return (
-    <aside className="w-64 min-h-screen bg-slate-900 text-white flex flex-col shrink-0">
-      
-      {/* =========================
-          LOGO
-      ========================= */}
+    <>
+      {/* =====================================
+          MOBILE TOP BAR
+      ===================================== */}
 
-      <div className="px-6 py-5 border-b border-slate-700">
-        <h1 className="text-xl font-bold">
-          Convenience POS
-        </h1>
-
-        <p className="text-sm text-slate-400 mt-1">
-          ระบบจัดการร้านค้า
-        </p>
-      </div>
-
-      {/* =========================
-          USER
-      ========================= */}
-
-      <div className="px-5 py-4 border-b border-slate-700">
-        <p className="font-semibold truncate">
-          {currentUser?.name || "ผู้ใช้งาน"}
-        </p>
-
-        <p className="text-sm text-slate-400 mt-1">
-          {userRole || "ไม่ระบุสิทธิ์"}
-        </p>
-      </div>
-
-      {/* =========================
-          MENU
-      ========================= */}
-
-      <nav className="flex-1 p-3 overflow-y-auto">
-        <div className="space-y-1">
-
-          {visibleMenus.map((menu) => {
-            const Icon = menu.icon;
-            const active = currentPage === menu.name;
-
-            return (
-              <button
-                key={menu.name}
-                type="button"
-                onClick={() => {
-                  setCurrentPage(menu.name);
-                }}
-                className={`
-                  w-full
-                  flex
-                  items-center
-                  gap-3
-                  px-4
-                  py-3
-                  rounded-lg
-                  text-left
-                  transition
-                  ${
-                    active
-                      ? "bg-blue-600 text-white"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                  }
-                `}
-              >
-                <Icon size={20} />
-
-                <span className="text-sm font-medium">
-                  {menu.name}
-                </span>
-              </button>
-            );
-          })}
-
-          {/* กรณีไม่มีสิทธิ์ */}
-          {visibleMenus.length === 0 && (
-            <div className="px-4 py-3 text-sm text-slate-500">
-              ไม่พบเมนูสำหรับสิทธิ์นี้
-            </div>
-          )}
-
-        </div>
-      </nav>
-
-      {/* =========================
-          LOGOUT
-      ========================= */}
-
-      <div className="p-3 border-t border-slate-700">
+      <div className="mobile-topbar">
         <button
           type="button"
-          onClick={onLogout}
-          className="
-            w-full
-            flex
-            items-center
-            gap-3
-            px-4
-            py-3
-            rounded-lg
-            text-red-400
-            hover:bg-red-500/10
-            hover:text-red-300
-            transition
-          "
+          onClick={() => setMobileOpen(true)}
+          className="mobile-menu-button"
+          aria-label="เปิดเมนู"
         >
-          <LogOut size={20} />
-
-          <span className="text-sm font-medium">
-            ออกจากระบบ
-          </span>
+          <Menu size={24} />
         </button>
+
+        <div className="mobile-title">
+          <h1>Convenience POS</h1>
+          <span>{currentPage}</span>
+        </div>
       </div>
 
-    </aside>
+      {/* =====================================
+          MOBILE OVERLAY
+      ===================================== */}
+
+      {mobileOpen && (
+        <button
+          type="button"
+          className="sidebar-overlay"
+          onClick={() => setMobileOpen(false)}
+          aria-label="ปิดเมนู"
+        />
+      )}
+
+      {/* =====================================
+          SIDEBAR
+      ===================================== */}
+
+      <aside
+        className={`sidebar ${
+          mobileOpen ? "sidebar-mobile-open" : ""
+        }`}
+      >
+        {/* =========================
+            LOGO
+        ========================= */}
+
+        <div className="sidebar-logo">
+          <div className="sidebar-logo-row">
+            <div>
+              <h1>Convenience POS</h1>
+
+              <p>ระบบจัดการร้านค้า</p>
+            </div>
+
+            {/* ปุ่มปิดเฉพาะมือถือ */}
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="sidebar-close-button"
+              aria-label="ปิดเมนู"
+            >
+              <X size={22} />
+            </button>
+          </div>
+        </div>
+
+        {/* =========================
+            USER
+        ========================= */}
+
+        <div className="sidebar-user">
+          <p className="sidebar-user-name">
+            {currentUser?.name || "ผู้ใช้งาน"}
+          </p>
+
+          <p className="sidebar-user-role">
+            {userRole || "ไม่ระบุสิทธิ์"}
+          </p>
+        </div>
+
+        {/* =========================
+            MENU
+        ========================= */}
+
+        <nav className="sidebar-menu">
+          <div className="sidebar-menu-list">
+            {visibleMenus.map((menu) => {
+              const Icon = menu.icon;
+              const active = currentPage === menu.name;
+
+              return (
+                <button
+                  key={menu.name}
+                  type="button"
+                  onClick={() => handleMenuClick(menu.name)}
+                  className={`sidebar-menu-item ${
+                    active ? "sidebar-menu-active" : ""
+                  }`}
+                >
+                  <Icon size={20} />
+
+                  <span>{menu.name}</span>
+                </button>
+              );
+            })}
+
+            {/* กรณีไม่มีสิทธิ์ */}
+
+            {visibleMenus.length === 0 && (
+              <div className="sidebar-no-menu">
+                ไม่พบเมนูสำหรับสิทธิ์นี้
+              </div>
+            )}
+          </div>
+        </nav>
+
+        {/* =========================
+            LOGOUT
+        ========================= */}
+
+        <div className="sidebar-logout">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="sidebar-logout-button"
+          >
+            <LogOut size={20} />
+
+            <span>ออกจากระบบ</span>
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

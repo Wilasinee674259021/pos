@@ -9,7 +9,7 @@ const defaultPromotions = [
     discount: 10,
     startDate: "2026-01-01",
     endDate: "2026-12-31",
-    status: "active",
+    status: "เปิดใช้งาน",
   },
   {
     id: 2,
@@ -19,25 +19,19 @@ const defaultPromotions = [
     discount: 60,
     startDate: "2026-01-01",
     endDate: "2026-12-31",
-    status: "active",
+    status: "เปิดใช้งาน",
   },
 ];
 
 export default function Promotions() {
   const [promotions, setPromotions] = useState(() => {
-    try {
-      const saved = localStorage.getItem("pos_promotions");
-
-      return saved ? JSON.parse(saved) : defaultPromotions;
-    } catch (error) {
-      console.error("โหลดโปรโมชั่นไม่สำเร็จ:", error);
-      return defaultPromotions;
-    }
+    const saved = localStorage.getItem("pos_promotions");
+    return saved ? JSON.parse(saved) : defaultPromotions;
   });
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingPromotion, setEditingPromotion] = useState(null);
   const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -49,13 +43,10 @@ export default function Promotions() {
   });
 
   useEffect(() => {
-    localStorage.setItem(
-      "pos_promotions",
-      JSON.stringify(promotions)
-    );
+    localStorage.setItem("pos_promotions", JSON.stringify(promotions));
   }, [promotions]);
 
-  const openAddForm = () => {
+  const openAddModal = () => {
     setEditingPromotion(null);
 
     setForm({
@@ -67,10 +58,10 @@ export default function Promotions() {
       endDate: "",
     });
 
-    setShowForm(true);
+    setShowModal(true);
   };
 
-  const openEditForm = (promotion) => {
+  const openEditModal = (promotion) => {
     setEditingPromotion(promotion);
 
     setForm({
@@ -82,17 +73,19 @@ export default function Promotions() {
       endDate: promotion.endDate,
     });
 
-    setShowForm(true);
+    setShowModal(true);
   };
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const savePromotion = () => {
+  const handleSave = () => {
     if (
       !form.name ||
       !form.condition ||
@@ -104,455 +97,601 @@ export default function Promotions() {
       return;
     }
 
-    if (form.startDate > form.endDate) {
-      alert("วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด");
-      return;
-    }
-
     if (editingPromotion) {
-      setPromotions(
-        promotions.map((promotion) =>
-          promotion.id === editingPromotion.id
+      setPromotions((prev) =>
+        prev.map((item) =>
+          item.id === editingPromotion.id
             ? {
-                ...promotion,
-                name: form.name,
-                type: form.type,
+                ...item,
+                ...form,
                 condition: Number(form.condition),
                 discount: Number(form.discount),
-                startDate: form.startDate,
-                endDate: form.endDate,
               }
-            : promotion
+            : item
         )
       );
-
-      alert("แก้ไขโปรโมชั่นเรียบร้อย");
     } else {
       const newPromotion = {
         id: Date.now(),
-        name: form.name,
-        type: form.type,
+        ...form,
         condition: Number(form.condition),
         discount: Number(form.discount),
-        startDate: form.startDate,
-        endDate: form.endDate,
-        status: "active",
+        status: "เปิดใช้งาน",
       };
 
-      setPromotions([...promotions, newPromotion]);
-
-      alert("เพิ่มโปรโมชั่นเรียบร้อย");
+      setPromotions((prev) => [...prev, newPromotion]);
     }
 
-    setShowForm(false);
+    setShowModal(false);
   };
 
-  const deletePromotion = (id) => {
+  const handleDelete = (id) => {
     const confirmDelete = window.confirm(
-      "ต้องการลบโปรโมชั่นนี้ใช่หรือไม่?"
+      "คุณต้องการลบโปรโมชั่นนี้ใช่หรือไม่?"
     );
 
     if (!confirmDelete) return;
 
-    setPromotions(
-      promotions.filter(
-        (promotion) => promotion.id !== id
-      )
-    );
+    setPromotions((prev) => prev.filter((item) => item.id !== id));
   };
 
   const toggleStatus = (id) => {
-    setPromotions(
-      promotions.map((promotion) =>
-        promotion.id === id
+    setPromotions((prev) =>
+      prev.map((item) =>
+        item.id === id
           ? {
-              ...promotion,
+              ...item,
               status:
-                promotion.status === "active"
-                  ? "inactive"
-                  : "active",
+                item.status === "เปิดใช้งาน"
+                  ? "ปิดใช้งาน"
+                  : "เปิดใช้งาน",
             }
-          : promotion
+          : item
       )
     );
   };
 
-  const filteredPromotions = promotions.filter(
-    (promotion) =>
-      promotion.name
-        .toLowerCase()
-        .includes(search.toLowerCase())
+  const filteredPromotions = promotions.filter((promotion) =>
+    promotion.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  return (
-    <div className="p-8 bg-slate-50 min-h-screen">
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-7">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">
-            🏷️ จัดการโปรโมชั่น
-          </h1>
+  const activeCount = promotions.filter(
+    (item) => item.status === "เปิดใช้งาน"
+  ).length;
 
-          <p className="text-slate-500 mt-1">
-            สร้างและจัดการโปรโมชั่นสำหรับสินค้า
-          </p>
+  const inactiveCount = promotions.filter(
+    (item) => item.status === "ปิดใช้งาน"
+  ).length;
+
+  const formatDate = (date) => {
+    if (!date) return "-";
+
+    const [year, month, day] = date.split("-");
+
+    return `${day}/${month}/${year}`;
+  };
+
+  const getTypeLabel = (type) => {
+    if (type === "ลดเป็นจำนวนเงิน") {
+      return "ส่วนลดตามยอดซื้อ";
+    }
+
+    return "ราคาพิเศษตามจำนวน";
+  };
+
+  const getConditionText = (promotion) => {
+    if (promotion.type === "ลดเป็นจำนวนเงิน") {
+      return (
+        <div className="flex flex-col">
+          <span className="text-xs text-gray-400">เมื่อซื้อครบ</span>
+          <span className="font-semibold text-gray-800">
+            ฿{Number(promotion.condition).toLocaleString()}
+          </span>
         </div>
+      );
+    }
 
-        <button
-          onClick={openAddForm}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700"
-        >
-          ＋ เพิ่มโปรโมชั่น
-        </button>
+    return (
+      <div className="flex flex-col">
+        <span className="text-xs text-gray-400">จำนวนสินค้า</span>
+        <span className="font-semibold text-gray-800">
+          {promotion.condition} ชิ้น
+        </span>
+      </div>
+    );
+  };
+
+  const getDiscountText = (promotion) => {
+    if (promotion.type === "ลดเป็นเปอร์เซ็นต์") {
+      return `${promotion.discount}%`;
+    }
+
+    return `฿${Number(promotion.discount).toLocaleString()}`;
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-5 md:p-6 lg:p-8">
+      {/* HEADER */}
+      <div className="mb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
+              โปรโมชั่น
+            </h1>
+
+            <p className="mt-1 text-sm text-gray-500">
+              จัดการโปรโมชั่นและส่วนลดของร้านค้า
+            </p>
+          </div>
+
+          <button
+            onClick={openAddModal}
+            className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
+          >
+            + เพิ่มโปรโมชั่น
+          </button>
+        </div>
       </div>
 
       {/* SUMMARY */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl p-5 shadow-sm">
-          <p className="text-slate-500">
-            โปรโมชั่นทั้งหมด
-          </p>
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">โปรโมชั่นทั้งหมด</p>
 
-          <p className="text-3xl font-bold mt-2">
-            {promotions.length}
-          </p>
+          <div className="mt-2 flex items-end justify-between">
+            <p className="text-3xl font-bold text-gray-800">
+              {promotions.length}
+            </p>
+
+            <span className="text-sm text-gray-400">รายการ</span>
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm">
-          <p className="text-slate-500">
-            โปรโมชั่นที่เปิดใช้
-          </p>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">กำลังใช้งาน</p>
 
-          <p className="text-3xl font-bold text-green-600 mt-2">
-            {
-              promotions.filter(
-                (p) => p.status === "active"
-              ).length
-            }
-          </p>
+          <div className="mt-2 flex items-end justify-between">
+            <p className="text-3xl font-bold text-green-600">
+              {activeCount}
+            </p>
+
+            <span className="text-sm text-gray-400">รายการ</span>
+          </div>
         </div>
 
-        <div className="bg-white rounded-xl p-5 shadow-sm">
-          <p className="text-slate-500">
-            โปรโมชั่นปิดใช้
-          </p>
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <p className="text-sm text-gray-500">ปิดใช้งาน</p>
 
-          <p className="text-3xl font-bold text-red-500 mt-2">
-            {
-              promotions.filter(
-                (p) => p.status === "inactive"
-              ).length
-            }
-          </p>
+          <div className="mt-2 flex items-end justify-between">
+            <p className="text-3xl font-bold text-gray-500">
+              {inactiveCount}
+            </p>
+
+            <span className="text-sm text-gray-400">รายการ</span>
+          </div>
         </div>
       </div>
 
       {/* SEARCH */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-6">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="🔍 ค้นหาชื่อโปรโมชั่น..."
-          className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      <div className="mb-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ค้นหาชื่อโปรโมชั่น..."
+            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-10 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white"
+          />
+
+          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+            🔍
+          </span>
+        </div>
       </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      {/* DESKTOP TABLE */}
+      <div className="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px]">
-            <thead className="bg-slate-100">
-              <tr>
-                <th className="text-left p-4">
+          <table className="w-full min-w-[1100px] table-fixed">
+            <colgroup>
+              <col className="w-[25%]" />
+              <col className="w-[16%]" />
+              <col className="w-[13%]" />
+              <col className="w-[11%]" />
+              <col className="w-[17%]" />
+              <col className="w-[9%]" />
+              <col className="w-[9%]" />
+            </colgroup>
+
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="px-5 py-4 text-left text-xs font-semibold text-gray-500">
                   โปรโมชั่น
                 </th>
 
-                <th className="text-left p-4">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
                   ประเภท
                 </th>
 
-                <th className="text-center p-4">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
                   เงื่อนไข
                 </th>
 
-                <th className="text-center p-4">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
                   ส่วนลด
                 </th>
 
-                <th className="text-center p-4">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
                   ระยะเวลา
                 </th>
 
-                <th className="text-center p-4">
+                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
                   สถานะ
                 </th>
 
-                <th className="text-center p-4">
+                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
                   จัดการ
                 </th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredPromotions.map(
-                (promotion) => (
+              {filteredPromotions.length > 0 ? (
+                filteredPromotions.map((promotion) => (
                   <tr
                     key={promotion.id}
-                    className="border-t hover:bg-slate-50"
+                    className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
                   >
-                    <td className="p-4">
-                      <div className="font-bold">
-                        {promotion.name}
+                    {/* NAME */}
+                    <td className="px-5 py-5 align-middle">
+                      <div className="max-w-[280px]">
+                        <p className="break-words text-sm font-semibold leading-6 text-gray-800">
+                          {promotion.name}
+                        </p>
                       </div>
                     </td>
 
-                    <td className="p-4">
-                      {promotion.type}
+                    {/* TYPE */}
+                    <td className="px-4 py-5 align-middle">
+                      <span className="inline-flex max-w-full rounded-lg bg-blue-50 px-3 py-2 text-center text-xs font-medium leading-5 text-blue-700">
+                        {getTypeLabel(promotion.type)}
+                      </span>
                     </td>
 
-                    <td className="p-4 text-center">
-                      {promotion.type ===
-                      "ลดเป็นจำนวนเงิน"
-                        ? `ซื้อครบ ฿${promotion.condition}`
-                        : `ซื้อ ${promotion.condition} ชิ้น`}
+                    {/* CONDITION */}
+                    <td className="px-4 py-5 align-middle">
+                      {getConditionText(promotion)}
                     </td>
 
-                    <td className="p-4 text-center font-bold text-red-500">
-                      {promotion.type ===
-                      "ลดเป็นเปอร์เซ็นต์"
-                        ? `${promotion.discount}%`
-                        : `฿${promotion.discount}`}
-                    </td>
+                    {/* DISCOUNT */}
+                    <td className="px-4 py-5 align-middle">
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-400">
+                          ลด/ราคา
+                        </span>
 
-                    <td className="p-4 text-center text-sm">
-                      <div>
-                        {promotion.startDate}
-                      </div>
-
-                      <div className="text-slate-400">
-                        ถึง
-                      </div>
-
-                      <div>
-                        {promotion.endDate}
+                        <span className="mt-1 text-base font-bold text-red-600">
+                          {getDiscountText(promotion)}
+                        </span>
                       </div>
                     </td>
 
-                    <td className="p-4 text-center">
+                    {/* DATE */}
+                    <td className="px-4 py-5 align-middle">
+                      <div className="flex flex-col gap-1 text-sm">
+                        <span className="text-gray-700">
+                          {formatDate(promotion.startDate)}
+                        </span>
+
+                        <span className="text-xs text-gray-400">
+                          ถึง
+                        </span>
+
+                        <span className="text-gray-700">
+                          {formatDate(promotion.endDate)}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* STATUS */}
+                    <td className="px-4 py-5 text-center align-middle">
                       <button
-                        onClick={() =>
-                          toggleStatus(
-                            promotion.id
-                          )
-                        }
-                        className={
-                          promotion.status ===
-                          "active"
-                            ? "bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm"
-                            : "bg-slate-200 text-slate-500 px-3 py-1 rounded-full text-sm"
-                        }
+                        onClick={() => toggleStatus(promotion.id)}
+                        className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${
+                          promotion.status === "เปิดใช้งาน"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}
                       >
-                        {promotion.status ===
-                        "active"
-                          ? "เปิดใช้"
-                          : "ปิดใช้"}
+                        {promotion.status}
                       </button>
                     </td>
 
-                    <td className="p-4">
+                    {/* ACTION */}
+                    <td className="px-4 py-5 align-middle">
                       <div className="flex justify-center gap-2">
                         <button
-                          onClick={() =>
-                            openEditForm(
-                              promotion
-                            )
-                          }
-                          className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200"
+                          onClick={() => openEditModal(promotion)}
+                          className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
                         >
-                          ✏️
+                          แก้ไข
                         </button>
 
                         <button
-                          onClick={() =>
-                            deletePromotion(
-                              promotion.id
-                            )
-                          }
-                          className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200"
+                          onClick={() => handleDelete(promotion.id)}
+                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-100"
                         >
-                          🗑️
+                          ลบ
                         </button>
                       </div>
                     </td>
                   </tr>
-                )
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="px-5 py-12 text-center text-sm text-gray-400"
+                  >
+                    ไม่พบโปรโมชั่น
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
+      </div>
 
-        {filteredPromotions.length === 0 && (
-          <div className="text-center py-12 text-slate-400">
+      {/* MOBILE CARDS */}
+      <div className="space-y-4 md:hidden">
+        {filteredPromotions.length > 0 ? (
+          filteredPromotions.map((promotion) => (
+            <div
+              key={promotion.id}
+              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
+            >
+              {/* CARD HEADER */}
+              <div className="border-b border-gray-100 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="break-words text-base font-bold leading-6 text-gray-800">
+                      {promotion.name}
+                    </h2>
+                  </div>
+
+                  <button
+                    onClick={() => toggleStatus(promotion.id)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                      promotion.status === "เปิดใช้งาน"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {promotion.status}
+                  </button>
+                </div>
+
+                <div className="mt-3">
+                  <span className="inline-flex rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700">
+                    {getTypeLabel(promotion.type)}
+                  </span>
+                </div>
+              </div>
+
+              {/* CARD CONTENT */}
+              <div className="grid grid-cols-2 gap-px bg-gray-100">
+                <div className="bg-white p-4">
+                  <p className="text-xs text-gray-400">เงื่อนไข</p>
+
+                  <div className="mt-1">
+                    {getConditionText(promotion)}
+                  </div>
+                </div>
+
+                <div className="bg-white p-4">
+                  <p className="text-xs text-gray-400">ส่วนลด / ราคา</p>
+
+                  <p className="mt-1 text-lg font-bold text-red-600">
+                    {getDiscountText(promotion)}
+                  </p>
+                </div>
+              </div>
+
+              {/* DATE */}
+              <div className="border-t border-gray-100 p-4">
+                <p className="text-xs text-gray-400">ระยะเวลาโปรโมชั่น</p>
+
+                <div className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+                  <span className="rounded-lg bg-gray-50 px-3 py-2">
+                    {formatDate(promotion.startDate)}
+                  </span>
+
+                  <span className="text-gray-400">→</span>
+
+                  <span className="rounded-lg bg-gray-50 px-3 py-2">
+                    {formatDate(promotion.endDate)}
+                  </span>
+                </div>
+              </div>
+
+              {/* ACTION */}
+              <div className="flex gap-2 border-t border-gray-100 p-4">
+                <button
+                  onClick={() => openEditModal(promotion)}
+                  className="flex-1 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+                >
+                  แก้ไข
+                </button>
+
+                <button
+                  onClick={() => handleDelete(promotion.id)}
+                  className="flex-1 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-100"
+                >
+                  ลบ
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-gray-100 bg-white px-5 py-12 text-center text-sm text-gray-400 shadow-sm">
             ไม่พบโปรโมชั่น
           </div>
         )}
       </div>
 
-      {/* FORM MODAL */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-[550px] p-7 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">
-                {editingPromotion
-                  ? "✏️ แก้ไขโปรโมชั่น"
-                  : "➕ เพิ่มโปรโมชั่น"}
-              </h2>
+      {/* MODAL */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* MODAL HEADER */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">
+                  {editingPromotion
+                    ? "แก้ไขโปรโมชั่น"
+                    : "เพิ่มโปรโมชั่น"}
+                </h2>
+
+                <p className="mt-1 text-xs text-gray-400">
+                  กรอกข้อมูลโปรโมชั่นให้ครบถ้วน
+                </p>
+              </div>
 
               <button
-                onClick={() =>
-                  setShowForm(false)
-                }
-                className="text-xl text-slate-500 hover:text-red-500"
+                onClick={() => setShowModal(false)}
+                className="rounded-lg p-2 text-xl text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
-                ✕
+                ×
               </button>
             </div>
 
-            <div className="space-y-4">
-              {/* NAME */}
-              <div>
-                <label className="block mb-1 font-medium">
-                  ชื่อโปรโมชั่น
-                </label>
-
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder="เช่น ซื้อครบ 100 บาท ลด 10 บาท"
-                  className="w-full border rounded-lg p-3"
-                />
-              </div>
-
-              {/* TYPE */}
-              <div>
-                <label className="block mb-1 font-medium">
-                  ประเภทโปรโมชั่น
-                </label>
-
-                <select
-                  name="type"
-                  value={form.type}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-3"
-                >
-                  <option>
-                    ลดเป็นจำนวนเงิน
-                  </option>
-
-                  <option>
-                    ลดเป็นเปอร์เซ็นต์
-                  </option>
-
-                  <option>
-                    ซื้อ X ชิ้น ราคาพิเศษ
-                  </option>
-                </select>
-              </div>
-
-              {/* CONDITION */}
-              <div>
-                <label className="block mb-1 font-medium">
-                  เงื่อนไข
-                </label>
-
-                <input
-                  type="number"
-                  min="0"
-                  name="condition"
-                  value={form.condition}
-                  onChange={handleChange}
-                  placeholder={
-                    form.type ===
-                    "ซื้อ X ชิ้น ราคาพิเศษ"
-                      ? "จำนวนชิ้น"
-                      : "จำนวนเงิน"
-                  }
-                  className="w-full border rounded-lg p-3"
-                />
-              </div>
-
-              {/* DISCOUNT */}
-              <div>
-                <label className="block mb-1 font-medium">
-                  {form.type ===
-                  "ลดเป็นเปอร์เซ็นต์"
-                    ? "ส่วนลด (%)"
-                    : form.type ===
-                      "ซื้อ X ชิ้น ราคาพิเศษ"
-                    ? "ราคาพิเศษ"
-                    : "ส่วนลด (บาท)"}
-                </label>
-
-                <input
-                  type="number"
-                  min="0"
-                  name="discount"
-                  value={form.discount}
-                  onChange={handleChange}
-                  className="w-full border rounded-lg p-3"
-                />
-              </div>
-
-              {/* DATE */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* MODAL BODY */}
+            <div className="overflow-y-auto p-5 sm:p-6">
+              <div className="space-y-5">
+                {/* NAME */}
                 <div>
-                  <label className="block mb-1 font-medium">
-                    วันที่เริ่ม
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    ชื่อโปรโมชั่น
                   </label>
 
                   <input
-                    type="date"
-                    name="startDate"
-                    value={form.startDate}
+                    type="text"
+                    name="name"
+                    value={form.name}
                     onChange={handleChange}
-                    className="w-full border rounded-lg p-3"
+                    placeholder="เช่น ซื้อครบ 100 บาท ลด 10 บาท"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-500"
                   />
                 </div>
 
+                {/* TYPE */}
                 <div>
-                  <label className="block mb-1 font-medium">
-                    วันที่สิ้นสุด
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    ประเภทโปรโมชั่น
                   </label>
 
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={form.endDate}
+                  <select
+                    name="type"
+                    value={form.type}
                     onChange={handleChange}
-                    className="w-full border rounded-lg p-3"
-                  />
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
+                  >
+                    <option value="ลดเป็นจำนวนเงิน">
+                      ลดเป็นจำนวนเงิน
+                    </option>
+
+                    <option value="ลดเป็นเปอร์เซ็นต์">
+                      ลดเป็นเปอร์เซ็นต์
+                    </option>
+
+                    <option value="ซื้อ X ชิ้น ราคาพิเศษ">
+                      ซื้อ X ชิ้น ราคาพิเศษ
+                    </option>
+                  </select>
+                </div>
+
+                {/* CONDITION + DISCOUNT */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                      เงื่อนไข
+                    </label>
+
+                    <input
+                      type="number"
+                      name="condition"
+                      value={form.condition}
+                      onChange={handleChange}
+                      min="0"
+                      placeholder="เช่น 100"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                      ส่วนลด / ราคาพิเศษ
+                    </label>
+
+                    <input
+                      type="number"
+                      name="discount"
+                      value={form.discount}
+                      onChange={handleChange}
+                      min="0"
+                      placeholder="เช่น 10"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* DATE */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                      วันที่เริ่ม
+                    </label>
+
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={form.startDate}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                      วันที่สิ้นสุด
+                    </label>
+
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={form.endDate}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* BUTTON */}
-            <div className="flex gap-3 mt-7">
+            {/* MODAL FOOTER */}
+            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-4 sm:flex-row sm:justify-end sm:px-6">
               <button
-                onClick={() =>
-                  setShowForm(false)
-                }
-                className="flex-1 border rounded-lg py-3 hover:bg-slate-50"
+                onClick={() => setShowModal(false)}
+                className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 sm:w-auto"
               >
                 ยกเลิก
               </button>
 
               <button
-                onClick={savePromotion}
-                className="flex-1 bg-blue-600 text-white rounded-lg py-3 font-bold hover:bg-blue-700"
+                onClick={handleSave}
+                className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 sm:w-auto"
               >
-                💾 บันทึก
+                {editingPromotion ? "บันทึกการแก้ไข" : "เพิ่มโปรโมชั่น"}
               </button>
             </div>
           </div>

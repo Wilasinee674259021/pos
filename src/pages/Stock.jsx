@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const defaultProducts = [
   {
@@ -45,104 +45,111 @@ const defaultProducts = [
 
 export default function Stock() {
   const [products, setProducts] = useState(() => {
-    const saved =
-      localStorage.getItem("pos_stock");
+    const saved = localStorage.getItem("pos_stock");
 
-    return saved
-      ? JSON.parse(saved)
-      : defaultProducts;
+    return saved ? JSON.parse(saved) : defaultProducts;
   });
 
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("ทั้งหมด");
 
-  const [category, setCategory] =
-    useState("ทั้งหมด");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  const [showModal, setShowModal] =
-    useState(false);
-
-  const [selectedProduct, setSelectedProduct] =
-    useState(null);
-
-  const [stockType, setStockType] =
-    useState("in");
-
-  const [amount, setAmount] =
-    useState("");
-
-  const [note, setNote] =
-    useState("");
+  const [stockType, setStockType] = useState("in");
+  const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(
-      "pos_stock",
-      JSON.stringify(products)
-    );
+    localStorage.setItem("pos_stock", JSON.stringify(products));
   }, [products]);
 
-  // =========================
-  // FILTER
-  // =========================
+  /* =========================
+      CATEGORY
+  ========================= */
 
-  const filteredProducts =
-    products.filter((product) => {
-      const matchSearch =
-        product.name
-          .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          ) ||
-        product.code
-          .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          );
+  const categories = useMemo(() => {
+    const uniqueCategories = [
+      ...new Set(products.map((product) => product.category)),
+    ];
 
-      const matchCategory =
-        category === "ทั้งหมด" ||
-        product.category === category;
+    return ["ทั้งหมด", ...uniqueCategories];
+  }, [products]);
 
-      return (
-        matchSearch &&
-        matchCategory
-      );
-    });
+  /* =========================
+      FILTER
+  ========================= */
 
-  // =========================
-  // SUMMARY
-  // =========================
+  const filteredProducts = products.filter((product) => {
+    const keyword = search.toLowerCase().trim();
 
-  const totalProducts =
-    products.length;
+    const matchSearch =
+      product.name.toLowerCase().includes(keyword) ||
+      product.code.toLowerCase().includes(keyword);
 
-  const totalStock =
-    products.reduce(
-      (sum, product) =>
-        sum + Number(product.stock),
-      0
-    );
+    const matchCategory =
+      category === "ทั้งหมด" || product.category === category;
 
-  const lowStockProducts =
-    products.filter(
-      (product) =>
-        product.stock > 0 &&
-        product.stock <= product.minStock
-    ).length;
+    return matchSearch && matchCategory;
+  });
 
-  const outOfStockProducts =
-    products.filter(
-      (product) =>
-        product.stock === 0
-    ).length;
+  /* =========================
+      SUMMARY
+  ========================= */
 
-  // =========================
-  // OPEN STOCK MODAL
-  // =========================
+  const totalProducts = products.length;
 
-  const openStockModal = (
-    product,
-    type
-  ) => {
+  const totalStock = products.reduce(
+    (sum, product) => sum + Number(product.stock),
+    0
+  );
+
+  const lowStockProducts = products.filter(
+    (product) =>
+      Number(product.stock) > 0 &&
+      Number(product.stock) <= Number(product.minStock)
+  ).length;
+
+  const outOfStockProducts = products.filter(
+    (product) => Number(product.stock) === 0
+  ).length;
+
+  /* =========================
+      STATUS
+  ========================= */
+
+  const getStockStatus = (product) => {
+    const stock = Number(product.stock);
+    const minStock = Number(product.minStock);
+
+    if (stock === 0) {
+      return {
+        label: "หมด",
+        className: "bg-red-100 text-red-700",
+        stockClass: "text-red-600",
+      };
+    }
+
+    if (stock <= minStock) {
+      return {
+        label: "ใกล้หมด",
+        className: "bg-orange-100 text-orange-700",
+        stockClass: "text-orange-500",
+      };
+    }
+
+    return {
+      label: "ปกติ",
+      className: "bg-green-100 text-green-700",
+      stockClass: "text-green-600",
+    };
+  };
+
+  /* =========================
+      OPEN MODAL
+  ========================= */
+
+  const openStockModal = (product, type) => {
     setSelectedProduct(product);
     setStockType(type);
     setAmount("");
@@ -150,50 +157,47 @@ export default function Stock() {
     setShowModal(true);
   };
 
-  // =========================
-  // UPDATE STOCK
-  // =========================
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedProduct(null);
+    setAmount("");
+    setNote("");
+  };
+
+  /* =========================
+      UPDATE STOCK
+  ========================= */
 
   const updateStock = () => {
-    const quantity =
-      Number(amount);
+    const quantity = Number(amount);
 
-    if (
-      !amount ||
-      quantity <= 0
-    ) {
-      alert(
-        "กรุณากรอกจำนวนที่ถูกต้อง"
-      );
+    if (!amount || quantity <= 0) {
+      alert("กรุณากรอกจำนวนที่ถูกต้อง");
+      return;
+    }
+
+    if (!selectedProduct) {
       return;
     }
 
     if (
       stockType === "out" &&
-      quantity >
-        selectedProduct.stock
+      quantity > Number(selectedProduct.stock)
     ) {
-      alert(
-        "จำนวนสินค้าในสต๊อกไม่เพียงพอ"
-      );
+      alert("จำนวนสินค้าในสต๊อกไม่เพียงพอ");
       return;
     }
 
-    setProducts(
-      products.map((product) => {
-        if (
-          product.id !==
-          selectedProduct.id
-        ) {
+    setProducts((prevProducts) =>
+      prevProducts.map((product) => {
+        if (product.id !== selectedProduct.id) {
           return product;
         }
 
         const newStock =
           stockType === "in"
-            ? product.stock +
-              quantity
-            : product.stock -
-              quantity;
+            ? Number(product.stock) + quantity
+            : Number(product.stock) - quantity;
 
         return {
           ...product,
@@ -202,7 +206,7 @@ export default function Stock() {
       })
     );
 
-    setShowModal(false);
+    closeModal();
 
     alert(
       stockType === "in"
@@ -212,445 +216,523 @@ export default function Stock() {
   };
 
   return (
-    <div className="p-8 bg-slate-50 min-h-screen">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-5 md:p-6 lg:p-8">
+      {/* =========================
+          HEADER
+      ========================= */}
 
-      {/* HEADER */}
+      <div className="mb-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
+            📦 จัดการสต๊อกสินค้า
+          </h1>
 
-      <div className="mb-7">
-
-        <h1 className="text-3xl font-bold text-slate-800">
-          📦 จัดการสต๊อกสินค้า
-        </h1>
-
-        <p className="text-slate-500 mt-1">
-          ตรวจสอบ รับเข้า และตัดสินค้าออกจากสต๊อก
-        </p>
-
+          <p className="text-sm leading-6 text-gray-500">
+            ตรวจสอบ รับเข้า และตัดสินค้าออกจากสต๊อก
+          </p>
+        </div>
       </div>
 
-      {/* SUMMARY */}
+      {/* =========================
+          SUMMARY
+      ========================= */}
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* TOTAL PRODUCTS */}
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">
+                สินค้าทั้งหมด
+              </p>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <p className="mt-2 text-3xl font-bold text-gray-800">
+                {totalProducts}
+              </p>
 
-          <p className="text-slate-500">
-            สินค้าทั้งหมด
-          </p>
+              <p className="mt-1 text-xs text-gray-400">
+                รายการสินค้า
+              </p>
+            </div>
 
-          <p className="text-3xl font-bold mt-2">
-            {totalProducts}
-          </p>
-
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
+              📦
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        {/* TOTAL STOCK */}
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">
+                จำนวนสินค้าคงเหลือ
+              </p>
 
-          <p className="text-slate-500">
-            จำนวนสินค้าคงเหลือ
-          </p>
+              <p className="mt-2 text-3xl font-bold text-blue-600">
+                {totalStock}
+              </p>
 
-          <p className="text-3xl font-bold text-blue-600 mt-2">
-            {totalStock}
-          </p>
+              <p className="mt-1 text-xs text-gray-400">
+                ชิ้น
+              </p>
+            </div>
 
-          <p className="text-sm text-slate-400">
-            ชิ้น
-          </p>
-
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
+              📊
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        {/* LOW STOCK */}
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">
+                สินค้าใกล้หมด
+              </p>
 
-          <p className="text-slate-500">
-            ใกล้หมด
-          </p>
+              <p className="mt-2 text-3xl font-bold text-orange-500">
+                {lowStockProducts}
+              </p>
 
-          <p className="text-3xl font-bold text-orange-500 mt-2">
-            {lowStockProducts}
-          </p>
+              <p className="mt-1 text-xs text-gray-400">
+                รายการ
+              </p>
+            </div>
 
-          <p className="text-sm text-slate-400">
-            รายการ
-          </p>
-
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-xl">
+              ⚠️
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        {/* OUT OF STOCK */}
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-500">
+                สินค้าหมด
+              </p>
 
-          <p className="text-slate-500">
-            สินค้าหมด
-          </p>
+              <p className="mt-2 text-3xl font-bold text-red-500">
+                {outOfStockProducts}
+              </p>
 
-          <p className="text-3xl font-bold text-red-500 mt-2">
-            {outOfStockProducts}
-          </p>
+              <p className="mt-1 text-xs text-gray-400">
+                รายการ
+              </p>
+            </div>
 
-          <p className="text-sm text-slate-400">
-            รายการ
-          </p>
-
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-xl">
+              🚨
+            </div>
+          </div>
         </div>
-
       </div>
 
-      {/* SEARCH */}
+      {/* =========================
+          SEARCH / FILTER
+      ========================= */}
 
-      <div className="bg-white rounded-2xl p-5 shadow-sm mb-6">
+      <div className="mb-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="relative flex-1">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ค้นหาชื่อสินค้า / รหัสสินค้า"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-11 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white"
+            />
 
-        <div className="flex gap-3">
-
-          <input
-            value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
-            placeholder="🔍 ค้นหาชื่อสินค้า / รหัสสินค้า"
-            className="flex-1 border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+              🔍
+            </span>
+          </div>
 
           <select
             value={category}
-            onChange={(e) =>
-              setCategory(
-                e.target.value
-              )
-            }
-            className="border border-slate-300 rounded-lg px-4"
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 sm:w-48"
           >
-
-            <option>
-              ทั้งหมด
-            </option>
-
-            <option>
-              เครื่องดื่ม
-            </option>
-
-            <option>
-              อาหาร
-            </option>
-
-            <option>
-              ขนม
-            </option>
-
+            {categories.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
           </select>
-
         </div>
-
       </div>
 
-      {/* TABLE */}
+      {/* =========================
+          DESKTOP TABLE
+      ========================= */}
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm md:block">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1050px] table-fixed">
+            <colgroup>
+              <col className="w-[13%]" />
+              <col className="w-[25%]" />
+              <col className="w-[15%]" />
+              <col className="w-[12%]" />
+              <col className="w-[13%]" />
+              <col className="w-[22%]" />
+            </colgroup>
 
-        <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="px-5 py-4 text-left text-xs font-semibold text-gray-500">
+                  รหัสสินค้า
+                </th>
 
-          <thead className="bg-slate-100">
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
+                  สินค้า
+                </th>
 
-            <tr>
+                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
+                  หมวดหมู่
+                </th>
 
-              <th className="text-left p-4">
-                รหัสสินค้า
-              </th>
+                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                  สต๊อก
+                </th>
 
-              <th className="text-left p-4">
-                สินค้า
-              </th>
+                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                  สถานะ
+                </th>
 
-              <th className="text-left p-4">
-                หมวดหมู่
-              </th>
+                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                  จัดการ
+                </th>
+              </tr>
+            </thead>
 
-              <th className="text-center p-4">
-                สต๊อก
-              </th>
+            <tbody>
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => {
+                  const status = getStockStatus(product);
 
-              <th className="text-center p-4">
-                สถานะ
-              </th>
+                  return (
+                    <tr
+                      key={product.id}
+                      className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
+                    >
+                      {/* CODE */}
+                      <td className="px-5 py-5 align-middle">
+                        <span className="rounded-lg bg-gray-100 px-3 py-2 font-mono text-xs font-semibold text-gray-600">
+                          {product.code}
+                        </span>
+                      </td>
 
-              <th className="text-center p-4">
-                จัดการ
-              </th>
+                      {/* PRODUCT */}
+                      <td className="px-4 py-5 align-middle">
+                        <div className="min-w-0">
+                          <p className="break-words text-sm font-semibold leading-6 text-gray-800">
+                            {product.name}
+                          </p>
 
-            </tr>
+                          <p className="mt-1 text-xs text-gray-400">
+                            สต๊อกขั้นต่ำ {product.minStock} ชิ้น
+                          </p>
+                        </div>
+                      </td>
 
-          </thead>
+                      {/* CATEGORY */}
+                      <td className="px-4 py-5 align-middle">
+                        <span className="inline-flex rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+                          {product.category}
+                        </span>
+                      </td>
 
-          <tbody>
+                      {/* STOCK */}
+                      <td className="px-4 py-5 text-center align-middle">
+                        <div className="flex flex-col items-center">
+                          <span
+                            className={`text-xl font-bold ${status.stockClass}`}
+                          >
+                            {product.stock}
+                          </span>
 
-            {filteredProducts.map(
-              (product) => {
+                          <span className="text-xs text-gray-400">
+                            ชิ้น
+                          </span>
+                        </div>
+                      </td>
 
-                const isOut =
-                  product.stock === 0;
+                      {/* STATUS */}
+                      <td className="px-4 py-5 text-center align-middle">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
+                        >
+                          {status.label}
+                        </span>
+                      </td>
 
-                const isLow =
-                  product.stock > 0 &&
-                  product.stock <=
-                    product.minStock;
+                      {/* ACTION */}
+                      <td className="px-4 py-5 align-middle">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() =>
+                              openStockModal(product, "in")
+                            }
+                            className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 transition hover:bg-green-100"
+                          >
+                            ＋ รับเข้า
+                          </button>
 
-                return (
-                  <tr
-                    key={product.id}
-                    className="border-t hover:bg-slate-50"
+                          <button
+                            onClick={() =>
+                              openStockModal(product, "out")
+                            }
+                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                          >
+                            − ตัดออก
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td
+                    colSpan="6"
+                    className="px-5 py-12 text-center text-sm text-gray-400"
                   >
+                    ไม่พบสินค้า
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-                    <td className="p-4 font-medium">
-                      {product.code}
-                    </td>
+      {/* =========================
+          MOBILE CARDS
+      ========================= */}
 
-                    <td className="p-4">
+      <div className="space-y-4 md:hidden">
+        {filteredProducts.length > 0 ? (
+          filteredProducts.map((product) => {
+            const status = getStockStatus(product);
 
-                      <div className="font-bold">
-                        {product.name}
+            return (
+              <div
+                key={product.id}
+                className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
+              >
+                {/* CARD HEADER */}
+                <div className="border-b border-gray-100 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2">
+                        <span className="rounded-lg bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-600">
+                          {product.code}
+                        </span>
                       </div>
 
-                    </td>
+                      <h2 className="break-words text-base font-bold leading-6 text-gray-800">
+                        {product.name}
+                      </h2>
 
-                    <td className="p-4">
+                      <p className="mt-1 text-xs text-gray-400">
+                        สต๊อกขั้นต่ำ {product.minStock} ชิ้น
+                      </p>
+                    </div>
+
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
+                    >
+                      {status.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* CARD INFO */}
+                <div className="grid grid-cols-2 gap-px bg-gray-100">
+                  <div className="bg-white p-4">
+                    <p className="text-xs text-gray-400">
+                      หมวดหมู่
+                    </p>
+
+                    <p className="mt-1 text-sm font-semibold text-gray-700">
                       {product.category}
-                    </td>
+                    </p>
+                  </div>
 
-                    <td className="p-4 text-center">
+                  <div className="bg-white p-4">
+                    <p className="text-xs text-gray-400">
+                      สินค้าคงเหลือ
+                    </p>
 
+                    <div className="mt-1 flex items-baseline gap-1">
                       <span
-                        className={
-                          isOut
-                            ? "text-red-600 font-bold text-lg"
-                            : isLow
-                            ? "text-orange-500 font-bold text-lg"
-                            : "text-green-600 font-bold text-lg"
-                        }
+                        className={`text-xl font-bold ${status.stockClass}`}
                       >
                         {product.stock}
                       </span>
 
-                      <span className="text-slate-400 ml-1">
+                      <span className="text-xs text-gray-400">
                         ชิ้น
                       </span>
+                    </div>
+                  </div>
+                </div>
 
-                    </td>
+                {/* ACTION */}
+                <div className="flex gap-2 border-t border-gray-100 p-4">
+                  <button
+                    onClick={() => openStockModal(product, "in")}
+                    className="flex-1 rounded-xl border border-green-200 bg-green-50 px-3 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-100"
+                  >
+                    ＋ รับเข้า
+                  </button>
 
-                    <td className="p-4 text-center">
-
-                      {isOut ? (
-
-                        <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm">
-                          หมด
-                        </span>
-
-                      ) : isLow ? (
-
-                        <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">
-                          ใกล้หมด
-                        </span>
-
-                      ) : (
-
-                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
-                          ปกติ
-                        </span>
-
-                      )}
-
-                    </td>
-
-                    <td className="p-4">
-
-                      <div className="flex justify-center gap-2">
-
-                        <button
-                          onClick={() =>
-                            openStockModal(
-                              product,
-                              "in"
-                            )
-                          }
-                          className="bg-green-100 text-green-700 px-3 py-2 rounded-lg"
-                        >
-                          ＋ รับเข้า
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            openStockModal(
-                              product,
-                              "out"
-                            )
-                          }
-                          className="bg-red-100 text-red-700 px-3 py-2 rounded-lg"
-                        >
-                          − ตัดออก
-                        </button>
-
-                      </div>
-
-                    </td>
-
-                  </tr>
-                );
-              }
-            )}
-
-          </tbody>
-
-        </table>
-
-        {filteredProducts.length === 0 && (
-
-          <div className="text-center py-12 text-slate-400">
+                  <button
+                    onClick={() => openStockModal(product, "out")}
+                    className="flex-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                  >
+                    − ตัดออก
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="rounded-2xl border border-gray-100 bg-white px-5 py-12 text-center text-sm text-gray-400 shadow-sm">
             ไม่พบสินค้า
           </div>
-
         )}
-
       </div>
 
       {/* =========================
           STOCK MODAL
       ========================= */}
 
-      {showModal && (
+      {showModal && selectedProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* MODAL HEADER */}
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">
+                  {stockType === "in"
+                    ? "📥 รับสินค้าเข้า"
+                    : "📤 ตัดสินค้าออก"}
+                </h2>
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-
-          <div className="bg-white rounded-2xl w-[500px] p-7 shadow-xl">
-
-            <div className="flex justify-between items-center mb-6">
-
-              <h2 className="text-2xl font-bold">
-
-                {stockType === "in"
-                  ? "📥 รับสินค้าเข้า"
-                  : "📤 ตัดสินค้าออก"}
-
-              </h2>
+                <p className="mt-1 text-xs text-gray-400">
+                  {stockType === "in"
+                    ? "เพิ่มจำนวนสินค้าเข้าสู่สต๊อก"
+                    : "ลดจำนวนสินค้าออกจากสต๊อก"}
+                </p>
+              </div>
 
               <button
-                onClick={() =>
-                  setShowModal(false)
-                }
-                className="text-xl text-slate-500"
+                onClick={closeModal}
+                className="rounded-lg p-2 text-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
               >
-                ✕
+                ×
               </button>
-
             </div>
 
-            {/* PRODUCT */}
+            {/* MODAL BODY */}
+            <div className="overflow-y-auto p-5 sm:p-6">
+              {/* PRODUCT INFO */}
+              <div className="mb-5 rounded-2xl bg-gray-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="break-words text-base font-bold leading-6 text-gray-800">
+                      {selectedProduct.name}
+                    </p>
 
-            <div className="bg-slate-100 rounded-xl p-4 mb-5">
+                    <p className="mt-1 text-xs text-gray-400">
+                      รหัสสินค้า: {selectedProduct.code}
+                    </p>
+                  </div>
 
-              <div className="font-bold text-lg">
-                {selectedProduct?.name}
+                  <div className="shrink-0 rounded-xl bg-white px-4 py-3 text-center shadow-sm">
+                    <p className="text-xs text-gray-400">
+                      สต๊อกปัจจุบัน
+                    </p>
+
+                    <p
+                      className={`mt-1 text-xl font-bold ${
+                        getStockStatus(selectedProduct).stockClass
+                      }`}
+                    >
+                      {selectedProduct.stock}
+                      <span className="ml-1 text-xs font-normal text-gray-400">
+                        ชิ้น
+                      </span>
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="text-sm text-slate-500">
-                รหัสสินค้า:{" "}
-                {selectedProduct?.code}
+              {/* AMOUNT */}
+              <div className="mb-5">
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  จำนวนสินค้า
+                </label>
+
+                <input
+                  type="number"
+                  min="1"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="กรอกจำนวนสินค้า"
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-lg outline-none transition focus:border-blue-500"
+                  autoFocus
+                />
               </div>
 
-              <div className="text-sm mt-2">
+              {/* NOTE */}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  หมายเหตุ
+                </label>
 
-                สต๊อกปัจจุบัน:{" "}
-
-                <span className="font-bold">
-                  {selectedProduct?.stock}
-                  {" "}ชิ้น
-                </span>
-
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder={
+                    stockType === "in"
+                      ? "เช่น รับสินค้าจากซัพพลายเออร์"
+                      : "เช่น สินค้าชำรุด / หมดอายุ"
+                  }
+                  className="h-24 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                />
               </div>
-
             </div>
 
-            {/* AMOUNT */}
-
-            <div className="mb-5">
-
-              <label className="block font-medium mb-2">
-                จำนวน
-              </label>
-
-              <input
-                type="number"
-                min="1"
-                value={amount}
-                onChange={(e) =>
-                  setAmount(
-                    e.target.value
-                  )
-                }
-                placeholder="กรอกจำนวน"
-                className="w-full border border-slate-300 rounded-lg p-4 text-lg"
-                autoFocus
-              />
-
-            </div>
-
-            {/* NOTE */}
-
-            <div className="mb-6">
-
-              <label className="block font-medium mb-2">
-                หมายเหตุ
-              </label>
-
-              <textarea
-                value={note}
-                onChange={(e) =>
-                  setNote(
-                    e.target.value
-                  )
-                }
-                placeholder={
-                  stockType === "in"
-                    ? "เช่น รับสินค้าจากซัพพลายเออร์"
-                    : "เช่น สินค้าชำรุด / หมดอายุ"
-                }
-                className="w-full border border-slate-300 rounded-lg p-3 h-24"
-              />
-
-            </div>
-
-            {/* BUTTON */}
-
-            <div className="flex gap-3">
-
+            {/* MODAL FOOTER */}
+            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-4 sm:flex-row sm:justify-end sm:px-6">
               <button
-                onClick={() =>
-                  setShowModal(false)
-                }
-                className="flex-1 border rounded-lg py-3"
+                onClick={closeModal}
+                className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100 sm:w-auto"
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={updateStock}
-                className={
+                className={`w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition sm:w-auto ${
                   stockType === "in"
-                    ? "flex-1 bg-green-600 text-white rounded-lg py-3 font-bold"
-                    : "flex-1 bg-red-600 text-white rounded-lg py-3 font-bold"
-                }
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
               >
                 {stockType === "in"
                   ? "📥 ยืนยันรับเข้า"
                   : "📤 ยืนยันตัดออก"}
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }
