@@ -6,7 +6,7 @@ const defaultEmployees = [
     employeeCode: "EMP001",
     name: "ผู้ดูแลระบบ",
     username: "admin",
-    password: "admin123",
+    password: "1234",
     position: "ผู้จัดการ",
     branch: "สาขาหลัก",
     role: "ผู้ดูแลระบบ",
@@ -17,7 +17,7 @@ const defaultEmployees = [
     employeeCode: "EMP002",
     name: "พนักงานหน้าร้าน",
     username: "staff",
-    password: "staff123",
+    password: "1234",
     position: "พนักงานขาย",
     branch: "สาขาหลัก",
     role: "พนักงาน",
@@ -352,7 +352,7 @@ export default function Employees() {
           <div className="min-w-0">
 
             <h1 className="text-2xl font-bold leading-tight text-slate-800 sm:text-3xl">
-              👨‍💼 จัดการพนักงาน
+              👩🏻‍💻 จัดการพนักงาน
             </h1>
 
             <p className="mt-1 text-sm leading-6 text-slate-500">
@@ -395,7 +395,7 @@ export default function Employees() {
             </div>
 
             <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg sm:flex">
-              👨‍💼
+              👩🏻‍💻
             </div>
 
           </div>
