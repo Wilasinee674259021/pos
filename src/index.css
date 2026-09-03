@@ -234,6 +234,95 @@ main {
 }
 
 /* =========================================
+   STANDARD TOP PAGE INPUT
+   ใช้กับช่องค้นหา/ข้อความด้านบน
+========================================= */
+
+.top-page-input {
+  width: 100%;
+  height: 38px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  background: white;
+  color: #0f172a;
+
+  font-size: 14px;
+  line-height: 38px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.top-page-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 0.1);
+}
+
+.top-page-input::placeholder {
+  color: #94a3b8;
+}
+
+/* =========================================
+   TOP PAGE INPUT WRAPPER
+========================================= */
+
+.top-page-input-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.top-page-input-wrapper input,
+.top-page-input-wrapper select {
+  width: 100%;
+  height: 38px;
+}
+
+/* =========================================
+   STANDARD TOP CONTROL
+   ปุ่ม/Select ด้านบนให้สูงเท่ากัน
+========================================= */
+
+.top-page-control {
+  height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+
+  background: white;
+  color: #334155;
+
+  font-size: 14px;
+  line-height: 1;
+
+  white-space: nowrap;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.top-page-control:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 0.1);
+}
+
+/* =========================================
    TABLE RESPONSIVE
 ========================================= */
 
@@ -241,7 +330,6 @@ main {
   -webkit-overflow-scrolling: touch;
 }
 
-/* กล่องที่ครอบ table */
 .overflow-hidden:has(table) {
   max-width: 100%;
 }
@@ -459,6 +547,22 @@ main {
   }
 
   /* -------------------------
+     Standard Top Inputs Mobile
+  ------------------------- */
+
+  .top-page-input-wrapper {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .top-page-input,
+  .top-page-input-wrapper input,
+  .top-page-input-wrapper select,
+  .top-page-control {
+    height: 38px;
+  }
+
+  /* -------------------------
      Buttons
   ------------------------- */
 
@@ -595,6 +699,17 @@ main {
 
   button {
     min-height: 42px;
+  }
+
+  /* -------------------------
+     Top Inputs Small Mobile
+  ------------------------- */
+
+  .top-page-input,
+  .top-page-input-wrapper input,
+  .top-page-input-wrapper select,
+  .top-page-control {
+    height: 38px;
   }
 
   .fixed.inset-0 {

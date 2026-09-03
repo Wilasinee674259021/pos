@@ -335,69 +335,79 @@ export default function Members() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
 
-      {/* =========================
-          HEADER
-      ========================= */}
+      {/* HEADER */}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 sm:mb-6">
+      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
 
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">
             👥 สมาชิก
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-500 mt-1">
+          <p className="mt-1 text-sm text-slate-500 sm:text-base">
             จัดการข้อมูลสมาชิกและคะแนนสะสม
           </p>
+
         </div>
 
         <button
           onClick={openAddForm}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-bold transition"
+          className="
+            h-10
+            w-full
+            rounded-lg
+            bg-blue-600
+            px-5
+            text-sm
+            font-bold
+            text-white
+            transition
+            hover:bg-blue-700
+            sm:w-auto
+          "
         >
           ＋ สมัครสมาชิก
         </button>
 
       </div>
 
-      {/* =========================
-          SUMMARY
-      ========================= */}
+      {/* SUMMARY */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-2 sm:gap-4">
 
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
           <p className="text-sm text-slate-500">
             สมาชิกทั้งหมด
           </p>
 
-          <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">
+          <p className="mt-2 text-2xl font-bold text-blue-600 sm:text-3xl">
             {totalMembers.toLocaleString(
               "th-TH",
             )}
           </p>
 
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="mt-1 text-xs text-slate-400">
             คน
           </p>
 
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
           <p className="text-sm text-slate-500">
             Points รวม
           </p>
 
-          <p className="text-2xl sm:text-3xl font-bold text-yellow-600 mt-2">
+          <p className="mt-2 text-2xl font-bold text-yellow-600 sm:text-3xl">
             ⭐{" "}
             {totalPoints.toLocaleString(
               "th-TH",
             )}
           </p>
 
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="mt-1 text-xs text-slate-400">
             คะแนนสะสมทั้งหมด
           </p>
 
@@ -405,17 +415,15 @@ export default function Members() {
 
       </div>
 
-      {/* =========================
-          SEARCH
-      ========================= */}
+      {/* SEARCH */}
 
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 mb-5 sm:mb-6">
+      <div className="mb-5 rounded-xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
 
-        <h2 className="font-bold text-lg mb-3">
+        <h2 className="mb-3 font-bold text-lg">
           🔎 ค้นหาสมาชิก
         </h2>
 
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
 
           <input
             value={phone}
@@ -431,12 +439,38 @@ export default function Members() {
             maxLength={10}
             inputMode="numeric"
             placeholder="กรอกเบอร์โทรศัพท์ 10 หลัก"
-            className="w-full min-w-0 flex-1 border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+            className="
+              h-10
+              w-full
+              min-w-0
+              flex-1
+              rounded-lg
+              border
+              border-slate-300
+              px-4
+              text-sm
+              outline-none
+              focus:border-blue-500
+              focus:ring-2
+              focus:ring-blue-500
+            "
           />
 
           <button
             onClick={searchMember}
-            className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-lg font-bold transition"
+            className="
+              h-10
+              w-full
+              rounded-lg
+              bg-slate-800
+              px-6
+              text-sm
+              font-bold
+              text-white
+              transition
+              hover:bg-slate-900
+              sm:w-auto
+            "
           >
             🔍 ค้นหา
           </button>
@@ -445,23 +479,21 @@ export default function Members() {
 
       </div>
 
-      {/* =========================
-          SEARCH RESULT
-      ========================= */}
+      {/* SEARCH RESULT */}
 
       {member && (
 
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 mb-5 sm:mb-6">
+        <div className="mb-5 rounded-xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
 
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
             <div className="min-w-0">
 
-              <div className="text-sm text-slate-400 mb-1">
+              <div className="mb-1 text-sm text-slate-400">
                 Member ID
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold break-all">
+              <h2 className="break-all text-xl font-bold sm:text-2xl">
                 {member.id}
               </h2>
 
@@ -472,21 +504,21 @@ export default function Members() {
                 </span>
               </p>
 
-              <p className="text-slate-500 mt-1">
+              <p className="mt-1 text-slate-500">
                 📱 {member.phone}
               </p>
 
             </div>
 
-            <div className="flex flex-col sm:flex-row lg:items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row lg:items-center">
 
-              <div className="bg-yellow-50 rounded-xl p-4 sm:p-5 text-center min-w-[160px]">
+              <div className="min-w-[160px] rounded-xl bg-yellow-50 p-4 text-center sm:p-5">
 
                 <p className="text-sm text-slate-500">
                   คะแนนสะสม
                 </p>
 
-                <div className="text-3xl sm:text-4xl font-bold text-yellow-600 mt-1">
+                <div className="mt-1 text-3xl font-bold text-yellow-600 sm:text-4xl">
                   ⭐{" "}
                   {Number(
                     member.points || 0,
@@ -495,28 +527,60 @@ export default function Members() {
                   )}
                 </div>
 
-                <p className="text-sm text-slate-500 mt-1">
+                <p className="mt-1 text-sm text-slate-500">
                   Points
                 </p>
 
               </div>
 
-              <div className="grid grid-cols-2 sm:flex lg:flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex lg:flex-col">
+
+                {/* EDIT */}
 
                 <button
                   onClick={() =>
                     openEditForm(member)
                   }
-                  className="bg-blue-100 text-blue-600 px-4 py-3 rounded-lg hover:bg-blue-200 font-bold transition"
+                  className="
+                    flex
+                    h-8
+                    items-center
+                    justify-center
+                    gap-1.5
+                    rounded-md
+                    bg-blue-100
+                    px-3
+                    text-xs
+                    font-semibold
+                    text-blue-600
+                    transition
+                    hover:bg-blue-200
+                  "
                 >
                   ✏️ แก้ไข
                 </button>
+
+                {/* DELETE */}
 
                 <button
                   onClick={() =>
                     deleteMember(member.id)
                   }
-                  className="bg-red-100 text-red-600 px-4 py-3 rounded-lg hover:bg-red-200 font-bold transition"
+                  className="
+                    flex
+                    h-8
+                    items-center
+                    justify-center
+                    gap-1.5
+                    rounded-md
+                    bg-red-100
+                    px-3
+                    text-xs
+                    font-semibold
+                    text-red-600
+                    transition
+                    hover:bg-red-200
+                  "
                 >
                   🗑️ ลบ
                 </button>
@@ -531,25 +595,33 @@ export default function Members() {
 
       )}
 
-      {/* =========================
-          ERROR
-      ========================= */}
+      {/* ERROR */}
 
       {error && (
 
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-5 sm:mb-6">
+        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 sm:mb-6">
 
           <div className="font-bold">
             ❌ โหลดข้อมูลสมาชิกไม่สำเร็จ
           </div>
 
-          <div className="text-sm mt-1 break-words">
+          <div className="mt-1 break-words text-sm">
             {error}
           </div>
 
           <button
             onClick={loadMembers}
-            className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold"
+            className="
+              mt-3
+              h-9
+              rounded-lg
+              bg-red-600
+              px-4
+              text-sm
+              font-bold
+              text-white
+              hover:bg-red-700
+            "
           >
             🔄 ลองใหม่
           </button>
@@ -558,13 +630,11 @@ export default function Members() {
 
       )}
 
-      {/* =========================
-          MEMBER TABLE
-      ========================= */}
+      {/* MEMBER TABLE */}
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
 
-        <div className="p-4 sm:p-5 border-b">
+        <div className="border-b p-4 sm:p-5">
 
           <div className="flex items-center justify-between gap-3">
 
@@ -572,7 +642,7 @@ export default function Members() {
               รายชื่อสมาชิกทั้งหมด
             </h2>
 
-            <span className="text-sm text-slate-400 whitespace-nowrap">
+            <span className="whitespace-nowrap text-sm text-slate-400">
               {filteredMembers.length} คน
             </span>
 
@@ -588,23 +658,23 @@ export default function Members() {
 
               <tr>
 
-                <th className="text-left p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-left">
                   Member ID
                 </th>
 
-                <th className="text-left p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-left">
                   ชื่อสมาชิก
                 </th>
 
-                <th className="text-left p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-left">
                   เบอร์โทรศัพท์
                 </th>
 
-                <th className="text-center p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-center">
                   Points
                 </th>
 
-                <th className="text-center p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-center">
                   จัดการ
                 </th>
 
@@ -620,7 +690,7 @@ export default function Members() {
 
                   <td
                     colSpan="5"
-                    className="text-center p-10 text-slate-500"
+                    className="p-10 text-center text-slate-500"
                   >
                     ⏳ กำลังโหลดข้อมูลสมาชิก...
                   </td>
@@ -633,9 +703,10 @@ export default function Members() {
 
                   <td
                     colSpan="5"
-                    className="text-center p-10 text-slate-400"
+                    className="p-10 text-center text-slate-400"
                   >
-                    <div className="text-3xl mb-2">
+
+                    <div className="mb-2 text-3xl">
                       👥
                     </div>
 
@@ -656,29 +727,31 @@ export default function Members() {
 
                     <tr
                       key={item.id}
-                      className="border-t hover:bg-slate-50 transition"
+                      className="border-t transition hover:bg-slate-50"
                     >
 
-                      <td className="p-4 font-bold whitespace-nowrap">
+                      <td className="whitespace-nowrap p-4 font-bold">
                         {item.id}
                       </td>
 
-                      <td className="p-4 font-medium max-w-[220px]">
+                      <td className="max-w-[220px] p-4 font-medium">
+
                         <div
                           className="truncate"
                           title={item.name}
                         >
                           {item.name}
                         </div>
+
                       </td>
 
-                      <td className="p-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap p-4">
                         {item.phone}
                       </td>
 
                       <td className="p-4 text-center">
 
-                        <span className="inline-block bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full font-bold">
+                        <span className="inline-block rounded-full bg-yellow-50 px-3 py-1 font-bold text-yellow-700">
                           ⭐{" "}
                           {Number(
                             item.points || 0,
@@ -689,19 +762,37 @@ export default function Members() {
 
                       </td>
 
+                      {/* ACTION */}
+
                       <td className="p-4">
 
-                        <div className="flex justify-center gap-2">
+                        <div className="flex justify-center gap-1.5">
+
+                          {/* EDIT */}
 
                           <button
                             onClick={() =>
                               openEditForm(item)
                             }
-                            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200 transition"
+                            className="
+                              flex
+                              h-8
+                              w-8
+                              items-center
+                              justify-center
+                              rounded-md
+                              bg-blue-100
+                              text-sm
+                              text-blue-600
+                              transition
+                              hover:bg-blue-200
+                            "
                             title="แก้ไข"
                           >
                             ✏️
                           </button>
+
+                          {/* DELETE */}
 
                           <button
                             onClick={() =>
@@ -709,7 +800,19 @@ export default function Members() {
                                 item.id,
                               )
                             }
-                            className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition"
+                            className="
+                              flex
+                              h-8
+                              w-8
+                              items-center
+                              justify-center
+                              rounded-md
+                              bg-red-100
+                              text-sm
+                              text-red-600
+                              transition
+                              hover:bg-red-200
+                            "
                             title="ลบ"
                           >
                             🗑️
@@ -734,21 +837,19 @@ export default function Members() {
 
       </div>
 
-      {/* =========================
-          ADD / EDIT MODAL
-      ========================= */}
+      {/* ADD / EDIT MODAL */}
 
       {showForm && (
 
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
 
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto shadow-2xl p-4 sm:p-6">
+          <div className="max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
 
             {/* MODAL HEADER */}
 
-            <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="mb-5 flex items-center justify-between gap-3">
 
-              <h2 className="text-xl sm:text-2xl font-bold">
+              <h2 className="text-xl font-bold sm:text-2xl">
                 {editingMember
                   ? "✏️ แก้ไขสมาชิก"
                   : "➕ สมัครสมาชิก"}
@@ -756,7 +857,19 @@ export default function Members() {
 
               <button
                 onClick={closeForm}
-                className="w-9 h-9 flex-shrink-0 rounded-lg text-xl text-slate-500 hover:bg-slate-100 transition"
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  text-xl
+                  text-slate-500
+                  transition
+                  hover:bg-slate-100
+                "
               >
                 ✕
               </button>
@@ -767,7 +880,7 @@ export default function Members() {
 
             <div className="mb-4">
 
-              <label className="block font-medium mb-2">
+              <label className="mb-2 block font-medium">
                 ชื่อ-นามสกุล
               </label>
 
@@ -780,7 +893,16 @@ export default function Members() {
                   })
                 }
                 placeholder="เช่น สมชาย ใจดี"
-                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
               />
 
             </div>
@@ -789,7 +911,7 @@ export default function Members() {
 
             <div className="mb-5">
 
-              <label className="block font-medium mb-2">
+              <label className="mb-2 block font-medium">
                 เบอร์โทรศัพท์
               </label>
 
@@ -807,7 +929,16 @@ export default function Members() {
                 maxLength={10}
                 inputMode="numeric"
                 placeholder="เช่น 0812345678"
-                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
               />
 
             </div>
@@ -816,7 +947,7 @@ export default function Members() {
 
             {!editingMember && (
 
-              <div className="bg-yellow-50 border border-yellow-100 text-yellow-700 rounded-lg p-4 text-sm mb-5">
+              <div className="mb-5 rounded-lg border border-yellow-100 bg-yellow-50 p-4 text-sm text-yellow-700">
 
                 ⭐ สมาชิกใหม่เริ่มต้นที่{" "}
                 <strong>0 Points</strong>
@@ -827,18 +958,38 @@ export default function Members() {
 
             {/* BUTTONS */}
 
-            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
 
               <button
                 onClick={closeForm}
-                className="w-full sm:flex-1 border border-slate-300 rounded-lg py-3 hover:bg-slate-50 font-medium transition"
+                className="
+                  h-10
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  font-medium
+                  transition
+                  hover:bg-slate-50
+                  sm:flex-1
+                "
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={saveMember}
-                className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-bold transition"
+                className="
+                  h-10
+                  w-full
+                  rounded-lg
+                  bg-blue-600
+                  font-bold
+                  text-white
+                  transition
+                  hover:bg-blue-700
+                  sm:flex-1
+                "
               >
                 💾 บันทึก
               </button>

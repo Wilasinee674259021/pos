@@ -421,13 +421,13 @@ export default function POS() {
   // ================================
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-5 lg:p-8">
 
       {/* =================================
           HEADER
       ================================= */}
 
-      <div className="mb-5 sm:mb-6">
+      <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
           🧾 POS คิดเงิน
         </h1>
@@ -448,11 +448,12 @@ export default function POS() {
         ================================= */}
 
         <div className="lg:col-span-2 min-w-0">
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-5">
 
             {/* SEARCH */}
 
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-5">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-5">
 
               <input
                 value={search}
@@ -461,12 +462,12 @@ export default function POS() {
                 }
                 onKeyDown={handleSearchKeyDown}
                 placeholder="🔍 สแกน Barcode หรือค้นหาสินค้า"
-                className="w-full min-w-0 flex-1 border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full min-w-0 flex-1 border border-slate-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
               <button
                 onClick={searchProduct}
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold transition"
+                className="!min-h-0 w-full sm:w-auto h-10 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 rounded-lg font-bold transition"
               >
                 ค้นหา
               </button>
@@ -476,6 +477,7 @@ export default function POS() {
             {/* LOADING */}
 
             {loadingProducts ? (
+
               <div className="text-center text-slate-400 py-10">
                 กำลังโหลดสินค้า...
               </div>
@@ -498,7 +500,7 @@ export default function POS() {
 
                 <button
                   onClick={loadProducts}
-                  className="mt-4 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-bold transition"
+                  className="!min-h-0 h-10 mt-4 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-bold transition"
                 >
                   ลองใหม่
                 </button>
@@ -515,10 +517,11 @@ export default function POS() {
 
               /* PRODUCT GRID */
 
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
 
                 {filteredProducts.map(
                   (product) => (
+
                     <button
                       key={product.id}
                       onClick={() =>
@@ -529,14 +532,14 @@ export default function POS() {
                           product.stock,
                         ) <= 0
                       }
-                      className="min-w-0 text-left border border-slate-200 rounded-xl p-3 sm:p-4 hover:border-blue-500 hover:shadow-md transition disabled:opacity-40 bg-white"
+                      className="!min-h-0 min-w-0 h-auto text-left border border-slate-200 rounded-xl p-3 sm:p-4 hover:border-blue-500 hover:shadow-md transition disabled:opacity-40 bg-white"
                     >
 
                       <div className="font-bold text-sm sm:text-lg break-words line-clamp-2">
                         {product.name}
                       </div>
 
-                      <div className="text-xs sm:text-sm text-slate-400 mt-1 break-all">
+                      <div className="text-[11px] sm:text-sm text-slate-400 mt-1 break-all">
                         {product.barcode}
                       </div>
 
@@ -575,7 +578,7 @@ export default function POS() {
 
         <div className="min-w-0">
 
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
+          <div className="bg-white rounded-xl shadow-sm p-3 sm:p-5">
 
             <h2 className="text-lg sm:text-xl font-bold mb-4">
               🛒 รายการสินค้า
@@ -585,26 +588,26 @@ export default function POS() {
 
             {cart.length === 0 ? (
 
-              <div className="text-center text-slate-400 py-10">
+              <div className="text-center text-slate-400 py-8 sm:py-10">
                 ยังไม่มีสินค้า
               </div>
 
             ) : (
 
-              <div className="space-y-4 max-h-[420px] lg:max-h-[480px] overflow-y-auto pr-1">
+              <div className="space-y-3 sm:space-y-4 max-h-[360px] sm:max-h-[420px] lg:max-h-[480px] overflow-y-auto pr-1">
 
                 {cart.map((item) => (
 
                   <div
                     key={item.id}
-                    className="border-b pb-4"
+                    className="border-b pb-3 sm:pb-4"
                   >
 
                     {/* NAME + DELETE */}
 
                     <div className="flex items-start justify-between gap-2">
 
-                      <div className="font-medium min-w-0 break-words">
+                      <div className="font-medium min-w-0 break-words text-sm sm:text-base">
                         {item.name}
                       </div>
 
@@ -614,7 +617,7 @@ export default function POS() {
                             item.id,
                           )
                         }
-                        className="flex-shrink-0 text-red-500 hover:text-red-700 w-8 h-8 rounded-lg hover:bg-red-50"
+                        className="!min-h-0 !w-8 !h-8 flex-shrink-0 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50"
                         aria-label="ลบสินค้า"
                       >
                         ✕
@@ -634,7 +637,7 @@ export default function POS() {
                               item.id,
                             )
                           }
-                          className="w-9 h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold"
+                          className="!min-h-0 !w-8 !h-8 sm:!w-9 sm:!h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-lg"
                         >
                           −
                         </button>
@@ -649,14 +652,14 @@ export default function POS() {
                               item.id,
                             )
                           }
-                          className="w-9 h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold"
+                          className="!min-h-0 !w-8 !h-8 sm:!w-9 sm:!h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-lg"
                         >
                           +
                         </button>
 
                       </div>
 
-                      <div className="font-bold text-right break-all">
+                      <div className="font-bold text-right break-all text-sm sm:text-base">
                         ฿
                         {(
                           Number(
@@ -683,7 +686,7 @@ export default function POS() {
                 MEMBER
             ================================= */}
 
-            <div className="border-t mt-5 pt-5">
+            <div className="border-t mt-4 sm:mt-5 pt-4 sm:pt-5">
 
               <h3 className="font-bold mb-3">
                 👤 สมาชิก
@@ -703,12 +706,12 @@ export default function POS() {
                   }
                   placeholder="เบอร์โทรสมาชิก"
                   maxLength={10}
-                  className="w-full min-w-0 flex-1 border border-slate-300 rounded-lg px-3 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full min-w-0 flex-1 border border-slate-300 rounded-lg px-3 py-2.5 sm:py-3 outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
                 <button
                   onClick={searchMember}
-                  className="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white px-5 py-3 rounded-lg font-bold"
+                  className="!min-h-0 h-10 sm:h-11 w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white px-5 rounded-lg font-bold"
                 >
                   ค้นหา
                 </button>
@@ -716,6 +719,7 @@ export default function POS() {
               </div>
 
               {member && (
+
                 <div className="bg-green-50 text-green-700 rounded-lg p-3 mt-3">
 
                   <div className="font-bold break-words">
@@ -728,6 +732,7 @@ export default function POS() {
                   </div>
 
                 </div>
+
               )}
 
             </div>
@@ -736,7 +741,7 @@ export default function POS() {
                 TOTAL
             ================================= */}
 
-            <div className="border-t mt-5 pt-5">
+            <div className="border-t mt-4 sm:mt-5 pt-4 sm:pt-5">
 
               <div className="flex items-center justify-between gap-3 text-xl sm:text-2xl font-bold">
 
@@ -744,7 +749,7 @@ export default function POS() {
                   ยอดรวม
                 </span>
 
-                <span className="text-blue-600 text-right">
+                <span className="text-blue-600 text-right break-all">
                   ฿
                   {totalAmount.toLocaleString(
                     "th-TH",
@@ -762,7 +767,7 @@ export default function POS() {
                 PAYMENT
             ================================= */}
 
-            <div className="mt-5">
+            <div className="mt-4 sm:mt-5">
 
               <h3 className="font-bold mb-3">
                 💳 วิธีชำระเงิน
@@ -774,7 +779,7 @@ export default function POS() {
                   onClick={() =>
                     setPaymentMethod("cash")
                   }
-                  className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm transition ${
+                  className={`!min-h-0 h-10 sm:h-11 px-1 sm:px-2 rounded-lg font-bold text-xs sm:text-sm transition ${
                     paymentMethod === "cash"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-100 hover:bg-slate-200"
@@ -787,7 +792,7 @@ export default function POS() {
                   onClick={() =>
                     setPaymentMethod("qr")
                   }
-                  className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm transition ${
+                  className={`!min-h-0 h-10 sm:h-11 px-1 sm:px-2 rounded-lg font-bold text-xs sm:text-sm transition ${
                     paymentMethod === "qr"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-100 hover:bg-slate-200"
@@ -800,7 +805,7 @@ export default function POS() {
                   onClick={() =>
                     setPaymentMethod("card")
                   }
-                  className={`p-2 sm:p-3 rounded-lg font-bold text-xs sm:text-sm transition ${
+                  className={`!min-h-0 h-10 sm:h-11 px-1 sm:px-2 rounded-lg font-bold text-xs sm:text-sm transition ${
                     paymentMethod === "card"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-100 hover:bg-slate-200"
@@ -818,6 +823,7 @@ export default function POS() {
             ================================= */}
 
             {paymentMethod === "cash" && (
+
               <div className="mt-4">
 
                 <label className="block font-medium mb-2">
@@ -834,7 +840,7 @@ export default function POS() {
                     )
                   }
                   placeholder="จำนวนเงินที่รับ"
-                  className="w-full border border-slate-300 rounded-lg px-4 py-3 text-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 text-lg outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
                 <div className="flex justify-between items-center gap-3 mt-3">
@@ -856,6 +862,7 @@ export default function POS() {
                 </div>
 
               </div>
+
             )}
 
             {/* =================================
@@ -868,7 +875,7 @@ export default function POS() {
                 loading ||
                 cart.length === 0
               }
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-4 rounded-xl mt-6 text-lg sm:text-xl font-bold transition"
+              className="!min-h-0 w-full h-12 sm:h-14 bg-green-600 hover:bg-green-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white rounded-xl mt-5 sm:mt-6 text-base sm:text-xl font-bold transition"
             >
               {loading
                 ? "กำลังชำระเงิน..."

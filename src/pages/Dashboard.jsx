@@ -335,12 +335,13 @@ export default function Dashboard() {
               </div>
             </div>
 
+            {/* ปุ่มด้านขวาบน */}
             <button
               onClick={loadDashboard}
               disabled={loading}
               className="
                 flex
-                h-10
+                h-[38px]
                 w-full
                 items-center
                 justify-center
@@ -350,6 +351,7 @@ export default function Dashboard() {
                 px-4
                 text-sm
                 font-medium
+                leading-none
                 text-white
                 transition
                 hover:bg-blue-700

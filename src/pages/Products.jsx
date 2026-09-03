@@ -341,49 +341,67 @@ export default function Products() {
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
 
-      {/* ==================================
-          HEADER
-      ================================== */}
+      {/* HEADER */}
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 sm:mb-6">
+      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
 
         <div className="min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">
             📦 สินค้า
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-500 mt-1">
+          <p className="mt-1 text-sm text-slate-500 sm:text-base">
             จัดการสินค้าและสต๊อก
           </p>
         </div>
 
         <button
           onClick={openAddForm}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-bold transition"
+          className="
+            h-10
+            w-full
+            rounded-lg
+            bg-blue-600
+            px-5
+            text-sm
+            font-bold
+            text-white
+            transition
+            hover:bg-blue-700
+            sm:w-auto
+          "
         >
           ＋ เพิ่มสินค้า
         </button>
 
       </div>
 
-      {/* ==================================
-          ERROR
-      ================================== */}
+      {/* ERROR */}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-5 sm:mb-6">
+        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 sm:mb-6">
 
           <p className="font-bold">
             โหลดข้อมูลสินค้าไม่สำเร็จ
           </p>
 
-          <p className="text-sm mt-1 break-words">
+          <p className="mt-1 break-words text-sm">
             {error}
           </p>
 
           <button
             onClick={loadProducts}
-            className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold"
+            className="
+              mt-3
+              h-9
+              rounded-lg
+              bg-red-600
+              px-4
+              text-sm
+              font-bold
+              text-white
+              hover:bg-red-700
+            "
           >
             🔄 ลองใหม่
           </button>
@@ -391,51 +409,41 @@ export default function Products() {
         </div>
       )}
 
-      {/* ==================================
-          SUMMARY
-      ================================== */}
+      {/* SUMMARY */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-5 sm:mb-6">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-3 sm:gap-4">
 
-        {/* TOTAL PRODUCTS */}
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
-
-          <p className="text-sm sm:text-base text-slate-500">
+          <p className="text-sm text-slate-500 sm:text-base">
             สินค้าทั้งหมด
           </p>
 
-          <p className="text-2xl sm:text-3xl font-bold mt-2">
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">
             {totalProducts}
           </p>
 
         </div>
 
-        {/* TOTAL STOCK */}
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
-
-          <p className="text-sm sm:text-base text-slate-500">
+          <p className="text-sm text-slate-500 sm:text-base">
             Stock รวม
           </p>
 
-          <p className="text-2xl sm:text-3xl font-bold text-blue-600 mt-2">
-            {totalStock.toLocaleString(
-              "th-TH",
-            )}
+          <p className="mt-2 text-2xl font-bold text-blue-600 sm:text-3xl">
+            {totalStock.toLocaleString("th-TH")}
           </p>
 
         </div>
 
-        {/* LOW STOCK */}
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
-        <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5">
-
-          <p className="text-sm sm:text-base text-slate-500">
+          <p className="text-sm text-slate-500 sm:text-base">
             สินค้าใกล้หมด
           </p>
 
-          <p className="text-2xl sm:text-3xl font-bold text-red-600 mt-2">
+          <p className="mt-2 text-2xl font-bold text-red-600 sm:text-3xl">
             {lowStock}
           </p>
 
@@ -443,11 +451,9 @@ export default function Products() {
 
       </div>
 
-      {/* ==================================
-          SEARCH
-      ================================== */}
+      {/* SEARCH */}
 
-      <div className="bg-white rounded-xl shadow-sm p-4 sm:p-5 mb-5 sm:mb-6">
+      <div className="mb-5 rounded-xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
 
         <input
           value={search}
@@ -455,24 +461,35 @@ export default function Products() {
             setSearch(e.target.value)
           }
           placeholder="🔍 ค้นหาชื่อสินค้า / Barcode / หมวดหมู่"
-          className="w-full border border-slate-300 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
+          className="
+            h-10
+            w-full
+            rounded-lg
+            border
+            border-slate-300
+            px-4
+            text-sm
+            outline-none
+            transition
+            focus:border-blue-500
+            focus:ring-2
+            focus:ring-blue-500
+          "
         />
 
         {search && (
-          <div className="text-sm text-slate-500 mt-2">
+          <div className="mt-2 text-sm text-slate-500">
             พบ {filteredProducts.length} รายการ
           </div>
         )}
 
       </div>
 
-      {/* ==================================
-          TABLE
-      ================================== */}
+      {/* TABLE */}
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
 
-        <div className="p-4 sm:p-5 border-b">
+        <div className="border-b p-4 sm:p-5">
 
           <div className="flex items-center justify-between gap-3">
 
@@ -496,31 +513,31 @@ export default function Products() {
 
               <tr>
 
-                <th className="text-left p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-left">
                   รหัส
                 </th>
 
-                <th className="text-left p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-left">
                   สินค้า
                 </th>
 
-                <th className="text-left p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-left">
                   Barcode
                 </th>
 
-                <th className="text-left p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-left">
                   หมวดหมู่
                 </th>
 
-                <th className="text-right p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-right">
                   ราคา
                 </th>
 
-                <th className="text-center p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-center">
                   Stock
                 </th>
 
-                <th className="text-center p-4 whitespace-nowrap">
+                <th className="whitespace-nowrap p-4 text-center">
                   จัดการ
                 </th>
 
@@ -536,9 +553,10 @@ export default function Products() {
 
                   <td
                     colSpan="7"
-                    className="text-center p-10 text-slate-500"
+                    className="p-10 text-center text-slate-500"
                   >
                     <div className="flex flex-col items-center gap-2">
+
                       <div className="text-2xl">
                         ⏳
                       </div>
@@ -546,6 +564,7 @@ export default function Products() {
                       <div>
                         กำลังโหลดข้อมูลสินค้า...
                       </div>
+
                     </div>
                   </td>
 
@@ -557,9 +576,9 @@ export default function Products() {
 
                   <td
                     colSpan="7"
-                    className="text-center p-10 text-slate-400"
+                    className="p-10 text-center text-slate-400"
                   >
-                    <div className="text-3xl mb-2">
+                    <div className="mb-2 text-3xl">
                       📦
                     </div>
 
@@ -568,6 +587,7 @@ export default function Products() {
                         ? "ไม่พบสินค้าที่ค้นหา"
                         : "ยังไม่มีสินค้า"}
                     </div>
+
                   </td>
 
                 </tr>
@@ -579,18 +599,18 @@ export default function Products() {
 
                     <tr
                       key={product.id}
-                      className="border-t hover:bg-slate-50 transition"
+                      className="border-t transition hover:bg-slate-50"
                     >
 
                       {/* ID */}
 
-                      <td className="p-4 font-bold whitespace-nowrap">
+                      <td className="whitespace-nowrap p-4 font-bold">
                         {product.id}
                       </td>
 
                       {/* NAME */}
 
-                      <td className="p-4 font-medium max-w-[220px]">
+                      <td className="max-w-[220px] p-4 font-medium">
                         <div
                           className="truncate"
                           title={product.name}
@@ -601,21 +621,23 @@ export default function Products() {
 
                       {/* BARCODE */}
 
-                      <td className="p-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap p-4">
                         {product.barcode}
                       </td>
 
                       {/* CATEGORY */}
 
                       <td className="p-4">
+
                         <span className="inline-block max-w-[160px] truncate">
                           {product.category || "-"}
                         </span>
+
                       </td>
 
                       {/* PRICE */}
 
-                      <td className="p-4 text-right font-bold whitespace-nowrap">
+                      <td className="whitespace-nowrap p-4 text-right font-bold">
                         ฿
                         {Number(
                           product.price || 0,
@@ -632,7 +654,7 @@ export default function Products() {
                       <td className="p-4 text-center">
 
                         <span
-                          className={`inline-block min-w-[55px] px-3 py-1 rounded-full text-sm font-bold ${
+                          className={`inline-block min-w-[55px] rounded-full px-3 py-1 text-sm font-bold ${
                             Number(
                               product.stock || 0,
                             ) <= 5
@@ -649,7 +671,9 @@ export default function Products() {
 
                       <td className="p-4">
 
-                        <div className="flex justify-center gap-2">
+                        <div className="flex justify-center gap-1.5">
+
+                          {/* EDIT */}
 
                           <button
                             onClick={() =>
@@ -657,11 +681,25 @@ export default function Products() {
                                 product,
                               )
                             }
-                            className="bg-blue-100 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-200 transition"
+                            className="
+                              flex
+                              h-8
+                              w-8
+                              items-center
+                              justify-center
+                              rounded-md
+                              bg-blue-100
+                              text-sm
+                              text-blue-600
+                              transition
+                              hover:bg-blue-200
+                            "
                             title="แก้ไข"
                           >
                             ✏️
                           </button>
+
+                          {/* DELETE */}
 
                           <button
                             onClick={() =>
@@ -669,7 +707,19 @@ export default function Products() {
                                 product.id,
                               )
                             }
-                            className="bg-red-100 text-red-600 px-3 py-2 rounded-lg hover:bg-red-200 transition"
+                            className="
+                              flex
+                              h-8
+                              w-8
+                              items-center
+                              justify-center
+                              rounded-md
+                              bg-red-100
+                              text-sm
+                              text-red-600
+                              transition
+                              hover:bg-red-200
+                            "
                             title="ลบ"
                           >
                             🗑️
@@ -694,21 +744,19 @@ export default function Products() {
 
       </div>
 
-      {/* ==================================
-          ADD / EDIT MODAL
-      ================================== */}
+      {/* ADD / EDIT MODAL */}
 
       {showForm && (
 
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
 
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[95vh] overflow-y-auto p-4 sm:p-6 lg:p-7 shadow-2xl">
+          <div className="max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6 lg:p-7">
 
             {/* MODAL HEADER */}
 
-            <div className="flex items-center justify-between gap-3 mb-5 sm:mb-6">
+            <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
 
-              <h2 className="text-xl sm:text-2xl font-bold">
+              <h2 className="text-xl font-bold sm:text-2xl">
                 {editingProduct
                   ? "✏️ แก้ไขสินค้า"
                   : "➕ เพิ่มสินค้า"}
@@ -716,7 +764,20 @@ export default function Products() {
 
               <button
                 onClick={closeForm}
-                className="flex-shrink-0 w-9 h-9 rounded-lg text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition"
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  text-lg
+                  text-slate-500
+                  transition
+                  hover:bg-slate-100
+                  hover:text-slate-800
+                "
               >
                 ✕
               </button>
@@ -727,7 +788,7 @@ export default function Products() {
 
             <div className="mb-4">
 
-              <label className="block font-medium mb-2">
+              <label className="mb-2 block font-medium">
                 ชื่อสินค้า
               </label>
 
@@ -740,7 +801,16 @@ export default function Products() {
                   })
                 }
                 placeholder="เช่น น้ำดื่ม 600ml"
-                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
               />
 
             </div>
@@ -749,7 +819,7 @@ export default function Products() {
 
             <div className="mb-4">
 
-              <label className="block font-medium mb-2">
+              <label className="mb-2 block font-medium">
                 Barcode
               </label>
 
@@ -767,7 +837,16 @@ export default function Products() {
                 }
                 placeholder="เช่น 8851234567890"
                 inputMode="numeric"
-                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
               />
 
             </div>
@@ -776,7 +855,7 @@ export default function Products() {
 
             <div className="mb-4">
 
-              <label className="block font-medium mb-2">
+              <label className="mb-2 block font-medium">
                 ราคา (บาท)
               </label>
 
@@ -792,7 +871,16 @@ export default function Products() {
                   })
                 }
                 placeholder="0.00"
-                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
               />
 
             </div>
@@ -801,7 +889,7 @@ export default function Products() {
 
             <div className="mb-4">
 
-              <label className="block font-medium mb-2">
+              <label className="mb-2 block font-medium">
                 จำนวน Stock
               </label>
 
@@ -817,7 +905,16 @@ export default function Products() {
                   })
                 }
                 placeholder="0"
-                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
               />
 
             </div>
@@ -826,7 +923,7 @@ export default function Products() {
 
             <div className="mb-6">
 
-              <label className="block font-medium mb-2">
+              <label className="mb-2 block font-medium">
                 หมวดหมู่
               </label>
 
@@ -839,25 +936,54 @@ export default function Products() {
                   })
                 }
                 placeholder="เช่น เครื่องดื่ม"
-                className="w-full border border-slate-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-blue-500"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
               />
 
             </div>
 
             {/* BUTTONS */}
 
-            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
 
               <button
                 onClick={closeForm}
-                className="w-full sm:flex-1 border border-slate-300 rounded-lg py-3 hover:bg-slate-50 font-medium transition"
+                className="
+                  h-10
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  font-medium
+                  transition
+                  hover:bg-slate-50
+                  sm:flex-1
+                "
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={saveProduct}
-                className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 font-bold transition"
+                className="
+                  h-10
+                  w-full
+                  rounded-lg
+                  bg-blue-600
+                  font-bold
+                  text-white
+                  transition
+                  hover:bg-blue-700
+                  sm:flex-1
+                "
               >
                 💾 บันทึก
               </button>

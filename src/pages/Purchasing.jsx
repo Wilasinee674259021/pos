@@ -285,15 +285,15 @@ export default function Purchasing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-5 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
       {/* =========================
           HEADER
       ========================= */}
 
-      <div className="mb-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
+      <div className="mb-5 sm:mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold leading-tight text-gray-800 sm:text-3xl">
               🚚 จัดซื้อ / รับสินค้า
             </h1>
 
@@ -304,7 +304,7 @@ export default function Purchasing() {
 
           <button
             onClick={() => setShowForm(true)}
-            className="w-full rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto"
+            className="!min-h-0 h-10 w-full rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto sm:px-5"
           >
             ＋ รับสินค้าเข้า
           </button>
@@ -315,16 +315,16 @@ export default function Purchasing() {
           SUMMARY
       ========================= */}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-3 sm:gap-4">
         {/* TOTAL PURCHASE */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:rounded-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-500 sm:text-sm">
                 รายการรับสินค้าทั้งหมด
               </p>
 
-              <p className="mt-2 text-3xl font-bold text-gray-800">
+              <p className="mt-2 text-2xl font-bold text-gray-800 sm:text-3xl">
                 {totalPurchases}
               </p>
 
@@ -333,21 +333,21 @@ export default function Purchasing() {
               </p>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg sm:h-11 sm:w-11 sm:rounded-xl sm:text-xl">
               🚚
             </div>
           </div>
         </div>
 
         {/* TOTAL ITEMS */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:rounded-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-gray-500 sm:text-sm">
                 จำนวนสินค้าที่รับเข้า
               </p>
 
-              <p className="mt-2 text-3xl font-bold text-blue-600">
+              <p className="mt-2 text-2xl font-bold text-blue-600 sm:text-3xl">
                 {totalItems}
               </p>
 
@@ -356,17 +356,17 @@ export default function Purchasing() {
               </p>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg sm:h-11 sm:w-11 sm:rounded-xl sm:text-xl">
               📦
             </div>
           </div>
         </div>
 
         {/* TOTAL COST */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex items-start justify-between">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:rounded-2xl">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-xs font-medium text-gray-500 sm:text-sm">
                 มูลค่าการจัดซื้อ
               </p>
 
@@ -379,7 +379,7 @@ export default function Purchasing() {
               </p>
             </div>
 
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-lg sm:h-11 sm:w-11 sm:rounded-xl sm:text-xl">
               💰
             </div>
           </div>
@@ -390,16 +390,16 @@ export default function Purchasing() {
           SEARCH
       ========================= */}
 
-      <div className="mb-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+      <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm sm:mb-5 sm:rounded-2xl sm:p-4">
         <div className="relative">
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="ค้นหาเลขที่ใบรับสินค้า / Supplier"
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-11 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white"
+            className="!h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 pr-10 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white sm:rounded-xl sm:px-4"
           />
 
-          <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 sm:right-4">
             🔍
           </span>
         </div>
@@ -409,9 +409,9 @@ export default function Purchasing() {
           DESKTOP TABLE
       ========================= */}
 
-      <div className="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm md:block">
+      <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block md:rounded-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px] table-fixed">
+          <table className="w-full min-w-[950px] table-fixed">
             <colgroup>
               <col className="w-[17%]" />
               <col className="w-[29%]" />
@@ -423,27 +423,27 @@ export default function Purchasing() {
 
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="px-5 py-4 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 lg:px-5">
                   เลขที่ใบรับสินค้า
                 </th>
 
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 lg:px-4">
                   Supplier
                 </th>
 
-                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 lg:px-4">
                   วันที่
                 </th>
 
-                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 lg:px-4">
                   จำนวน
                 </th>
 
-                <th className="px-4 py-4 text-right text-xs font-semibold text-gray-500">
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-500 lg:px-4">
                   มูลค่า
                 </th>
 
-                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 lg:px-4">
                   รายละเอียด
                 </th>
               </tr>
@@ -457,30 +457,30 @@ export default function Purchasing() {
                     className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
                   >
                     {/* INVOICE */}
-                    <td className="px-5 py-5 align-middle">
-                      <span className="inline-flex rounded-lg bg-gray-100 px-3 py-2 font-mono text-xs font-semibold text-gray-700">
+                    <td className="px-4 py-4 align-middle lg:px-5">
+                      <span className="inline-flex max-w-full break-all rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-700">
                         {purchase.invoiceNumber}
                       </span>
                     </td>
 
                     {/* SUPPLIER */}
-                    <td className="px-4 py-5 align-middle">
-                      <p className="break-words text-sm font-semibold leading-6 text-gray-800">
+                    <td className="px-3 py-4 align-middle lg:px-4">
+                      <p className="break-words text-sm font-semibold leading-5 text-gray-800">
                         {purchase.supplier}
                       </p>
                     </td>
 
                     {/* DATE */}
-                    <td className="px-4 py-5 text-center align-middle">
+                    <td className="px-3 py-4 text-center align-middle lg:px-4">
                       <span className="text-sm text-gray-600">
                         {formatDate(purchase.date)}
                       </span>
                     </td>
 
                     {/* ITEMS */}
-                    <td className="px-4 py-5 text-center align-middle">
+                    <td className="px-3 py-4 text-center align-middle lg:px-4">
                       <div className="flex flex-col items-center">
-                        <span className="text-base font-bold text-gray-800">
+                        <span className="text-sm font-bold text-gray-800">
                           {purchase.totalItems}
                         </span>
 
@@ -491,17 +491,17 @@ export default function Purchasing() {
                     </td>
 
                     {/* COST */}
-                    <td className="px-4 py-5 text-right align-middle">
-                      <span className="text-base font-bold text-green-600">
+                    <td className="px-3 py-4 text-right align-middle lg:px-4">
+                      <span className="text-sm font-bold text-green-600">
                         ฿{Number(purchase.totalCost).toLocaleString()}
                       </span>
                     </td>
 
                     {/* DETAIL */}
-                    <td className="px-4 py-5 text-center align-middle">
+                    <td className="px-3 py-4 text-center align-middle lg:px-4">
                       <button
                         onClick={() => viewItems(purchase)}
-                        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
+                        className="!min-h-0 h-8 rounded-md border border-blue-200 bg-blue-50 px-3 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
                       >
                         👁️ ดูสินค้า
                       </button>
@@ -527,22 +527,22 @@ export default function Purchasing() {
           MOBILE CARDS
       ========================= */}
 
-      <div className="space-y-4 md:hidden">
+      <div className="space-y-3 md:hidden">
         {filteredPurchases.length > 0 ? (
           filteredPurchases.map((purchase) => (
             <div
               key={purchase.id}
-              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
+              className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
             >
               {/* CARD HEADER */}
-              <div className="border-b border-gray-100 p-4">
+              <div className="border-b border-gray-100 p-3 sm:p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="mb-2 text-xs text-gray-400">
+                    <p className="mb-1.5 text-xs text-gray-400">
                       เลขที่ใบรับสินค้า
                     </p>
 
-                    <span className="inline-flex max-w-full break-all rounded-lg bg-gray-100 px-3 py-2 font-mono text-xs font-semibold text-gray-700">
+                    <span className="inline-flex max-w-full break-all rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-700">
                       {purchase.invoiceNumber}
                     </span>
                   </div>
@@ -552,7 +552,7 @@ export default function Purchasing() {
                       วันที่
                     </p>
 
-                    <p className="mt-1 text-sm font-medium text-gray-700">
+                    <p className="mt-1 text-xs font-medium text-gray-700 sm:text-sm">
                       {formatDate(purchase.date)}
                     </p>
                   </div>
@@ -560,24 +560,24 @@ export default function Purchasing() {
               </div>
 
               {/* SUPPLIER */}
-              <div className="border-b border-gray-100 p-4">
+              <div className="border-b border-gray-100 p-3 sm:p-4">
                 <p className="text-xs text-gray-400">
                   Supplier
                 </p>
 
-                <p className="mt-1 break-words text-sm font-semibold leading-6 text-gray-800">
+                <p className="mt-1 break-words text-sm font-semibold leading-5 text-gray-800">
                   {purchase.supplier}
                 </p>
               </div>
 
               {/* INFO */}
               <div className="grid grid-cols-2 gap-px bg-gray-100">
-                <div className="bg-white p-4">
+                <div className="bg-white p-3 sm:p-4">
                   <p className="text-xs text-gray-400">
                     จำนวนสินค้า
                   </p>
 
-                  <p className="mt-1 text-lg font-bold text-gray-800">
+                  <p className="mt-1 text-base font-bold text-gray-800 sm:text-lg">
                     {purchase.totalItems}
                     <span className="ml-1 text-xs font-normal text-gray-400">
                       ชิ้น
@@ -585,22 +585,22 @@ export default function Purchasing() {
                   </p>
                 </div>
 
-                <div className="bg-white p-4">
+                <div className="bg-white p-3 sm:p-4">
                   <p className="text-xs text-gray-400">
                     มูลค่ารวม
                   </p>
 
-                  <p className="mt-1 break-all text-lg font-bold text-green-600">
+                  <p className="mt-1 break-all text-base font-bold text-green-600 sm:text-lg">
                     ฿{Number(purchase.totalCost).toLocaleString()}
                   </p>
                 </div>
               </div>
 
               {/* ACTION */}
-              <div className="border-t border-gray-100 p-4">
+              <div className="border-t border-gray-100 p-3 sm:p-4">
                 <button
                   onClick={() => viewItems(purchase)}
-                  className="w-full rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+                  className="!min-h-0 h-9 w-full rounded-lg border border-blue-200 bg-blue-50 px-4 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
                 >
                   👁️ ดูรายการสินค้า
                 </button>
@@ -608,7 +608,7 @@ export default function Purchasing() {
             </div>
           ))
         ) : (
-          <div className="rounded-2xl border border-gray-100 bg-white px-5 py-12 text-center text-sm text-gray-400 shadow-sm">
+          <div className="rounded-xl border border-gray-100 bg-white px-5 py-12 text-center text-sm text-gray-400 shadow-sm">
             ยังไม่มีประวัติการรับสินค้า
           </div>
         )}
@@ -619,43 +619,43 @@ export default function Purchasing() {
       ========================= */}
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
-          <div className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+          <div className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:rounded-2xl">
             {/* MODAL HEADER */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
-              <div>
-                <h2 className="text-lg font-bold text-gray-800 sm:text-xl">
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold leading-tight text-gray-800 sm:text-xl">
                   🚚 รับสินค้าเข้า
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 hidden text-xs text-gray-400 sm:block">
                   บันทึกข้อมูลสินค้าและเพิ่มจำนวนเข้าสู่สต๊อก
                 </p>
               </div>
 
               <button
                 onClick={closeForm}
-                className="rounded-lg p-2 text-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                className="!min-h-0 h-9 w-9 shrink-0 rounded-lg p-0 text-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
               >
                 ✕
               </button>
             </div>
 
             {/* MODAL BODY */}
-            <div className="overflow-y-auto p-4 sm:p-6">
+            <div className="overflow-y-auto p-3 sm:p-5 md:p-6">
               {/* =========================
                   BASIC INFO
               ========================= */}
 
-              <div className="mb-6">
-                <h3 className="mb-4 text-sm font-bold text-gray-800">
+              <div className="mb-5">
+                <h3 className="mb-3 text-sm font-bold text-gray-800">
                   ข้อมูลการรับสินค้า
                 </h3>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   {/* SUPPLIER */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                       Supplier
                     </label>
 
@@ -664,7 +664,7 @@ export default function Purchasing() {
                       onChange={(e) =>
                         setSelectedSupplier(e.target.value)
                       }
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
                     >
                       <option value="">
                         -- เลือก Supplier --
@@ -683,7 +683,7 @@ export default function Purchasing() {
 
                   {/* INVOICE */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                       เลขที่ใบรับสินค้า
                     </label>
 
@@ -693,13 +693,13 @@ export default function Purchasing() {
                         setInvoiceNumber(e.target.value)
                       }
                       placeholder="เช่น PO-2026-001"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                      className="!h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
 
                   {/* DATE */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                       วันที่รับสินค้า
                     </label>
 
@@ -709,7 +709,7 @@ export default function Purchasing() {
                       onChange={(e) =>
                         setPurchaseDate(e.target.value)
                       }
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                      className="!h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
                 </div>
@@ -719,8 +719,8 @@ export default function Purchasing() {
                   ADD PRODUCT
               ========================= */}
 
-              <div className="mb-6 rounded-2xl bg-gray-50 p-4 sm:p-5">
-                <div className="mb-4">
+              <div className="mb-5 rounded-xl bg-gray-50 p-3 sm:rounded-2xl sm:p-4 md:p-5">
+                <div className="mb-3">
                   <h3 className="text-sm font-bold text-gray-800">
                     เพิ่มสินค้า
                   </h3>
@@ -733,7 +733,7 @@ export default function Purchasing() {
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
                   {/* PRODUCT */}
                   <div className="md:col-span-5">
-                    <label className="mb-2 block text-xs font-medium text-gray-500 md:hidden">
+                    <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
                       สินค้า
                     </label>
 
@@ -742,7 +742,7 @@ export default function Purchasing() {
                       onChange={(e) =>
                         setSelectedProduct(e.target.value)
                       }
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
+                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
                     >
                       <option value="">
                         -- เลือกสินค้า --
@@ -761,7 +761,7 @@ export default function Purchasing() {
 
                   {/* QUANTITY */}
                   <div className="md:col-span-3">
-                    <label className="mb-2 block text-xs font-medium text-gray-500 md:hidden">
+                    <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
                       จำนวน
                     </label>
 
@@ -773,13 +773,13 @@ export default function Purchasing() {
                         setQuantity(e.target.value)
                       }
                       placeholder="จำนวน"
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
+                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
 
                   {/* COST */}
                   <div className="md:col-span-3">
-                    <label className="mb-2 block text-xs font-medium text-gray-500 md:hidden">
+                    <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
                       ราคาทุน / ชิ้น
                     </label>
 
@@ -791,7 +791,7 @@ export default function Purchasing() {
                         setCost(e.target.value)
                       }
                       placeholder="ราคาทุน / ชิ้น"
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500"
+                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
 
@@ -799,7 +799,7 @@ export default function Purchasing() {
                   <div className="md:col-span-1">
                     <button
                       onClick={addItem}
-                      className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                      className="!min-h-0 h-10 w-full rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 sm:rounded-xl"
                     >
                       ＋
                     </button>
@@ -812,7 +812,7 @@ export default function Purchasing() {
               ========================= */}
 
               {items.length > 0 ? (
-                <div className="mb-6">
+                <div className="mb-5">
                   <div className="mb-3 flex items-center justify-between">
                     <div>
                       <h3 className="text-sm font-bold text-gray-800">
@@ -857,7 +857,7 @@ export default function Purchasing() {
                               key={item.id}
                               className="border-t border-gray-100"
                             >
-                              <td className="px-4 py-4">
+                              <td className="px-4 py-3">
                                 <div>
                                   <p className="break-words text-sm font-semibold text-gray-800">
                                     {item.name}
@@ -869,24 +869,24 @@ export default function Purchasing() {
                                 </div>
                               </td>
 
-                              <td className="px-4 py-4 text-center text-sm text-gray-700">
+                              <td className="px-4 py-3 text-center text-sm text-gray-700">
                                 {item.quantity}
                               </td>
 
-                              <td className="px-4 py-4 text-right text-sm text-gray-700">
+                              <td className="px-4 py-3 text-right text-sm text-gray-700">
                                 ฿{item.cost.toLocaleString()}
                               </td>
 
-                              <td className="px-4 py-4 text-right text-sm font-bold text-gray-800">
+                              <td className="px-4 py-3 text-right text-sm font-bold text-gray-800">
                                 ฿{item.total.toLocaleString()}
                               </td>
 
-                              <td className="px-4 py-4 text-center">
+                              <td className="px-4 py-3 text-center">
                                 <button
                                   onClick={() =>
                                     removeItem(item.id)
                                   }
-                                  className="rounded-lg p-2 text-red-500 transition hover:bg-red-50"
+                                  className="!min-h-0 h-8 w-8 rounded-lg p-0 text-red-500 transition hover:bg-red-50"
                                 >
                                   🗑️
                                 </button>
@@ -903,11 +903,11 @@ export default function Purchasing() {
                     {items.map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-gray-200 bg-white p-4"
+                        className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <p className="break-words text-sm font-semibold leading-6 text-gray-800">
+                            <p className="break-words text-sm font-semibold leading-5 text-gray-800">
                               {item.name}
                             </p>
 
@@ -920,14 +920,14 @@ export default function Purchasing() {
                             onClick={() =>
                               removeItem(item.id)
                             }
-                            className="shrink-0 rounded-lg p-2 text-red-500 hover:bg-red-50"
+                            className="!min-h-0 h-8 w-8 shrink-0 rounded-lg p-0 text-red-500 hover:bg-red-50"
                           >
                             🗑️
                           </button>
                         </div>
 
                         <div className="mt-3 grid grid-cols-3 gap-2">
-                          <div className="rounded-lg bg-gray-50 p-3">
+                          <div className="rounded-lg bg-gray-50 p-2.5 sm:p-3">
                             <p className="text-xs text-gray-400">
                               จำนวน
                             </p>
@@ -937,7 +937,7 @@ export default function Purchasing() {
                             </p>
                           </div>
 
-                          <div className="rounded-lg bg-gray-50 p-3">
+                          <div className="rounded-lg bg-gray-50 p-2.5 sm:p-3">
                             <p className="text-xs text-gray-400">
                               ราคาทุน
                             </p>
@@ -947,7 +947,7 @@ export default function Purchasing() {
                             </p>
                           </div>
 
-                          <div className="rounded-lg bg-green-50 p-3">
+                          <div className="rounded-lg bg-green-50 p-2.5 sm:p-3">
                             <p className="text-xs text-gray-400">
                               รวม
                             </p>
@@ -962,18 +962,18 @@ export default function Purchasing() {
                   </div>
 
                   {/* TOTAL */}
-                  <div className="mt-4 flex items-center justify-between rounded-xl bg-gray-50 p-4">
+                  <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3 sm:mt-4 sm:p-4">
                     <span className="text-sm font-semibold text-gray-600">
                       รวมทั้งสิ้น
                     </span>
 
-                    <span className="break-all text-xl font-bold text-green-600">
+                    <span className="break-all text-lg font-bold text-green-600 sm:text-xl">
                       ฿{currentFormTotal.toLocaleString()}
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="mb-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-5 py-10 text-center">
+                <div className="mb-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center sm:rounded-2xl sm:py-10">
                   <div className="text-3xl">📦</div>
 
                   <p className="mt-3 text-sm font-medium text-gray-600">
@@ -991,17 +991,17 @@ export default function Purchasing() {
                 MODAL FOOTER
             ========================= */}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-4 sm:flex-row sm:justify-end sm:px-6">
+            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-3 sm:flex-row sm:justify-end sm:p-4 sm:px-6">
               <button
                 onClick={closeForm}
-                className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100 sm:w-auto"
+                className="!min-h-0 h-10 w-full rounded-lg border border-gray-200 bg-white px-5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 sm:w-auto sm:rounded-xl"
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={savePurchase}
-                className="w-full rounded-xl bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700 sm:w-auto"
+                className="!min-h-0 h-10 w-full rounded-lg bg-green-600 px-5 text-sm font-semibold text-white transition hover:bg-green-700 sm:w-auto sm:rounded-xl"
               >
                 💾 ยืนยันรับสินค้า
               </button>

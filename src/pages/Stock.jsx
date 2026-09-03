@@ -216,12 +216,12 @@ export default function Stock() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-5 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
       {/* =========================
           HEADER
       ========================= */}
 
-      <div className="mb-6">
+      <div className="mb-5">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
             📦 จัดการสต๊อกสินค้า
@@ -237,94 +237,94 @@ export default function Stock() {
           SUMMARY
       ========================= */}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {/* TOTAL PRODUCTS */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-start justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-gray-500">
                 สินค้าทั้งหมด
               </p>
 
-              <p className="mt-2 text-3xl font-bold text-gray-800">
+              <p className="mt-1.5 text-2xl font-bold text-gray-800">
                 {totalProducts}
               </p>
 
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-gray-400">
                 รายการสินค้า
               </p>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg">
               📦
             </div>
           </div>
         </div>
 
         {/* TOTAL STOCK */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-start justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-gray-500">
                 จำนวนสินค้าคงเหลือ
               </p>
 
-              <p className="mt-2 text-3xl font-bold text-blue-600">
+              <p className="mt-1.5 text-2xl font-bold text-blue-600">
                 {totalStock}
               </p>
 
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-gray-400">
                 ชิ้น
               </p>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg">
               📊
             </div>
           </div>
         </div>
 
         {/* LOW STOCK */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-start justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-gray-500">
                 สินค้าใกล้หมด
               </p>
 
-              <p className="mt-2 text-3xl font-bold text-orange-500">
+              <p className="mt-1.5 text-2xl font-bold text-orange-500">
                 {lowStockProducts}
               </p>
 
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-gray-400">
                 รายการ
               </p>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-50 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-lg">
               ⚠️
             </div>
           </div>
         </div>
 
         {/* OUT OF STOCK */}
-        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-start justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium text-gray-500">
                 สินค้าหมด
               </p>
 
-              <p className="mt-2 text-3xl font-bold text-red-500">
+              <p className="mt-1.5 text-2xl font-bold text-red-500">
                 {outOfStockProducts}
               </p>
 
-              <p className="mt-1 text-xs text-gray-400">
+              <p className="mt-0.5 text-xs text-gray-400">
                 รายการ
               </p>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-lg">
               🚨
             </div>
           </div>
@@ -335,17 +335,17 @@ export default function Stock() {
           SEARCH / FILTER
       ========================= */}
 
-      <div className="mb-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <div className="relative flex-1">
+      <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+        <div className="flex flex-col gap-2.5 sm:flex-row">
+          <div className="relative min-w-0 flex-1">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ค้นหาชื่อสินค้า / รหัสสินค้า"
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pr-11 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white"
+              className="!h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 pr-10 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white"
             />
 
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
               🔍
             </span>
           </div>
@@ -353,7 +353,7 @@ export default function Stock() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 sm:w-48"
+            className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-blue-500 sm:w-48"
           >
             {categories.map((item) => (
               <option key={item} value={item}>
@@ -368,7 +368,7 @@ export default function Stock() {
           DESKTOP TABLE
       ========================= */}
 
-      <div className="hidden overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm md:block">
+      <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] table-fixed">
             <colgroup>
@@ -382,27 +382,27 @@ export default function Stock() {
 
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="px-5 py-4 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
                   รหัสสินค้า
                 </th>
 
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
                   สินค้า
                 </th>
 
-                <th className="px-4 py-4 text-left text-xs font-semibold text-gray-500">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
                   หมวดหมู่
                 </th>
 
-                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
                   สต๊อก
                 </th>
 
-                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
                   สถานะ
                 </th>
 
-                <th className="px-4 py-4 text-center text-xs font-semibold text-gray-500">
+                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
                   จัดการ
                 </th>
               </tr>
@@ -419,34 +419,34 @@ export default function Stock() {
                       className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
                     >
                       {/* CODE */}
-                      <td className="px-5 py-5 align-middle">
-                        <span className="rounded-lg bg-gray-100 px-3 py-2 font-mono text-xs font-semibold text-gray-600">
+                      <td className="px-4 py-4 align-middle">
+                        <span className="rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-600">
                           {product.code}
                         </span>
                       </td>
 
                       {/* PRODUCT */}
-                      <td className="px-4 py-5 align-middle">
+                      <td className="px-4 py-4 align-middle">
                         <div className="min-w-0">
-                          <p className="break-words text-sm font-semibold leading-6 text-gray-800">
+                          <p className="break-words text-sm font-semibold leading-5 text-gray-800">
                             {product.name}
                           </p>
 
-                          <p className="mt-1 text-xs text-gray-400">
+                          <p className="mt-0.5 text-xs text-gray-400">
                             สต๊อกขั้นต่ำ {product.minStock} ชิ้น
                           </p>
                         </div>
                       </td>
 
                       {/* CATEGORY */}
-                      <td className="px-4 py-5 align-middle">
-                        <span className="inline-flex rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+                      <td className="px-4 py-4 align-middle">
+                        <span className="inline-flex rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                           {product.category}
                         </span>
                       </td>
 
                       {/* STOCK */}
-                      <td className="px-4 py-5 text-center align-middle">
+                      <td className="px-4 py-4 text-center align-middle">
                         <div className="flex flex-col items-center">
                           <span
                             className={`text-xl font-bold ${status.stockClass}`}
@@ -461,22 +461,22 @@ export default function Stock() {
                       </td>
 
                       {/* STATUS */}
-                      <td className="px-4 py-5 text-center align-middle">
+                      <td className="px-4 py-4 text-center align-middle">
                         <span
-                          className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
+                          className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
                         >
                           {status.label}
                         </span>
                       </td>
 
                       {/* ACTION */}
-                      <td className="px-4 py-5 align-middle">
-                        <div className="flex justify-center gap-2">
+                      <td className="px-4 py-4 align-middle">
+                        <div className="flex justify-center gap-1.5">
                           <button
                             onClick={() =>
                               openStockModal(product, "in")
                             }
-                            className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 transition hover:bg-green-100"
+                            className="!min-h-0 h-8 rounded-md border border-green-200 bg-green-50 px-2.5 text-xs font-medium leading-none text-green-700 transition hover:bg-green-100"
                           >
                             ＋ รับเข้า
                           </button>
@@ -485,7 +485,7 @@ export default function Stock() {
                             onClick={() =>
                               openStockModal(product, "out")
                             }
-                            className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                            className="!min-h-0 h-8 rounded-md border border-red-200 bg-red-50 px-2.5 text-xs font-medium leading-none text-red-700 transition hover:bg-red-100"
                           >
                             − ตัดออก
                           </button>
@@ -498,7 +498,7 @@ export default function Stock() {
                 <tr>
                   <td
                     colSpan="6"
-                    className="px-5 py-12 text-center text-sm text-gray-400"
+                    className="px-5 py-10 text-center text-sm text-gray-400"
                   >
                     ไม่พบสินค้า
                   </td>
@@ -513,7 +513,7 @@ export default function Stock() {
           MOBILE CARDS
       ========================= */}
 
-      <div className="space-y-4 md:hidden">
+      <div className="space-y-3 md:hidden">
         {filteredProducts.length > 0 ? (
           filteredProducts.map((product) => {
             const status = getStockStatus(product);
@@ -521,19 +521,19 @@ export default function Stock() {
             return (
               <div
                 key={product.id}
-                className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
+                className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
               >
                 {/* CARD HEADER */}
-                <div className="border-b border-gray-100 p-4">
-                  <div className="flex items-start justify-between gap-3">
+                <div className="border-b border-gray-100 p-3.5">
+                  <div className="flex items-start justify-between gap-2.5">
                     <div className="min-w-0 flex-1">
                       <div className="mb-2">
-                        <span className="rounded-lg bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-600">
+                        <span className="rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-600">
                           {product.code}
                         </span>
                       </div>
 
-                      <h2 className="break-words text-base font-bold leading-6 text-gray-800">
+                      <h2 className="break-words text-base font-bold leading-5 text-gray-800">
                         {product.name}
                       </h2>
 
@@ -543,7 +543,7 @@ export default function Stock() {
                     </div>
 
                     <span
-                      className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${status.className}`}
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
                     >
                       {status.label}
                     </span>
@@ -552,17 +552,17 @@ export default function Stock() {
 
                 {/* CARD INFO */}
                 <div className="grid grid-cols-2 gap-px bg-gray-100">
-                  <div className="bg-white p-4">
+                  <div className="bg-white p-3.5">
                     <p className="text-xs text-gray-400">
                       หมวดหมู่
                     </p>
 
-                    <p className="mt-1 text-sm font-semibold text-gray-700">
+                    <p className="mt-1 break-words text-sm font-semibold text-gray-700">
                       {product.category}
                     </p>
                   </div>
 
-                  <div className="bg-white p-4">
+                  <div className="bg-white p-3.5">
                     <p className="text-xs text-gray-400">
                       สินค้าคงเหลือ
                     </p>
@@ -582,17 +582,17 @@ export default function Stock() {
                 </div>
 
                 {/* ACTION */}
-                <div className="flex gap-2 border-t border-gray-100 p-4">
+                <div className="flex gap-2 border-t border-gray-100 p-3.5">
                   <button
                     onClick={() => openStockModal(product, "in")}
-                    className="flex-1 rounded-xl border border-green-200 bg-green-50 px-3 py-2.5 text-sm font-medium text-green-700 transition hover:bg-green-100"
+                    className="!min-h-0 h-9 flex-1 rounded-lg border border-green-200 bg-green-50 px-3 text-sm font-medium leading-none text-green-700 transition hover:bg-green-100"
                   >
                     ＋ รับเข้า
                   </button>
 
                   <button
                     onClick={() => openStockModal(product, "out")}
-                    className="flex-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-100"
+                    className="!min-h-0 h-9 flex-1 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-medium leading-none text-red-700 transition hover:bg-red-100"
                   >
                     − ตัดออก
                   </button>
@@ -601,7 +601,7 @@ export default function Stock() {
             );
           })
         ) : (
-          <div className="rounded-2xl border border-gray-100 bg-white px-5 py-12 text-center text-sm text-gray-400 shadow-sm">
+          <div className="rounded-xl border border-gray-100 bg-white px-5 py-10 text-center text-sm text-gray-400 shadow-sm">
             ไม่พบสินค้า
           </div>
         )}
@@ -612,18 +612,18 @@ export default function Stock() {
       ========================= */}
 
       {showModal && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
             {/* MODAL HEADER */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 sm:px-6">
-              <div>
+            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3.5 sm:px-5">
+              <div className="min-w-0">
                 <h2 className="text-lg font-bold text-gray-800">
                   {stockType === "in"
                     ? "📥 รับสินค้าเข้า"
                     : "📤 ตัดสินค้าออก"}
                 </h2>
 
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-0.5 text-xs text-gray-400">
                   {stockType === "in"
                     ? "เพิ่มจำนวนสินค้าเข้าสู่สต๊อก"
                     : "ลดจำนวนสินค้าออกจากสต๊อก"}
@@ -632,19 +632,19 @@ export default function Stock() {
 
               <button
                 onClick={closeModal}
-                className="rounded-lg p-2 text-xl text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                className="!min-h-0 h-9 w-9 shrink-0 rounded-lg p-0 text-xl leading-none text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
               >
                 ×
               </button>
             </div>
 
             {/* MODAL BODY */}
-            <div className="overflow-y-auto p-5 sm:p-6">
+            <div className="overflow-y-auto p-4 sm:p-5">
               {/* PRODUCT INFO */}
-              <div className="mb-5 rounded-2xl bg-gray-50 p-4">
+              <div className="mb-4 rounded-xl bg-gray-50 p-3.5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="break-words text-base font-bold leading-6 text-gray-800">
+                    <p className="break-words text-base font-bold leading-5 text-gray-800">
                       {selectedProduct.name}
                     </p>
 
@@ -653,17 +653,18 @@ export default function Stock() {
                     </p>
                   </div>
 
-                  <div className="shrink-0 rounded-xl bg-white px-4 py-3 text-center shadow-sm">
+                  <div className="shrink-0 rounded-lg bg-white px-3 py-2.5 text-center shadow-sm">
                     <p className="text-xs text-gray-400">
                       สต๊อกปัจจุบัน
                     </p>
 
                     <p
-                      className={`mt-1 text-xl font-bold ${
+                      className={`mt-0.5 text-xl font-bold ${
                         getStockStatus(selectedProduct).stockClass
                       }`}
                     >
                       {selectedProduct.stock}
+
                       <span className="ml-1 text-xs font-normal text-gray-400">
                         ชิ้น
                       </span>
@@ -673,8 +674,8 @@ export default function Stock() {
               </div>
 
               {/* AMOUNT */}
-              <div className="mb-5">
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
+              <div className="mb-4">
+                <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                   จำนวนสินค้า
                 </label>
 
@@ -684,14 +685,14 @@ export default function Stock() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="กรอกจำนวนสินค้า"
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-lg outline-none transition focus:border-blue-500"
+                  className="!h-11 w-full rounded-lg border border-gray-200 px-3 text-base outline-none transition focus:border-blue-500"
                   autoFocus
                 />
               </div>
 
               {/* NOTE */}
               <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                   หมายเหตุ
                 </label>
 
@@ -703,23 +704,23 @@ export default function Stock() {
                       ? "เช่น รับสินค้าจากซัพพลายเออร์"
                       : "เช่น สินค้าชำรุด / หมดอายุ"
                   }
-                  className="h-24 w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-blue-500"
+                  className="h-20 w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
                 />
               </div>
             </div>
 
             {/* MODAL FOOTER */}
-            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-4 sm:flex-row sm:justify-end sm:px-6">
+            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-3.5 sm:flex-row sm:justify-end sm:px-5">
               <button
                 onClick={closeModal}
-                className="w-full rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-medium text-gray-600 transition hover:bg-gray-100 sm:w-auto"
+                className="!min-h-0 h-10 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium leading-none text-gray-600 transition hover:bg-gray-100 sm:w-auto"
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={updateStock}
-                className={`w-full rounded-xl px-5 py-3 text-sm font-semibold text-white transition sm:w-auto ${
+                className={`!min-h-0 h-10 w-full rounded-lg px-4 text-sm font-semibold leading-none text-white transition sm:w-auto ${
                   stockType === "in"
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-red-600 hover:bg-red-700"
