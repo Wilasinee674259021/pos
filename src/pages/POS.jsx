@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+  import.meta.env.VITE_API_URL ||
+  `http://${window.location.hostname}:5000`;
 
 const PRODUCT_API = `${API_URL}/api/products`;
 const MEMBER_API = `${API_URL}/api/members`;
@@ -19,6 +20,7 @@ export default function POS() {
 
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [receivedAmount, setReceivedAmount] = useState("");
+  const [showQRModal, setShowQRModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -591,12 +593,11 @@ export default function POS() {
   // PAYMENT
   // ================================
 
-  const handlePayment = async () => {
+  const handlePayment = async (confirmQR = false) => {
     if (cart.length === 0) {
       alert(
         "กรุณาเพิ่มสินค้าลงตะกร้าก่อน"
       );
-
       return;
     }
 
@@ -607,7 +608,12 @@ export default function POS() {
       alert(
         "จำนวนเงินที่รับมาไม่เพียงพอ"
       );
+      return;
+    }
 
+    // QR: เปิดหน้าต่าง QR ก่อน ยังไม่บันทึกการขาย
+    if (paymentMethod === "qr" && !confirmQR) {
+      setShowQRModal(true);
       return;
     }
 
@@ -673,9 +679,10 @@ export default function POS() {
           result.message ||
             "ชำระเงินไม่สำเร็จ"
         );
-
         return;
       }
+
+      setShowQRModal(false);
 
       alert(
         `ชำระเงินสำเร็จ\n\n` +
@@ -1204,11 +1211,15 @@ export default function POS() {
                 </button>
 
                 <button
-                  onClick={() =>
-                    setPaymentMethod(
-                      "qr"
-                    )
-                  }
+                  onClick={() => {
+                    if (cart.length === 0) {
+                      alert("กรุณาเพิ่มสินค้าก่อนเลือก QR");
+                      return;
+                    }
+
+                    setPaymentMethod("qr");
+                    setShowQRModal(true);
+                  }}
                   className={`!min-h-0 h-10 sm:h-11 px-1 sm:px-2 rounded-lg font-bold text-xs sm:text-sm transition ${
                     paymentMethod ===
                     "qr"
@@ -1311,6 +1322,75 @@ export default function POS() {
         </div>
 
       </div>
+
+      {/* ================================
+          QR PAYMENT MODAL
+      ================================= */}
+      {showQRModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden">
+
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">
+                  📱 ชำระเงินด้วย QR Code
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  ให้ลูกค้าสแกน QR Code เพื่อชำระเงิน
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowQRModal(false)}
+                disabled={loading}
+                className="!min-h-0 !w-9 !h-9 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="text-center px-5 pt-5">
+              <p className="text-sm text-slate-500">
+                ยอดที่ต้องชำระ
+              </p>
+              <div className="text-4xl font-bold text-blue-600 mt-1">
+                ฿{netTotal.toLocaleString("th-TH", {
+                  minimumFractionDigits: 2,
+                })}
+              </div>
+            </div>
+
+            <div className="flex justify-center px-5 py-5">
+              <div className="bg-white border-4 border-slate-100 rounded-2xl p-4 shadow-sm">
+                  <img
+                    src="/promptpay-qr.jpg"
+                  alt="QR Code สำหรับชำระเงิน"
+                    className="w-32 h-32 sm:w-40 sm:h-40 object-contain"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-5">
+              <button
+                onClick={() => setShowQRModal(false)}
+                disabled={loading}
+                className="flex-1 !min-h-0 h-12 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 font-bold text-slate-600"
+              >
+                ยกเลิก
+              </button>
+
+              <button
+                onClick={() => handlePayment(true)}
+                disabled={loading}
+                className="flex-1 !min-h-0 h-12 rounded-xl bg-green-600 hover:bg-green-700 disabled:bg-slate-300 text-white font-bold"
+              >
+                {loading ? "กำลังบันทึก..." : "✓ ยืนยันการชำระเงิน"}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

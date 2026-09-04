@@ -9,6 +9,7 @@ export default defineConfig({
   ],
 
   server: {
+    host: true,
     allowedHosts: ['convenience-pos.onrender.com'],
   },
 
