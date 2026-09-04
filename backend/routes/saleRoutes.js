@@ -7,6 +7,7 @@ import SaleItem from "../models/SaleItem.js";
 import StockMovement from "../models/StockMovement.js";
 import Product from "../models/Product.js";
 import Member from "../models/Member.js";
+import Promotion from "../models/Promotion.js";
 
 const router = express.Router();
 
@@ -71,9 +72,11 @@ router.get("/dashboard", async (req, res) => {
 
     const recentBills = salesToday.slice(0, 5).map((sale) => {
       const totalAmount = Number(sale.totalAmount || 0);
+
       const discountAmount = Number(
         sale.discountAmount || 0
       );
+
       const storedNetTotal = Number(
         sale.netTotal || 0
       );
@@ -291,7 +294,7 @@ router.post("/", async (req, res) => {
     }
 
     // ======================================
-    // CALCULATE TOTAL
+    // CALCULATE PRODUCT TOTAL
     // ======================================
 
     let totalAmount = 0;
@@ -370,6 +373,124 @@ router.post("/", async (req, res) => {
     }
 
     // ======================================
+    // LOAD ACTIVE PROMOTIONS
+    // ======================================
+
+    const today = new Date();
+
+    const todayString =
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Bangkok",
+      }).format(today);
+
+    const promotions =
+      await Promotion.findAll({
+        where: {
+          status: "เปิดใช้งาน",
+          startDate: {
+            [Op.lte]: todayString,
+          },
+          endDate: {
+            [Op.gte]: todayString,
+          },
+        },
+        order: [["createdAt", "ASC"]],
+        transaction,
+      });
+
+    // ======================================
+    // CALCULATE PROMOTION DISCOUNT
+    // ======================================
+
+    let promotionDiscount = 0;
+
+    // --------------------------------------
+    // PROMOTION 1
+    // ซื้อครบ X บาท ลด Y บาท
+    // --------------------------------------
+
+    for (const promotion of promotions) {
+      if (
+        promotion.type ===
+        "ลดเป็นจำนวนเงิน"
+      ) {
+        const condition = Number(
+          promotion.condition || 0
+        );
+
+        const discount = Number(
+          promotion.discount || 0
+        );
+
+        if (
+          condition > 0 &&
+          totalAmount >= condition
+        ) {
+          promotionDiscount += discount;
+        }
+      }
+    }
+
+    // --------------------------------------
+    // PROMOTION 2
+    // ซื้อ X ชิ้น ราคาพิเศษ
+    // --------------------------------------
+
+    for (const promotion of promotions) {
+      if (
+        promotion.type ===
+        "ซื้อ X ชิ้น ราคาพิเศษ"
+      ) {
+        const condition = Math.floor(
+          Number(promotion.condition || 0)
+        );
+
+        const specialPrice = Number(
+          promotion.discount || 0
+        );
+
+        if (
+          condition <= 0 ||
+          specialPrice < 0
+        ) {
+          continue;
+        }
+
+        for (const item of saleItems) {
+          const quantity = item.quantity;
+
+          if (quantity < condition) {
+            continue;
+          }
+
+          const groups = Math.floor(
+            quantity / condition
+          );
+
+          const originalGroupPrice =
+            item.price * condition;
+
+          const discountPerGroup =
+            Math.max(
+              originalGroupPrice -
+                specialPrice,
+              0
+            );
+
+          promotionDiscount +=
+            groups *
+            discountPerGroup;
+        }
+      }
+    }
+
+    // ไม่ให้ส่วนลดเกินยอดสินค้า
+    promotionDiscount = Math.min(
+      promotionDiscount,
+      totalAmount
+    );
+
+    // ======================================
     // USE POINTS
     // 1 POINT = 1 BAHT
     // ======================================
@@ -429,13 +550,28 @@ router.post("/", async (req, res) => {
     // POINTS DISCOUNT
     // ======================================
 
+    const amountAfterPromotion =
+      Math.max(
+        totalAmount -
+          promotionDiscount,
+        0
+      );
+
     const usedPoints = Math.min(
       requestedPoints,
-      totalAmount
+      amountAfterPromotion
     );
 
     const pointsDiscount =
       usedPoints;
+
+    // ======================================
+    // TOTAL DISCOUNT
+    // ======================================
+
+    const discountAmount =
+      promotionDiscount +
+      pointsDiscount;
 
     // ======================================
     // NET TOTAL
@@ -443,12 +579,9 @@ router.post("/", async (req, res) => {
 
     const netTotal = Math.max(
       totalAmount -
-        pointsDiscount,
+        discountAmount,
       0
     );
-
-    const discountAmount =
-      pointsDiscount;
 
     // ======================================
     // PAYMENT
@@ -481,6 +614,8 @@ router.post("/", async (req, res) => {
         message:
           "จำนวนเงินที่รับมาไม่เพียงพอ",
         totalAmount,
+        promotionDiscount,
+        pointsDiscount,
         discountAmount,
         netTotal,
         receivedAmount: received,
@@ -659,19 +794,27 @@ router.post("/", async (req, res) => {
 
       data: {
         saleId: sale.id,
+
         memberId:
           sale.memberId,
 
         totalAmount,
-        discountAmount,
-        usedPoints,
+
+        promotionDiscount,
+
         pointsDiscount,
+
+        discountAmount,
+
+        usedPoints,
+
         netTotal,
 
         paymentMethod,
 
         receivedAmount:
           received,
+
         changeAmount,
 
         earnedPoints,
@@ -688,16 +831,22 @@ router.post("/", async (req, res) => {
             (item) => ({
               productId:
                 item.product.id,
+
               name:
                 item.product.name,
+
               quantity:
                 item.quantity,
+
               price:
                 item.price,
+
               cost:
                 item.cost,
+
               total:
                 item.itemTotal,
+
               totalCost:
                 item.itemCost,
             })

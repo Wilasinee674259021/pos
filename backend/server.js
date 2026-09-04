@@ -10,6 +10,7 @@ import sequelize from "./config/database.js";
 
 import "./models/Member.js";
 import "./models/Product.js";
+import "./models/Promotion.js";
 import "./models/Sale.js";
 import "./models/SaleItem.js";
 import "./models/StockMovement.js";
@@ -27,6 +28,7 @@ import saleRoutes from "./routes/saleRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import purchaseRoutes from "./routes/purchaseRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import promotionRoutes from "./routes/promotionRoutes.js";
 
 // =========================
 // LOAD ENV
@@ -107,6 +109,8 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/purchases", purchaseRoutes);
 
 app.use("/api/dashboard", dashboardRoutes);
+
+app.use("/api/promotions", promotionRoutes);
 
 // =========================
 // START SERVER

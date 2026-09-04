@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -6,9 +6,11 @@ const API_URL =
 const PRODUCT_API = `${API_URL}/api/products`;
 const MEMBER_API = `${API_URL}/api/members`;
 const SALE_API = `${API_URL}/api/sales`;
+const PROMOTION_API = `${API_URL}/api/promotions`;
 
 export default function POS() {
   const [products, setProducts] = useState([]);
+  const [promotions, setPromotions] = useState([]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState([]);
 
@@ -31,8 +33,6 @@ export default function POS() {
       setLoadingProducts(true);
       setProductError("");
 
-      console.log("PRODUCT API:", PRODUCT_API);
-
       const response = await fetch(PRODUCT_API, {
         method: "GET",
         headers: {
@@ -42,28 +42,27 @@ export default function POS() {
 
       const text = await response.text();
 
-      console.log("PRODUCT RESPONSE:", text);
-
       let result;
 
       try {
         result = JSON.parse(text);
       } catch {
         throw new Error(
-          `Backend ส่งข้อมูลไม่ใช่ JSON (HTTP ${response.status})`,
+          `Backend ส่งข้อมูลไม่ใช่ JSON (HTTP ${response.status})`
         );
       }
 
       if (!response.ok) {
         throw new Error(
           result.message ||
-            `โหลดสินค้าไม่สำเร็จ HTTP ${response.status}`,
+            `โหลดสินค้าไม่สำเร็จ HTTP ${response.status}`
         );
       }
 
       if (!result.success) {
         throw new Error(
-          result.message || "Backend ไม่ได้ส่ง success=true",
+          result.message ||
+            "Backend ไม่ได้ส่ง success=true"
         );
       }
 
@@ -74,7 +73,9 @@ export default function POS() {
       setProducts(productList);
 
       if (productList.length === 0) {
-        setProductError("Backend เชื่อมต่อได้ แต่ไม่มีสินค้า");
+        setProductError(
+          "Backend เชื่อมต่อได้ แต่ไม่มีสินค้า"
+        );
       }
     } catch (error) {
       console.error("LOAD PRODUCTS ERROR:", error);
@@ -83,15 +84,66 @@ export default function POS() {
 
       setProductError(
         error.message ||
-          "ไม่สามารถโหลดสินค้าจาก Backend ได้",
+          "ไม่สามารถโหลดสินค้าจาก Backend ได้"
       );
     } finally {
       setLoadingProducts(false);
     }
   };
 
+  // ================================
+  // LOAD PROMOTIONS
+  // ================================
+
+  const loadPromotions = async () => {
+    try {
+      const response = await fetch(
+        PROMOTION_API,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
+        throw new Error(
+          result.message ||
+            "โหลดโปรโมชั่นไม่สำเร็จ"
+        );
+      }
+
+      const promotionList = Array.isArray(
+        result.data
+      )
+        ? result.data
+        : [];
+
+      setPromotions(promotionList);
+
+      console.log(
+        "PROMOTIONS:",
+        promotionList
+      );
+    } catch (error) {
+      console.error(
+        "LOAD PROMOTIONS ERROR:",
+        error
+      );
+
+      setPromotions([]);
+    }
+  };
+
   useEffect(() => {
     loadProducts();
+    loadPromotions();
   }, []);
 
   // ================================
@@ -108,12 +160,16 @@ export default function POS() {
     try {
       if (/^\d+$/.test(keyword)) {
         const response = await fetch(
-          `${PRODUCT_API}/barcode/${keyword}`,
+          `${PRODUCT_API}/barcode/${keyword}`
         );
 
         const result = await response.json();
 
-        if (response.ok && result.success && result.data) {
+        if (
+          response.ok &&
+          result.success &&
+          result.data
+        ) {
           addToCart(result.data);
           setSearch("");
           return;
@@ -121,7 +177,9 @@ export default function POS() {
       }
 
       const response = await fetch(
-        `${PRODUCT_API}/search/${encodeURIComponent(keyword)}`,
+        `${PRODUCT_API}/search/${encodeURIComponent(
+          keyword
+        )}`
       );
 
       const result = await response.json();
@@ -138,7 +196,11 @@ export default function POS() {
         alert("ไม่พบสินค้า");
       }
     } catch (error) {
-      console.error("SEARCH PRODUCT ERROR:", error);
+      console.error(
+        "SEARCH PRODUCT ERROR:",
+        error
+      );
+
       alert("ค้นหาสินค้าไม่สำเร็จ");
     }
   };
@@ -165,14 +227,18 @@ export default function POS() {
 
     setCart((currentCart) => {
       const existing = currentCart.find(
-        (item) => item.id === product.id,
+        (item) => item.id === product.id
       );
 
       if (existing) {
         if (
-          existing.quantity >= Number(product.stock)
+          existing.quantity >=
+          Number(product.stock)
         ) {
-          alert("สินค้าใน Stock ไม่เพียงพอ");
+          alert(
+            "สินค้าใน Stock ไม่เพียงพอ"
+          );
+
           return currentCart;
         }
 
@@ -180,9 +246,10 @@ export default function POS() {
           item.id === product.id
             ? {
                 ...item,
-                quantity: item.quantity + 1,
+                quantity:
+                  item.quantity + 1,
               }
-            : item,
+            : item
         );
       }
 
@@ -207,16 +274,23 @@ export default function POS() {
           return item;
         }
 
-        if (item.quantity >= Number(item.stock)) {
-          alert("สินค้าใน Stock ไม่เพียงพอ");
+        if (
+          item.quantity >=
+          Number(item.stock)
+        ) {
+          alert(
+            "สินค้าใน Stock ไม่เพียงพอ"
+          );
+
           return item;
         }
 
         return {
           ...item,
-          quantity: item.quantity + 1,
+          quantity:
+            item.quantity + 1,
         };
-      }),
+      })
     );
   };
 
@@ -227,17 +301,22 @@ export default function POS() {
           item.id === id
             ? {
                 ...item,
-                quantity: item.quantity - 1,
+                quantity:
+                  item.quantity - 1,
               }
-            : item,
+            : item
         )
-        .filter((item) => item.quantity > 0),
+        .filter(
+          (item) => item.quantity > 0
+        )
     );
   };
 
   const removeFromCart = (id) => {
     setCart((currentCart) =>
-      currentCart.filter((item) => item.id !== id),
+      currentCart.filter(
+        (item) => item.id !== id
+      )
     );
   };
 
@@ -245,78 +324,302 @@ export default function POS() {
   // TOTAL
   // ================================
 
-  const totalAmount = cart.reduce(
-    (total, item) =>
-      total +
-      Number(item.price || 0) * item.quantity,
-    0,
-  );
+  const totalAmount = useMemo(() => {
+    return cart.reduce(
+      (total, item) =>
+        total +
+        Number(item.price || 0) *
+          item.quantity,
+      0
+    );
+  }, [cart]);
+
+  // ================================
+  // PROMOTION CALCULATION
+  // ================================
+
+  const promotionResult = useMemo(() => {
+    let discount = 0;
+    const appliedPromotions = [];
+
+    if (cart.length === 0) {
+      return {
+        discount: 0,
+        appliedPromotions: [],
+      };
+    }
+
+    const today = new Date();
+
+    const activePromotions =
+      promotions.filter((promo) => {
+        if (
+          promo.status !==
+          "เปิดใช้งาน"
+        ) {
+          return false;
+        }
+
+        const startDate = new Date(
+          `${promo.startDate}T00:00:00`
+        );
+
+        const endDate = new Date(
+          `${promo.endDate}T23:59:59`
+        );
+
+        return (
+          today >= startDate &&
+          today <= endDate
+        );
+      });
+
+    // ==================================
+    // ซื้อครบ X บาท ลด Y บาท
+    // ==================================
+
+    activePromotions.forEach(
+      (promo) => {
+        if (
+          promo.type ===
+          "ลดเป็นจำนวนเงิน"
+        ) {
+          const condition = Number(
+            promo.condition || 0
+          );
+
+          const promoDiscount =
+            Number(
+              promo.discount || 0
+            );
+
+          if (
+            condition > 0 &&
+            totalAmount >= condition &&
+            promoDiscount > 0
+          ) {
+            discount += promoDiscount;
+
+            appliedPromotions.push({
+              name: promo.name,
+              discount:
+                promoDiscount,
+            });
+          }
+        }
+      }
+    );
+
+    // ==================================
+    // ซื้อ X ชิ้น ราคาพิเศษ
+    // ==================================
+
+    activePromotions.forEach(
+      (promo) => {
+        if (
+          promo.type !==
+          "ซื้อ X ชิ้น ราคาพิเศษ"
+        ) {
+          return;
+        }
+
+        const condition = Math.floor(
+          Number(
+            promo.condition || 0
+          )
+        );
+
+        const specialPrice =
+          Number(
+            promo.discount || 0
+          );
+
+        if (
+          condition <= 0 ||
+          specialPrice < 0
+        ) {
+          return;
+        }
+
+        cart.forEach((item) => {
+          if (
+            item.quantity < condition
+          ) {
+            return;
+          }
+
+          const groups = Math.floor(
+            item.quantity /
+              condition
+          );
+
+          const normalPrice =
+            Number(item.price || 0) *
+            condition;
+
+          const discountPerGroup =
+            Math.max(
+              normalPrice -
+                specialPrice,
+              0
+            );
+
+          const itemDiscount =
+            groups *
+            discountPerGroup;
+
+          if (itemDiscount > 0) {
+            discount += itemDiscount;
+
+            appliedPromotions.push({
+              name: `${promo.name} (${item.name})`,
+              discount:
+                itemDiscount,
+            });
+          }
+        });
+      }
+    );
+
+    discount = Math.min(
+      discount,
+      totalAmount
+    );
+
+    return {
+      discount,
+      appliedPromotions,
+    };
+  }, [
+    cart,
+    promotions,
+    totalAmount,
+  ]);
+
+  const promotionDiscount =
+    promotionResult.discount;
 
   // ================================
   // SEARCH MEMBER
   // ================================
 
   const searchMember = async () => {
-    const cleanPhone = phone.replace(/\D/g, "");
+    const cleanPhone =
+      phone.replace(/\D/g, "");
 
-    if (!/^\d{10}$/.test(cleanPhone)) {
-      alert("กรุณากรอกเบอร์โทรศัพท์ 10 หลัก");
+    if (
+      !/^\d{10}$/.test(cleanPhone)
+    ) {
+      alert(
+        "กรุณากรอกเบอร์โทรศัพท์ 10 หลัก"
+      );
+
       return;
     }
 
     try {
       const response = await fetch(
-        `${MEMBER_API}/phone/${cleanPhone}`,
+        `${MEMBER_API}/phone/${cleanPhone}`
       );
 
-      const result = await response.json();
+      const result =
+        await response.json();
 
-      if (!response.ok || !result.success) {
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         setMember(null);
+
         alert("ไม่พบสมาชิก");
+
         return;
       }
 
       setMember(result.data);
     } catch (error) {
-      console.error("SEARCH MEMBER ERROR:", error);
-      alert("ค้นหาสมาชิกไม่สำเร็จ");
+      console.error(
+        "SEARCH MEMBER ERROR:",
+        error
+      );
+
+      alert(
+        "ค้นหาสมาชิกไม่สำเร็จ"
+      );
     }
   };
+
+  // ================================
+  // POINTS
+  // ================================
+
+  const requestedPoints = 0;
+
+  const pointsDiscount = 0;
+
+  const discountAmount =
+    promotionDiscount +
+    pointsDiscount;
+
+  // ================================
+  // NET TOTAL
+  // ================================
+
+  const netTotal = Math.max(
+    totalAmount -
+      discountAmount,
+    0
+  );
 
   // ================================
   // PAYMENT
   // ================================
 
-  const received = Number(receivedAmount || 0);
+  const received = Number(
+    receivedAmount || 0
+  );
 
   const change =
     paymentMethod === "cash"
-      ? Math.max(received - totalAmount, 0)
+      ? Math.max(
+          received - netTotal,
+          0
+        )
       : 0;
+
+  // ================================
+  // PAYMENT
+  // ================================
 
   const handlePayment = async () => {
     if (cart.length === 0) {
-      alert("กรุณาเพิ่มสินค้าลงตะกร้าก่อน");
+      alert(
+        "กรุณาเพิ่มสินค้าลงตะกร้าก่อน"
+      );
+
       return;
     }
 
     if (
       paymentMethod === "cash" &&
-      received < totalAmount
+      received < netTotal
     ) {
-      alert("จำนวนเงินที่รับมาไม่เพียงพอ");
+      alert(
+        "จำนวนเงินที่รับมาไม่เพียงพอ"
+      );
+
       return;
     }
 
-    const confirmPayment = window.confirm(
-      `ยืนยันการชำระเงิน ${totalAmount.toLocaleString(
-        "th-TH",
-        {
-          minimumFractionDigits: 2,
-        },
-      )} บาท ?`,
-    );
+    const confirmPayment =
+      window.confirm(
+        `ยืนยันการชำระเงิน ${netTotal.toLocaleString(
+          "th-TH",
+          {
+            minimumFractionDigits: 2,
+          }
+        )} บาท ?`
+      );
 
     if (!confirmPayment) {
       return;
@@ -325,35 +628,52 @@ export default function POS() {
     try {
       setLoading(true);
 
-      const response = await fetch(SALE_API, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          memberId: member?.id || null,
+      const response = await fetch(
+        SALE_API,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
 
-          items: cart.map((item) => ({
-            productId: item.id,
-            quantity: item.quantity,
-          })),
+          body: JSON.stringify({
+            memberId:
+              member?.id || null,
 
-          paymentMethod,
+            items: cart.map(
+              (item) => ({
+                productId: item.id,
+                quantity:
+                  item.quantity,
+              })
+            ),
 
-          receivedAmount:
-            paymentMethod === "cash"
-              ? received
-              : totalAmount,
-        }),
-      });
+            paymentMethod,
 
-      const result = await response.json();
+            receivedAmount:
+              paymentMethod === "cash"
+                ? received
+                : netTotal,
 
-      if (!response.ok || !result.success) {
+            usePoints:
+              requestedPoints,
+          }),
+        }
+      );
+
+      const result =
+        await response.json();
+
+      if (
+        !response.ok ||
+        !result.success
+      ) {
         alert(
           result.message ||
-            "ชำระเงินไม่สำเร็จ",
+            "ชำระเงินไม่สำเร็จ"
         );
+
         return;
       }
 
@@ -363,18 +683,41 @@ export default function POS() {
             result.data.saleId
           }\n` +
           `ยอดรวม: ${Number(
-            result.data.totalAmount,
-          ).toLocaleString("th-TH", {
-            minimumFractionDigits: 2,
-          })} บาท\n` +
+            result.data.totalAmount
+          ).toLocaleString(
+            "th-TH",
+            {
+              minimumFractionDigits: 2,
+            }
+          )} บาท\n` +
+          `ส่วนลด: ${Number(
+            result.data.discountAmount ||
+              0
+          ).toLocaleString(
+            "th-TH",
+            {
+              minimumFractionDigits: 2,
+            }
+          )} บาท\n` +
+          `ยอดสุทธิ: ${Number(
+            result.data.netTotal
+          ).toLocaleString(
+            "th-TH",
+            {
+              minimumFractionDigits: 2,
+            }
+          )} บาท\n` +
           `เงินทอน: ${Number(
-            result.data.changeAmount,
-          ).toLocaleString("th-TH", {
-            minimumFractionDigits: 2,
-          })} บาท\n` +
+            result.data.changeAmount
+          ).toLocaleString(
+            "th-TH",
+            {
+              minimumFractionDigits: 2,
+            }
+          )} บาท\n` +
           `ได้รับ Points: ${
             result.data.earnedPoints
-          }`,
+          }`
       );
 
       setCart([]);
@@ -383,9 +726,16 @@ export default function POS() {
       setReceivedAmount("");
 
       await loadProducts();
+      await loadPromotions();
     } catch (error) {
-      console.error("PAYMENT ERROR:", error);
-      alert("ไม่สามารถเชื่อมต่อ Backend ได้");
+      console.error(
+        "PAYMENT ERROR:",
+        error
+      );
+
+      alert(
+        "ไม่สามารถเชื่อมต่อ Backend ได้"
+      );
     } finally {
       setLoading(false);
     }
@@ -395,26 +745,28 @@ export default function POS() {
   // FILTER PRODUCTS
   // ================================
 
-  const filteredProducts = products.filter(
-    (product) => {
-      const keyword = search
-        .toLowerCase()
-        .trim();
+  const filteredProducts =
+    products.filter(
+      (product) => {
+        const keyword =
+          search
+            .toLowerCase()
+            .trim();
 
-      if (!keyword) {
-        return true;
+        if (!keyword) {
+          return true;
+        }
+
+        return (
+          product.name
+            ?.toLowerCase()
+            .includes(keyword) ||
+          product.barcode
+            ?.toLowerCase()
+            .includes(keyword)
+        );
       }
-
-      return (
-        product.name
-          ?.toLowerCase()
-          .includes(keyword) ||
-        product.barcode
-          ?.toLowerCase()
-          .includes(keyword)
-      );
-    },
-  );
+    );
 
   // ================================
   // UI
@@ -423,9 +775,7 @@ export default function POS() {
   return (
     <div className="min-h-screen bg-slate-100 p-3 sm:p-5 lg:p-8">
 
-      {/* =================================
-          HEADER
-      ================================= */}
+      {/* HEADER */}
 
       <div className="mb-4 sm:mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
@@ -437,36 +787,34 @@ export default function POS() {
         </p>
       </div>
 
-      {/* =================================
-          MAIN LAYOUT
-      ================================= */}
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
 
-        {/* =================================
-            PRODUCTS
-        ================================= */}
+        {/* PRODUCTS */}
 
         <div className="lg:col-span-2 min-w-0">
 
           <div className="bg-white rounded-xl shadow-sm p-3 sm:p-5">
-
-            {/* SEARCH */}
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-5">
 
               <input
                 value={search}
                 onChange={(e) =>
-                  setSearch(e.target.value)
+                  setSearch(
+                    e.target.value
+                  )
                 }
-                onKeyDown={handleSearchKeyDown}
+                onKeyDown={
+                  handleSearchKeyDown
+                }
                 placeholder="🔍 สแกน Barcode หรือค้นหาสินค้า"
                 className="w-full min-w-0 flex-1 border border-slate-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
 
               <button
-                onClick={searchProduct}
+                onClick={
+                  searchProduct
+                }
                 className="!min-h-0 w-full sm:w-auto h-10 sm:h-11 bg-blue-600 hover:bg-blue-700 text-white px-5 sm:px-6 rounded-lg font-bold transition"
               >
                 ค้นหา
@@ -474,16 +822,11 @@ export default function POS() {
 
             </div>
 
-            {/* LOADING */}
-
             {loadingProducts ? (
-
               <div className="text-center text-slate-400 py-10">
                 กำลังโหลดสินค้า...
               </div>
-
             ) : productError ? (
-
               <div className="rounded-xl bg-red-50 border border-red-200 p-4 sm:p-5 text-red-600">
 
                 <div className="font-bold text-lg mb-2">
@@ -499,37 +842,34 @@ export default function POS() {
                 </div>
 
                 <button
-                  onClick={loadProducts}
+                  onClick={
+                    loadProducts
+                  }
                   className="!min-h-0 h-10 mt-4 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-bold transition"
                 >
                   ลองใหม่
                 </button>
 
               </div>
-
             ) : filteredProducts.length === 0 ? (
-
               <div className="text-center text-slate-400 py-10">
                 ยังไม่มีสินค้า
               </div>
-
             ) : (
-
-              /* PRODUCT GRID */
-
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-4">
 
                 {filteredProducts.map(
                   (product) => (
-
                     <button
                       key={product.id}
                       onClick={() =>
-                        addToCart(product)
+                        addToCart(
+                          product
+                        )
                       }
                       disabled={
                         Number(
-                          product.stock,
+                          product.stock
                         ) <= 0
                       }
                       className="!min-h-0 min-w-0 h-auto text-left border border-slate-200 rounded-xl p-3 sm:p-4 hover:border-blue-500 hover:shadow-md transition disabled:opacity-40 bg-white"
@@ -546,24 +886,27 @@ export default function POS() {
                       <div className="text-blue-600 font-bold text-base sm:text-xl mt-2 sm:mt-3">
                         ฿
                         {Number(
-                          product.price || 0,
+                          product.price ||
+                            0
                         ).toLocaleString(
                           "th-TH",
                           {
                             minimumFractionDigits: 2,
-                          },
+                          }
                         )}
                       </div>
 
                       <div className="text-xs sm:text-sm mt-2">
                         Stock:{" "}
                         <span className="font-bold">
-                          {product.stock}
+                          {
+                            product.stock
+                          }
                         </span>
                       </div>
 
                     </button>
-                  ),
+                  )
                 )}
 
               </div>
@@ -572,9 +915,7 @@ export default function POS() {
           </div>
         </div>
 
-        {/* =================================
-            CART
-        ================================= */}
+        {/* CART */}
 
         <div className="min-w-0">
 
@@ -584,107 +925,100 @@ export default function POS() {
               🛒 รายการสินค้า
             </h2>
 
-            {/* CART ITEMS */}
-
             {cart.length === 0 ? (
-
               <div className="text-center text-slate-400 py-8 sm:py-10">
                 ยังไม่มีสินค้า
               </div>
-
             ) : (
-
               <div className="space-y-3 sm:space-y-4 max-h-[360px] sm:max-h-[420px] lg:max-h-[480px] overflow-y-auto pr-1">
 
-                {cart.map((item) => (
+                {cart.map(
+                  (item) => (
+                    <div
+                      key={item.id}
+                      className="border-b pb-3 sm:pb-4"
+                    >
 
-                  <div
-                    key={item.id}
-                    className="border-b pb-3 sm:pb-4"
-                  >
+                      <div className="flex items-start justify-between gap-2">
 
-                    {/* NAME + DELETE */}
-
-                    <div className="flex items-start justify-between gap-2">
-
-                      <div className="font-medium min-w-0 break-words text-sm sm:text-base">
-                        {item.name}
-                      </div>
-
-                      <button
-                        onClick={() =>
-                          removeFromCart(
-                            item.id,
-                          )
-                        }
-                        className="!min-h-0 !w-8 !h-8 flex-shrink-0 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50"
-                        aria-label="ลบสินค้า"
-                      >
-                        ✕
-                      </button>
-
-                    </div>
-
-                    {/* QUANTITY + PRICE */}
-
-                    <div className="flex items-center justify-between gap-2 mt-2">
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="font-medium min-w-0 break-words text-sm sm:text-base">
+                          {item.name}
+                        </div>
 
                         <button
                           onClick={() =>
-                            decreaseQuantity(
-                              item.id,
+                            removeFromCart(
+                              item.id
                             )
                           }
-                          className="!min-h-0 !w-8 !h-8 sm:!w-9 sm:!h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-lg"
+                          className="!min-h-0 !w-8 !h-8 flex-shrink-0 text-red-500 hover:text-red-700 rounded-lg hover:bg-red-50"
+                          aria-label="ลบสินค้า"
                         >
-                          −
-                        </button>
-
-                        <span className="font-bold min-w-[24px] text-center">
-                          {item.quantity}
-                        </span>
-
-                        <button
-                          onClick={() =>
-                            increaseQuantity(
-                              item.id,
-                            )
-                          }
-                          className="!min-h-0 !w-8 !h-8 sm:!w-9 sm:!h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-lg"
-                        >
-                          +
+                          ✕
                         </button>
 
                       </div>
 
-                      <div className="font-bold text-right break-all text-sm sm:text-base">
-                        ฿
-                        {(
-                          Number(
-                            item.price || 0,
-                          ) *
-                          item.quantity
-                        ).toLocaleString(
-                          "th-TH",
-                          {
-                            minimumFractionDigits: 2,
-                          },
-                        )}
+                      <div className="flex items-center justify-between gap-2 mt-2">
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+
+                          <button
+                            onClick={() =>
+                              decreaseQuantity(
+                                item.id
+                              )
+                            }
+                            className="!min-h-0 !w-8 !h-8 sm:!w-9 sm:!h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-lg"
+                          >
+                            −
+                          </button>
+
+                          <span className="font-bold min-w-[24px] text-center">
+                            {
+                              item.quantity
+                            }
+                          </span>
+
+                          <button
+                            onClick={() =>
+                              increaseQuantity(
+                                item.id
+                              )
+                            }
+                            className="!min-h-0 !w-8 !h-8 sm:!w-9 sm:!h-9 bg-slate-200 hover:bg-slate-300 rounded-lg font-bold text-lg"
+                          >
+                            +
+                          </button>
+
+                        </div>
+
+                        <div className="font-bold text-right break-all text-sm sm:text-base">
+                          ฿
+                          {(
+                            Number(
+                              item.price ||
+                                0
+                            ) *
+                            item.quantity
+                          ).toLocaleString(
+                            "th-TH",
+                            {
+                              minimumFractionDigits: 2,
+                            }
+                          )}
+                        </div>
+
                       </div>
 
                     </div>
-
-                  </div>
-                ))}
+                  )
+                )}
 
               </div>
             )}
 
-            {/* =================================
-                MEMBER
-            ================================= */}
+            {/* MEMBER */}
 
             <div className="border-t mt-4 sm:mt-5 pt-4 sm:pt-5">
 
@@ -700,8 +1034,8 @@ export default function POS() {
                     setPhone(
                       e.target.value.replace(
                         /\D/g,
-                        "",
-                      ),
+                        ""
+                      )
                     )
                   }
                   placeholder="เบอร์โทรสมาชิก"
@@ -710,7 +1044,9 @@ export default function POS() {
                 />
 
                 <button
-                  onClick={searchMember}
+                  onClick={
+                    searchMember
+                  }
                   className="!min-h-0 h-10 sm:h-11 w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white px-5 rounded-lg font-bold"
                 >
                   ค้นหา
@@ -719,7 +1055,6 @@ export default function POS() {
               </div>
 
               {member && (
-
                 <div className="bg-green-50 text-green-700 rounded-lg p-3 mt-3">
 
                   <div className="font-bold break-words">
@@ -732,30 +1067,109 @@ export default function POS() {
                   </div>
 
                 </div>
-
               )}
 
             </div>
 
-            {/* =================================
-                TOTAL
-            ================================= */}
+            {/* TOTAL */}
 
             <div className="border-t mt-4 sm:mt-5 pt-4 sm:pt-5">
 
-              <div className="flex items-center justify-between gap-3 text-xl sm:text-2xl font-bold">
+              <div className="flex items-center justify-between gap-3 text-base sm:text-lg">
 
                 <span>
                   ยอดรวม
                 </span>
 
-                <span className="text-blue-600 text-right break-all">
+                <span className="font-bold text-right break-all">
                   ฿
                   {totalAmount.toLocaleString(
                     "th-TH",
                     {
                       minimumFractionDigits: 2,
-                    },
+                    }
+                  )}
+                </span>
+
+              </div>
+
+              {/* PROMOTION */}
+
+              {promotionDiscount >
+                0 && (
+                <div className="mt-2">
+
+                  {promotionResult.appliedPromotions.map(
+                    (
+                      promo,
+                      index
+                    ) => (
+                      <div
+                        key={
+                          index
+                        }
+                        className="flex items-start justify-between gap-3 text-sm text-green-600"
+                      >
+
+                        <span className="min-w-0">
+                          🎉{" "}
+                          {
+                            promo.name
+                          }
+                        </span>
+
+                        <span className="font-bold whitespace-nowrap">
+                          -฿
+                          {Number(
+                            promo.discount
+                          ).toLocaleString(
+                            "th-TH",
+                            {
+                              minimumFractionDigits: 2,
+                            }
+                          )}
+                        </span>
+
+                      </div>
+                    )
+                  )}
+
+                  <div className="flex items-center justify-between gap-3 mt-2 text-red-600 font-bold">
+
+                    <span>
+                      ส่วนลดโปรโมชั่น
+                    </span>
+
+                    <span>
+                      -฿
+                      {promotionDiscount.toLocaleString(
+                        "th-TH",
+                        {
+                          minimumFractionDigits: 2,
+                        }
+                      )}
+                    </span>
+
+                  </div>
+
+                </div>
+              )}
+
+              {/* NET TOTAL */}
+
+              <div className="border-t mt-3 pt-3 flex items-center justify-between gap-3 text-xl sm:text-2xl font-bold">
+
+                <span>
+                  ยอดสุทธิ
+                </span>
+
+                <span className="text-blue-600 text-right break-all">
+                  ฿
+                  {netTotal.toLocaleString(
+                    "th-TH",
+                    {
+                      minimumFractionDigits: 2,
+                    }
                   )}
                 </span>
 
@@ -763,9 +1177,7 @@ export default function POS() {
 
             </div>
 
-            {/* =================================
-                PAYMENT
-            ================================= */}
+            {/* PAYMENT */}
 
             <div className="mt-4 sm:mt-5">
 
@@ -777,10 +1189,13 @@ export default function POS() {
 
                 <button
                   onClick={() =>
-                    setPaymentMethod("cash")
+                    setPaymentMethod(
+                      "cash"
+                    )
                   }
                   className={`!min-h-0 h-10 sm:h-11 px-1 sm:px-2 rounded-lg font-bold text-xs sm:text-sm transition ${
-                    paymentMethod === "cash"
+                    paymentMethod ===
+                    "cash"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-100 hover:bg-slate-200"
                   }`}
@@ -790,10 +1205,13 @@ export default function POS() {
 
                 <button
                   onClick={() =>
-                    setPaymentMethod("qr")
+                    setPaymentMethod(
+                      "qr"
+                    )
                   }
                   className={`!min-h-0 h-10 sm:h-11 px-1 sm:px-2 rounded-lg font-bold text-xs sm:text-sm transition ${
-                    paymentMethod === "qr"
+                    paymentMethod ===
+                    "qr"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-100 hover:bg-slate-200"
                   }`}
@@ -803,10 +1221,13 @@ export default function POS() {
 
                 <button
                   onClick={() =>
-                    setPaymentMethod("card")
+                    setPaymentMethod(
+                      "card"
+                    )
                   }
                   className={`!min-h-0 h-10 sm:h-11 px-1 sm:px-2 rounded-lg font-bold text-xs sm:text-sm transition ${
-                    paymentMethod === "card"
+                    paymentMethod ===
+                    "card"
                       ? "bg-blue-600 text-white"
                       : "bg-slate-100 hover:bg-slate-200"
                   }`}
@@ -818,12 +1239,10 @@ export default function POS() {
 
             </div>
 
-            {/* =================================
-                CASH
-            ================================= */}
+            {/* CASH */}
 
-            {paymentMethod === "cash" && (
-
+            {paymentMethod ===
+              "cash" && (
               <div className="mt-4">
 
                 <label className="block font-medium mb-2">
@@ -833,10 +1252,12 @@ export default function POS() {
                 <input
                   type="number"
                   min="0"
-                  value={receivedAmount}
+                  value={
+                    receivedAmount
+                  }
                   onChange={(e) =>
                     setReceivedAmount(
-                      e.target.value,
+                      e.target.value
                     )
                   }
                   placeholder="จำนวนเงินที่รับ"
@@ -855,22 +1276,21 @@ export default function POS() {
                       "th-TH",
                       {
                         minimumFractionDigits: 2,
-                      },
+                      }
                     )}
                   </span>
 
                 </div>
 
               </div>
-
             )}
 
-            {/* =================================
-                PAY
-            ================================= */}
+            {/* PAY */}
 
             <button
-              onClick={handlePayment}
+              onClick={
+                handlePayment
+              }
               disabled={
                 loading ||
                 cart.length === 0
@@ -879,16 +1299,15 @@ export default function POS() {
             >
               {loading
                 ? "กำลังชำระเงิน..."
-                : `💰 ชำระเงิน ฿${totalAmount.toLocaleString(
+                : `💰 ชำระเงิน ฿${netTotal.toLocaleString(
                     "th-TH",
                     {
                       minimumFractionDigits: 2,
-                    },
+                    }
                   )}`}
             </button>
 
           </div>
-
         </div>
 
       </div>
