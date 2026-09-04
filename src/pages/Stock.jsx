@@ -1,51 +1,76 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-const API_URL =
+const API_BASE =
   import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_URL = `${API_BASE}/api/products`;
+const STOCK_API_URL = `${API_BASE}/api/stock`;
 
 export default function Stock() {
   const [products, setProducts] = useState([]);
-
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ทั้งหมด");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [showModal, setShowModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [movementType, setMovementType] = useState("in");
 
-  const [stockType, setStockType] = useState("in");
-  const [amount, setAmount] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [note, setNote] = useState("");
-
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  /* =========================================================
-      LOAD PRODUCTS FROM DATABASE
-  ========================================================= */
+  // ======================================
+  // LOAD PRODUCTS
+  // ======================================
 
   const loadProducts = async () => {
     try {
       setLoading(true);
+      setError("");
 
-      const response = await fetch(`${API_URL}/api/stock`);
+      console.log("Loading stock from:", API_URL);
 
-      if (!response.ok) {
-        throw new Error("ไม่สามารถโหลดข้อมูลสต๊อกได้");
+      const response = await fetch(API_URL, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      const text = await response.text();
+
+      console.log("Stock API response:", text);
+
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
       }
 
-      const result = await response.json();
-
-      if (result.success) {
-        setProducts(result.data || []);
-      } else {
-        throw new Error(result.message || "ไม่สามารถโหลดข้อมูลสต๊อกได้");
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "โหลดข้อมูลสต๊อกไม่สำเร็จ",
+        );
       }
-    } catch (error) {
-      console.error("LOAD STOCK ERROR:", error);
 
-      alert(
-        "ไม่สามารถเชื่อมต่อฐานข้อมูลได้\nกรุณาตรวจสอบ Backend"
+      setProducts(
+        Array.isArray(result.data)
+          ? result.data
+          : [],
+      );
+    } catch (err) {
+      console.error("LOAD STOCK ERROR:", err);
+
+      setProducts([]);
+
+      setError(
+        err.message ||
+          "ไม่สามารถโหลดข้อมูลสต๊อกได้",
       );
     } finally {
       setLoading(false);
@@ -56,148 +81,129 @@ export default function Stock() {
     loadProducts();
   }, []);
 
-  /* =========================================================
-      CATEGORY
-  ========================================================= */
+  // ======================================
+  // CATEGORIES
+  // ======================================
 
   const categories = useMemo(() => {
-    const uniqueCategories = [
-      ...new Set(
-        products
-          .map((product) => product.category)
-          .filter(Boolean)
-      ),
-    ];
+    const list = products
+      .map((product) => product.category)
+      .filter(Boolean);
 
-    return ["ทั้งหมด", ...uniqueCategories];
+    return ["ทั้งหมด", ...new Set(list)];
   }, [products]);
 
-  /* =========================================================
-      FILTER
-  ========================================================= */
+  // ======================================
+  // FILTER
+  // ======================================
 
-  const filteredProducts = products.filter((product) => {
-    const keyword = search.toLowerCase().trim();
+  const filteredProducts = products.filter(
+    (product) => {
+      const keyword = search
+        .toLowerCase()
+        .trim();
 
-    const productName = String(product.name || "").toLowerCase();
-    const productCode = String(product.id || "").toLowerCase();
-    const barcode = String(product.barcode || "").toLowerCase();
+      const matchSearch =
+        !keyword ||
+        String(product.id || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(product.name || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(product.barcode || "")
+          .toLowerCase()
+          .includes(keyword) ||
+        String(product.category || "")
+          .toLowerCase()
+          .includes(keyword);
 
-    const matchSearch =
-      productName.includes(keyword) ||
-      productCode.includes(keyword) ||
-      barcode.includes(keyword);
+      const matchCategory =
+        category === "ทั้งหมด" ||
+        product.category === category;
 
-    const matchCategory =
-      category === "ทั้งหมด" ||
-      product.category === category;
+      return matchSearch && matchCategory;
+    },
+  );
 
-    return matchSearch && matchCategory;
-  });
-
-  /* =========================================================
-      SUMMARY
-  ========================================================= */
+  // ======================================
+  // SUMMARY
+  // ======================================
 
   const totalProducts = products.length;
 
   const totalStock = products.reduce(
-    (sum, product) => sum + Number(product.stock || 0),
-    0
+    (sum, product) =>
+      sum + Number(product.stock || 0),
+    0,
   );
 
-  const lowStockProducts = products.filter(
-    (product) => {
-      const stock = Number(product.stock || 0);
-      const minStock = Number(product.minStock || 10);
-
-      return stock > 0 && stock <= minStock;
-    }
+  const lowStock = products.filter(
+    (product) =>
+      Number(product.stock || 0) > 0 &&
+      Number(product.stock || 0) <= 5,
   ).length;
 
-  const outOfStockProducts = products.filter(
-    (product) => Number(product.stock || 0) === 0
+  const outOfStock = products.filter(
+    (product) =>
+      Number(product.stock || 0) === 0,
   ).length;
 
-  /* =========================================================
-      STATUS
-  ========================================================= */
+  // ======================================
+  // OPEN STOCK FORM
+  // ======================================
 
-  const getStockStatus = (product) => {
-    const stock = Number(product.stock || 0);
-
-    // ตอนนี้ Product model ยังไม่มี minStock
-    // จึงใช้ 10 เป็นค่าขั้นต่ำเริ่มต้น
-    const minStock = Number(product.minStock || 10);
-
-    if (stock === 0) {
-      return {
-        label: "หมด",
-        className: "bg-red-100 text-red-700",
-        stockClass: "text-red-600",
-      };
-    }
-
-    if (stock <= minStock) {
-      return {
-        label: "ใกล้หมด",
-        className: "bg-orange-100 text-orange-700",
-        stockClass: "text-orange-500",
-      };
-    }
-
-    return {
-      label: "ปกติ",
-      className: "bg-green-100 text-green-700",
-      stockClass: "text-green-600",
-    };
-  };
-
-  /* =========================================================
-      OPEN MODAL
-  ========================================================= */
-
-  const openStockModal = (product, type) => {
+  const openStockForm = (product, type) => {
     setSelectedProduct(product);
-    setStockType(type);
-    setAmount("");
+    setMovementType(type);
+    setQuantity("");
     setNote("");
-    setShowModal(true);
+    setShowForm(true);
   };
 
-  const closeModal = () => {
-    if (saving) {
-      return;
-    }
+  // ======================================
+  // CLOSE STOCK FORM
+  // ======================================
 
-    setShowModal(false);
+  const closeStockForm = () => {
+    setShowForm(false);
     setSelectedProduct(null);
-    setAmount("");
+    setQuantity("");
     setNote("");
+    setMovementType("in");
   };
 
-  /* =========================================================
-      UPDATE STOCK
-  ========================================================= */
+  // ======================================
+  // STOCK IN / OUT
+  // ======================================
 
-  const updateStock = async () => {
-    const quantity = Number(amount);
-
-    if (!amount || !Number.isInteger(quantity) || quantity <= 0) {
-      alert("กรุณากรอกจำนวนสินค้าเป็นจำนวนเต็มมากกว่า 0");
-      return;
-    }
-
+  const saveStockMovement = async () => {
     if (!selectedProduct) {
       return;
     }
 
+    const amount = Number(quantity);
+
     if (
-      stockType === "out" &&
-      quantity > Number(selectedProduct.stock || 0)
+      !quantity ||
+      Number.isNaN(amount) ||
+      amount <= 0 ||
+      !Number.isInteger(amount)
+    ) {
+      alert("กรุณากรอกจำนวนเป็นจำนวนเต็มมากกว่า 0");
+      return;
+    }
+
+    const currentStock = Number(
+      selectedProduct.stock || 0,
+    );
+
+    if (
+      movementType === "out" &&
+      amount > currentStock
     ) {
       alert(
-        `จำนวนสินค้าในสต๊อกไม่เพียงพอ\nเหลือ ${selectedProduct.stock} ชิ้น`
+        `สต๊อกไม่เพียงพอ\nคงเหลือ ${currentStock} ชิ้น`,
       );
       return;
     }
@@ -206,632 +212,787 @@ export default function Stock() {
       setSaving(true);
 
       const endpoint =
-        stockType === "in"
-          ? `${API_URL}/api/stock/in`
-          : `${API_URL}/api/stock/out`;
+        movementType === "in"
+          ? `${STOCK_API_URL}/in`
+          : `${STOCK_API_URL}/out`;
 
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           productId: selectedProduct.id,
-          quantity,
-          note: note.trim() || null,
+          quantity: amount,
+          note: note.trim(),
         }),
       });
 
-      const result = await response.json();
+      const text = await response.text();
 
-      if (!response.ok || !result.success) {
+      let result;
+
+      try {
+        result = JSON.parse(text);
+      } catch {
         throw new Error(
-          result.message || "ไม่สามารถอัปเดตสต๊อกได้"
+          "Backend ส่งข้อมูลไม่ใช่ JSON",
         );
       }
 
-      setShowModal(false);
-      setSelectedProduct(null);
-      setAmount("");
-      setNote("");
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message ||
+            "บันทึกสต๊อกไม่สำเร็จ",
+        );
+      }
+
+      alert(
+        movementType === "in"
+          ? "รับเข้าสินค้าเรียบร้อย"
+          : "จ่ายออกสินค้าเรียบร้อย",
+      );
+
+      closeStockForm();
 
       await loadProducts();
-
-      alert(
-        stockType === "in"
-          ? "รับสินค้าเข้าสต๊อกเรียบร้อย"
-          : "ตัดสินค้าออกจากสต๊อกเรียบร้อย"
+    } catch (err) {
+      console.error(
+        "STOCK MOVEMENT ERROR:",
+        err,
       );
-    } catch (error) {
-      console.error("UPDATE STOCK ERROR:", error);
 
       alert(
-        error.message ||
-          "ไม่สามารถอัปเดตสต๊อกได้ กรุณาตรวจสอบ Backend"
+        `ไม่สามารถบันทึกสต๊อกได้\n${err.message}`,
       );
     } finally {
       setSaving(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
+  // ======================================
+  // UI
+  // ======================================
 
-      <div className="mb-5">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">
-            📦 จัดการสต๊อกสินค้า
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
+
+      {/* HEADER */}
+
+      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+
+        <div className="min-w-0">
+
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">
+            📦 จัดการสต๊อก
           </h1>
 
-          <p className="text-sm leading-6 text-gray-500">
-            ตรวจสอบ รับเข้า และตัดสินค้าออกจากสต๊อก
+          <p className="mt-1 text-sm text-slate-500 sm:text-base">
+            ตรวจสอบและจัดการจำนวนสินค้าคงเหลือ
           </p>
+
         </div>
+
       </div>
 
-      {/* =====================================================
-          SUMMARY
-      ===================================================== */}
+      {/* ERROR */}
 
-      <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {error && (
+        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 sm:mb-6">
+
+          <p className="font-bold">
+            โหลดข้อมูลสต๊อกไม่สำเร็จ
+          </p>
+
+          <p className="mt-1 break-words text-sm">
+            {error}
+          </p>
+
+          <button
+            onClick={loadProducts}
+            className="
+              mt-3
+              h-9
+              rounded-lg
+              bg-red-600
+              px-4
+              text-sm
+              font-bold
+              text-white
+              hover:bg-red-700
+            "
+          >
+            🔄 ลองใหม่
+          </button>
+
+        </div>
+      )}
+
+      {/* SUMMARY */}
+
+      <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
+
         {/* TOTAL PRODUCTS */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-500">
-                สินค้าทั้งหมด
-              </p>
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
-              <p className="mt-1.5 text-2xl font-bold text-gray-800">
-                {totalProducts}
-              </p>
+          <p className="text-sm text-slate-500 sm:text-base">
+            สินค้าทั้งหมด
+          </p>
 
-              <p className="mt-0.5 text-xs text-gray-400">
-                รายการสินค้า
-              </p>
-            </div>
+          <p className="mt-2 text-2xl font-bold text-slate-800 sm:text-3xl">
+            {totalProducts}
+          </p>
 
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg">
-              📦
-            </div>
-          </div>
+          <p className="mt-1 text-sm text-slate-400">
+            รายการ
+          </p>
+
         </div>
 
         {/* TOTAL STOCK */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-500">
-                จำนวนสินค้าคงเหลือ
-              </p>
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
-              <p className="mt-1.5 text-2xl font-bold text-blue-600">
-                {totalStock}
-              </p>
+          <p className="text-sm text-slate-500 sm:text-base">
+            Stock รวม
+          </p>
 
-              <p className="mt-0.5 text-xs text-gray-400">
-                ชิ้น
-              </p>
-            </div>
+          <p className="mt-2 text-2xl font-bold text-blue-600 sm:text-3xl">
+            {totalStock.toLocaleString("th-TH")}
+          </p>
 
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg">
-              📊
-            </div>
-          </div>
+          <p className="mt-1 text-sm text-slate-400">
+            ชิ้น
+          </p>
+
         </div>
 
         {/* LOW STOCK */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-500">
-                สินค้าใกล้หมด
-              </p>
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
-              <p className="mt-1.5 text-2xl font-bold text-orange-500">
-                {lowStockProducts}
-              </p>
+          <p className="text-sm text-slate-500 sm:text-base">
+            สินค้าใกล้หมด
+          </p>
 
-              <p className="mt-0.5 text-xs text-gray-400">
-                รายการ
-              </p>
-            </div>
+          <p className="mt-2 text-2xl font-bold text-orange-500 sm:text-3xl">
+            {lowStock}
+          </p>
 
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-lg">
-              ⚠️
-            </div>
-          </div>
+          <p className="mt-1 text-sm text-slate-400">
+            รายการ
+          </p>
+
         </div>
 
         {/* OUT OF STOCK */}
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="flex items-start justify-between">
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-gray-500">
-                สินค้าหมด
-              </p>
+        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
 
-              <p className="mt-1.5 text-2xl font-bold text-red-500">
-                {outOfStockProducts}
-              </p>
+          <p className="text-sm text-slate-500 sm:text-base">
+            สินค้าหมด
+          </p>
 
-              <p className="mt-0.5 text-xs text-gray-400">
-                รายการ
-              </p>
-            </div>
+          <p className="mt-2 text-2xl font-bold text-red-600 sm:text-3xl">
+            {outOfStock}
+          </p>
 
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-lg">
-              🚨
-            </div>
-          </div>
+          <p className="mt-1 text-sm text-slate-400">
+            รายการ
+          </p>
+
         </div>
+
       </div>
 
-      {/* =====================================================
-          SEARCH / FILTER
-      ===================================================== */}
+      {/* SEARCH + CATEGORY */}
 
-      <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
-        <div className="flex flex-col gap-2.5 sm:flex-row">
-          <div className="relative min-w-0 flex-1">
+      <div className="mb-5 rounded-xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+
+          <div className="sm:col-span-2">
+
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="ค้นหาชื่อสินค้า / รหัสสินค้า / Barcode"
-              className="!h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 pr-10 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white"
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
+              placeholder="🔍 ค้นหาชื่อสินค้า / Barcode / รหัสสินค้า"
+              className="
+                h-10
+                w-full
+                rounded-lg
+                border
+                border-slate-300
+                px-4
+                text-sm
+                outline-none
+                transition
+                focus:border-blue-500
+                focus:ring-2
+                focus:ring-blue-500
+              "
             />
 
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              🔍
-            </span>
           </div>
 
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none focus:border-blue-500 sm:w-48"
-          >
-            {categories.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <div>
+
+            <select
+              value={category}
+              onChange={(e) =>
+                setCategory(e.target.value)
+              }
+              className="
+                h-10
+                w-full
+                rounded-lg
+                border
+                border-slate-300
+                bg-white
+                px-4
+                text-sm
+                outline-none
+                transition
+                focus:border-blue-500
+                focus:ring-2
+                focus:ring-blue-500
+              "
+            >
+
+              {categories.map(
+                (item) => (
+                  <option
+                    key={item}
+                    value={item}
+                  >
+                    {item}
+                  </option>
+                ),
+              )}
+
+            </select>
+
+          </div>
+
         </div>
+
+        {(search ||
+          category !== "ทั้งหมด") && (
+          <div className="mt-2 text-sm text-slate-500">
+            พบ {filteredProducts.length} รายการ
+          </div>
+        )}
+
       </div>
 
-      {/* =====================================================
-          LOADING
-      ===================================================== */}
+      {/* TABLE */}
 
-      {loading ? (
-        <div className="rounded-xl border border-gray-100 bg-white px-5 py-12 text-center shadow-sm">
-          <p className="text-sm text-gray-400">
-            ⏳ กำลังโหลดข้อมูลสต๊อก...
-          </p>
-        </div>
-      ) : (
-        <>
-          {/* =================================================
-              DESKTOP TABLE
-          ================================================= */}
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
 
-          <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1050px] table-fixed">
-                <colgroup>
-                  <col className="w-[13%]" />
-                  <col className="w-[25%]" />
-                  <col className="w-[15%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[13%]" />
-                  <col className="w-[22%]" />
-                </colgroup>
+        {/* TABLE HEADER */}
 
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
-                      รหัสสินค้า
-                    </th>
+        <div className="border-b p-4 sm:p-5">
 
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
-                      สินค้า
-                    </th>
+          <div className="flex items-center justify-between gap-3">
 
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
-                      หมวดหมู่
-                    </th>
+            <h2 className="text-lg font-bold">
+              รายการสต๊อก
+            </h2>
 
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
-                      สต๊อก
-                    </th>
+            <span className="text-sm text-slate-400">
+              {filteredProducts.length} รายการ
+            </span>
 
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
-                      สถานะ
-                    </th>
-
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
-                      จัดการ
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredProducts.length > 0 ? (
-                    filteredProducts.map((product) => {
-                      const status = getStockStatus(product);
-
-                      return (
-                        <tr
-                          key={product.id}
-                          className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
-                        >
-                          {/* CODE */}
-
-                          <td className="px-4 py-4 align-middle">
-                            <span className="rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-600">
-                              {product.id}
-                            </span>
-                          </td>
-
-                          {/* PRODUCT */}
-
-                          <td className="px-4 py-4 align-middle">
-                            <div className="min-w-0">
-                              <p className="break-words text-sm font-semibold leading-5 text-gray-800">
-                                {product.name}
-                              </p>
-
-                              <p className="mt-0.5 text-xs text-gray-400">
-                                สต๊อกขั้นต่ำ 10 ชิ้น
-                              </p>
-                            </div>
-                          </td>
-
-                          {/* CATEGORY */}
-
-                          <td className="px-4 py-4 align-middle">
-                            <span className="inline-flex rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                              {product.category || "ไม่ระบุ"}
-                            </span>
-                          </td>
-
-                          {/* STOCK */}
-
-                          <td className="px-4 py-4 text-center align-middle">
-                            <div className="flex flex-col items-center">
-                              <span
-                                className={`text-xl font-bold ${status.stockClass}`}
-                              >
-                                {product.stock}
-                              </span>
-
-                              <span className="text-xs text-gray-400">
-                                ชิ้น
-                              </span>
-                            </div>
-                          </td>
-
-                          {/* STATUS */}
-
-                          <td className="px-4 py-4 text-center align-middle">
-                            <span
-                              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
-                            >
-                              {status.label}
-                            </span>
-                          </td>
-
-                          {/* ACTION */}
-
-                          <td className="px-4 py-4 align-middle">
-                            <div className="flex justify-center gap-1.5">
-                              <button
-                                onClick={() =>
-                                  openStockModal(product, "in")
-                                }
-                                disabled={saving}
-                                className="!min-h-0 h-8 rounded-md border border-green-200 bg-green-50 px-2.5 text-xs font-medium leading-none text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                ＋ รับเข้า
-                              </button>
-
-                              <button
-                                onClick={() =>
-                                  openStockModal(product, "out")
-                                }
-                                disabled={
-                                  saving ||
-                                  Number(product.stock || 0) === 0
-                                }
-                                className="!min-h-0 h-8 rounded-md border border-red-200 bg-red-50 px-2.5 text-xs font-medium leading-none text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                − ตัดออก
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="6"
-                        className="px-5 py-10 text-center text-sm text-gray-400"
-                      >
-                        ไม่พบสินค้า
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
           </div>
 
-          {/* =================================================
-              MOBILE CARDS
-          ================================================= */}
+        </div>
 
-          <div className="space-y-3 md:hidden">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => {
-                const status = getStockStatus(product);
+        <div className="overflow-x-auto">
 
-                return (
-                  <div
-                    key={product.id}
-                    className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
+          <table className="w-full min-w-[1000px]">
+
+            <thead className="bg-slate-100">
+
+              <tr>
+
+                <th className="whitespace-nowrap p-4 text-left">
+                  รหัส
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-left">
+                  สินค้า
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-left">
+                  Barcode
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-left">
+                  หมวดหมู่
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-right">
+                  ราคา
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-center">
+                  Stock
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-center">
+                  สถานะ
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-center">
+                  จัดการ
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {loading ? (
+
+                <tr>
+
+                  <td
+                    colSpan="8"
+                    className="p-10 text-center text-slate-500"
                   >
-                    {/* CARD HEADER */}
 
-                    <div className="border-b border-gray-100 p-3.5">
-                      <div className="flex items-start justify-between gap-2.5">
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-2">
-                            <span className="rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-600">
-                              {product.id}
-                            </span>
+                    <div className="flex flex-col items-center gap-2">
+
+                      <div className="text-2xl">
+                        ⏳
+                      </div>
+
+                      <div>
+                        กำลังโหลดข้อมูลสต๊อก...
+                      </div>
+
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              ) : filteredProducts.length === 0 ? (
+
+                <tr>
+
+                  <td
+                    colSpan="8"
+                    className="p-10 text-center text-slate-400"
+                  >
+
+                    <div className="mb-2 text-3xl">
+                      📦
+                    </div>
+
+                    <div>
+                      {search ||
+                      category !== "ทั้งหมด"
+                        ? "ไม่พบสินค้าที่ค้นหา"
+                        : "ยังไม่มีสินค้า"}
+                    </div>
+
+                  </td>
+
+                </tr>
+
+              ) : (
+
+                filteredProducts.map(
+                  (product) => {
+
+                    const stock = Number(
+                      product.stock || 0,
+                    );
+
+                    let statusText = "ปกติ";
+
+                    let statusClass =
+                      "bg-green-100 text-green-700";
+
+                    if (stock === 0) {
+                      statusText = "หมด";
+                      statusClass =
+                        "bg-red-100 text-red-700";
+                    } else if (stock <= 5) {
+                      statusText = "ใกล้หมด";
+                      statusClass =
+                        "bg-orange-100 text-orange-700";
+                    }
+
+                    return (
+                      <tr
+                        key={product.id}
+                        className="border-t transition hover:bg-slate-50"
+                      >
+
+                        {/* ID */}
+
+                        <td className="whitespace-nowrap p-4 font-bold">
+                          {product.id}
+                        </td>
+
+                        {/* NAME */}
+
+                        <td className="max-w-[220px] p-4 font-medium">
+
+                          <div
+                            className="truncate"
+                            title={product.name}
+                          >
+                            {product.name}
                           </div>
 
-                          <h2 className="break-words text-base font-bold leading-5 text-gray-800">
-                            {product.name}
-                          </h2>
+                        </td>
 
-                          <p className="mt-1 text-xs text-gray-400">
-                            สต๊อกขั้นต่ำ 10 ชิ้น
-                          </p>
-                        </div>
+                        {/* BARCODE */}
 
-                        <span
-                          className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${status.className}`}
-                        >
-                          {status.label}
-                        </span>
-                      </div>
-                    </div>
+                        <td className="whitespace-nowrap p-4">
+                          {product.barcode}
+                        </td>
 
-                    {/* CARD INFO */}
+                        {/* CATEGORY */}
 
-                    <div className="grid grid-cols-2 gap-px bg-gray-100">
-                      <div className="bg-white p-3.5">
-                        <p className="text-xs text-gray-400">
-                          หมวดหมู่
-                        </p>
+                        <td className="p-4">
 
-                        <p className="mt-1 break-words text-sm font-semibold text-gray-700">
-                          {product.category || "ไม่ระบุ"}
-                        </p>
-                      </div>
+                          <span className="inline-block max-w-[160px] truncate">
+                            {product.category || "-"}
+                          </span>
 
-                      <div className="bg-white p-3.5">
-                        <p className="text-xs text-gray-400">
-                          สินค้าคงเหลือ
-                        </p>
+                        </td>
 
-                        <div className="mt-1 flex items-baseline gap-1">
+                        {/* PRICE */}
+
+                        <td className="whitespace-nowrap p-4 text-right font-bold">
+
+                          ฿
+                          {Number(
+                            product.price || 0,
+                          ).toLocaleString(
+                            "th-TH",
+                            {
+                              minimumFractionDigits: 2,
+                            },
+                          )}
+
+                        </td>
+
+                        {/* STOCK */}
+
+                        <td className="p-4 text-center">
+
                           <span
-                            className={`text-xl font-bold ${status.stockClass}`}
+                            className={`inline-block min-w-[55px] rounded-full px-3 py-1 text-sm font-bold ${
+                              stock === 0
+                                ? "bg-red-100 text-red-700"
+                                : stock <= 5
+                                ? "bg-orange-100 text-orange-700"
+                                : "bg-green-100 text-green-700"
+                            }`}
                           >
-                            {product.stock}
+                            {stock}
                           </span>
 
-                          <span className="text-xs text-gray-400">
-                            ชิ้น
+                        </td>
+
+                        {/* STATUS */}
+
+                        <td className="p-4 text-center">
+
+                          <span
+                            className={`inline-block rounded-full px-3 py-1 text-sm font-bold ${statusClass}`}
+                          >
+                            {statusText}
                           </span>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* ACTION */}
+                        </td>
 
-                    <div className="flex gap-2 border-t border-gray-100 p-3.5">
-                      <button
-                        onClick={() =>
-                          openStockModal(product, "in")
-                        }
-                        disabled={saving}
-                        className="!min-h-0 h-9 flex-1 rounded-lg border border-green-200 bg-green-50 px-3 text-sm font-medium leading-none text-green-700 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        ＋ รับเข้า
-                      </button>
+                        {/* ACTION */}
 
-                      <button
-                        onClick={() =>
-                          openStockModal(product, "out")
-                        }
-                        disabled={
-                          saving ||
-                          Number(product.stock || 0) === 0
-                        }
-                        className="!min-h-0 h-9 flex-1 rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-medium leading-none text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        − ตัดออก
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="rounded-xl border border-gray-100 bg-white px-5 py-10 text-center text-sm text-gray-400 shadow-sm">
-                ไม่พบสินค้า
-              </div>
-            )}
-          </div>
-        </>
-      )}
+                        <td className="p-4">
 
-      {/* =====================================================
-          STOCK MODAL
-      ===================================================== */}
+                          <div className="flex justify-center gap-1.5">
 
-      {showModal && selectedProduct && (
+                            <button
+                              onClick={() =>
+                                openStockForm(
+                                  product,
+                                  "in",
+                                )
+                              }
+                              className="
+                                flex
+                                h-8
+                                items-center
+                                justify-center
+                                rounded-md
+                                bg-green-100
+                                px-3
+                                text-sm
+                                font-bold
+                                text-green-700
+                                transition
+                                hover:bg-green-200
+                              "
+                            >
+                              ＋ รับเข้า
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                openStockForm(
+                                  product,
+                                  "out",
+                                )
+                              }
+                              disabled={stock === 0}
+                              className="
+                                flex
+                                h-8
+                                items-center
+                                justify-center
+                                rounded-md
+                                bg-red-100
+                                px-3
+                                text-sm
+                                font-bold
+                                text-red-700
+                                transition
+                                hover:bg-red-200
+                                disabled:cursor-not-allowed
+                                disabled:opacity-40
+                              "
+                            >
+                              － จ่ายออก
+                            </button>
+
+                          </div>
+
+                        </td>
+
+                      </tr>
+                    );
+                  },
+                )
+
+              )}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+      {/* STOCK MODAL */}
+
+      {showForm && selectedProduct && (
+
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
-          <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+
+          <div className="max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6 lg:p-7">
+
             {/* MODAL HEADER */}
 
-            <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3.5 sm:px-5">
-              <div className="min-w-0">
-                <h2 className="text-lg font-bold text-gray-800">
-                  {stockType === "in"
-                    ? "📥 รับสินค้าเข้า"
-                    : "📤 ตัดสินค้าออก"}
-                </h2>
-
-                <p className="mt-0.5 text-xs text-gray-400">
-                  {stockType === "in"
-                    ? "เพิ่มจำนวนสินค้าเข้าสู่สต๊อก"
-                    : "ลดจำนวนสินค้าออกจากสต๊อก"}
-                </p>
-              </div>
-
-              <button
-                onClick={closeModal}
-                disabled={saving}
-                className="!min-h-0 h-9 w-9 shrink-0 rounded-lg p-0 text-xl leading-none text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* MODAL BODY */}
-
-            <div className="overflow-y-auto p-4 sm:p-5">
-              {/* PRODUCT INFO */}
-
-              <div className="mb-4 rounded-xl bg-gray-50 p-3.5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <p className="break-words text-base font-bold leading-5 text-gray-800">
-                      {selectedProduct.name}
-                    </p>
-
-                    <p className="mt-1 text-xs text-gray-400">
-                      รหัสสินค้า: {selectedProduct.id}
-                    </p>
-
-                    <p className="mt-0.5 text-xs text-gray-400">
-                      Barcode: {selectedProduct.barcode}
-                    </p>
-                  </div>
-
-                  <div className="shrink-0 rounded-lg bg-white px-3 py-2.5 text-center shadow-sm">
-                    <p className="text-xs text-gray-400">
-                      สต๊อกปัจจุบัน
-                    </p>
-
-                    <p
-                      className={`mt-0.5 text-xl font-bold ${
-                        getStockStatus(selectedProduct).stockClass
-                      }`}
-                    >
-                      {selectedProduct.stock}
-
-                      <span className="ml-1 text-xs font-normal text-gray-400">
-                        ชิ้น
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* AMOUNT */}
-
-              <div className="mb-4">
-                <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                  จำนวนสินค้า
-                </label>
-
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="กรอกจำนวนสินค้า"
-                  className="!h-11 w-full rounded-lg border border-gray-200 px-3 text-base outline-none transition focus:border-blue-500"
-                  autoFocus
-                  disabled={saving}
-                />
-              </div>
-
-              {/* NOTE */}
+            <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
 
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-gray-700">
-                  หมายเหตุ
-                </label>
 
-                <textarea
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder={
-                    stockType === "in"
-                      ? "เช่น รับสินค้าจากซัพพลายเออร์"
-                      : "เช่น สินค้าชำรุด / หมดอายุ"
-                  }
-                  className="h-20 w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500"
-                  disabled={saving}
-                />
+                <h2 className="text-xl font-bold sm:text-2xl">
+
+                  {movementType === "in"
+                    ? "📥 รับเข้าสินค้า"
+                    : "📤 จ่ายออกสินค้า"}
+
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-500">
+
+                  {selectedProduct.id} -{" "}
+                  {selectedProduct.name}
+
+                </p>
+
               </div>
+
+              <button
+                onClick={closeStockForm}
+                disabled={saving}
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  text-lg
+                  text-slate-500
+                  transition
+                  hover:bg-slate-100
+                  hover:text-slate-800
+                "
+              >
+                ✕
+              </button>
+
             </div>
 
-            {/* MODAL FOOTER */}
+            {/* CURRENT STOCK */}
 
-            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-3.5 sm:flex-row sm:justify-end sm:px-5">
+            <div className="mb-5 rounded-xl bg-slate-50 p-4">
+
+              <div className="flex items-center justify-between">
+
+                <span className="text-sm text-slate-500">
+                  Stock ปัจจุบัน
+                </span>
+
+                <span className="text-xl font-bold text-slate-800">
+                  {Number(
+                    selectedProduct.stock || 0,
+                  )}{" "}
+                  ชิ้น
+                </span>
+
+              </div>
+
+            </div>
+
+            {/* QUANTITY */}
+
+            <div className="mb-4">
+
+              <label className="mb-2 block font-medium">
+                จำนวน
+              </label>
+
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={quantity}
+                onChange={(e) =>
+                  setQuantity(e.target.value)
+                }
+                placeholder="ระบุจำนวน"
+                inputMode="numeric"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
+                autoFocus
+              />
+
+            </div>
+
+            {/* NOTE */}
+
+            <div className="mb-6">
+
+              <label className="mb-2 block font-medium">
+                หมายเหตุ
+              </label>
+
+              <textarea
+                value={note}
+                onChange={(e) =>
+                  setNote(e.target.value)
+                }
+                placeholder={
+                  movementType === "in"
+                    ? "เช่น รับสินค้าจาก Supplier"
+                    : "เช่น สินค้าชำรุด / ปรับยอด"
+                }
+                rows="3"
+                className="
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  p-3
+                  outline-none
+                  focus:ring-2
+                  focus:ring-blue-500
+                "
+              />
+
+            </div>
+
+            {/* BUTTONS */}
+
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
+
               <button
-                onClick={closeModal}
+                onClick={closeStockForm}
                 disabled={saving}
-                className="!min-h-0 h-10 w-full rounded-lg border border-gray-200 bg-white px-4 text-sm font-medium leading-none text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="
+                  h-10
+                  w-full
+                  rounded-lg
+                  border
+                  border-slate-300
+                  font-medium
+                  transition
+                  hover:bg-slate-50
+                  sm:flex-1
+                "
               >
                 ยกเลิก
               </button>
 
               <button
-                onClick={updateStock}
+                onClick={saveStockMovement}
                 disabled={saving}
-                className={`!min-h-0 h-10 w-full rounded-lg px-4 text-sm font-semibold leading-none text-white transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto ${
-                  stockType === "in"
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-red-600 hover:bg-red-700"
-                }`}
+                className={`
+                  h-10
+                  w-full
+                  rounded-lg
+                  font-bold
+                  text-white
+                  transition
+                  sm:flex-1
+                  ${
+                    movementType === "in"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-red-600 hover:bg-red-700"
+                  }
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                `}
               >
                 {saving
-                  ? "⏳ กำลังบันทึก..."
-                  : stockType === "in"
-                  ? "📥 ยืนยันรับเข้า"
-                  : "📤 ยืนยันตัดออก"}
+                  ? "กำลังบันทึก..."
+                  : movementType === "in"
+                  ? "💾 ยืนยันรับเข้า"
+                  : "💾 ยืนยันจ่ายออก"}
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
+
     </div>
   );
 }
