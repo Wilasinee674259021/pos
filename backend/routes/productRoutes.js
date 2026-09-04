@@ -5,6 +5,171 @@ import { Op } from "sequelize";
 const router = express.Router();
 
 // ======================================
+// DEFAULT PRODUCTS
+// ======================================
+
+const defaultProducts = [
+  {
+    id: "P001",
+    name: "น้ำดื่ม",
+    barcode: "885000000001",
+    price: 10,
+    stock: 88,
+    category: "เครื่องดื่ม",
+    status: "active",
+  },
+  {
+    id: "P002",
+    name: "โค้ก 325ml",
+    barcode: "885000000002",
+    price: 15,
+    stock: 42,
+    category: "เครื่องดื่ม",
+    status: "active",
+  },
+  {
+    id: "P003",
+    name: "นมสด 250ml",
+    barcode: "885000000003",
+    price: 13,
+    stock: 38,
+    category: "เครื่องดื่ม",
+    status: "active",
+  },
+  {
+    id: "P004",
+    name: "มันฝรั่งทอด 50g",
+    barcode: "885000000004",
+    price: 20,
+    stock: 34,
+    category: "ขนม",
+    status: "active",
+  },
+  {
+    id: "P005",
+    name: "ขนมปังไส้ครีม",
+    barcode: "885000000006",
+    price: 12,
+    stock: 24,
+    category: "ขนม",
+    status: "active",
+  },
+  {
+    id: "P006",
+    name: "กาแฟกระป๋อง 180ml",
+    barcode: "885000000007",
+    price: 18,
+    stock: 37,
+    category: "เครื่องดื่ม",
+    status: "active",
+  },
+  {
+    id: "P007",
+    name: "น้ำส้ม 100%",
+    barcode: "885000000008",
+    price: 25,
+    stock: 18,
+    category: "เครื่องดื่ม",
+    status: "active",
+  },
+  {
+    id: "P008",
+    name: "ช็อกโกแลตนม 45g",
+    barcode: "885000000009",
+    price: 30,
+    stock: 16,
+    category: "ขนม",
+    status: "active",
+  },
+  {
+    id: "P009",
+    name: "กระดาษทิชชู่ 6 ม้วน",
+    barcode: "885000000010",
+    price: 59,
+    stock: 9,
+    category: "ของใช้",
+    status: "active",
+  },
+  {
+    id: "P010",
+    name: "สบู่ก้อน 100g",
+    barcode: "885000000011",
+    price: 35,
+    stock: 6,
+    category: "ของใช้",
+    status: "active",
+  },
+  {
+    id: "P011",
+    name: "อาหารแมวเด็ก",
+    barcode: "885000000876",
+    price: 120,
+    stock: 95,
+    category: "สัตว์เลี้ยง",
+    status: "active",
+  },
+];
+
+// ======================================
+// SEED / SYNC DEFAULT PRODUCTS
+// ======================================
+
+router.post("/seed", async (req, res) => {
+  try {
+    const results = [];
+
+    for (const item of defaultProducts) {
+      const existingProduct = await Product.findByPk(item.id);
+
+      if (existingProduct) {
+        await existingProduct.update({
+          name: item.name,
+          barcode: item.barcode,
+          price: item.price,
+          stock: item.stock,
+          category: item.category,
+          status: item.status,
+        });
+
+        results.push({
+          id: item.id,
+          action: "updated",
+        });
+      } else {
+        await Product.create({
+          ...item,
+          cost: 0,
+        });
+
+        results.push({
+          id: item.id,
+          action: "created",
+        });
+      }
+    }
+
+    const products = await Product.findAll({
+      order: [["id", "ASC"]],
+    });
+
+    res.json({
+      success: true,
+      message: "ตั้งค่าสินค้าหลักเรียบร้อย",
+      results,
+      data: products,
+    });
+  } catch (error) {
+    console.error("SEED PRODUCTS ERROR:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "ตั้งค่าสินค้าไม่สำเร็จ",
+      error: error.message,
+    });
+  }
+});
+
+// ======================================
 // GET ALL PRODUCTS
 // ======================================
 
@@ -251,15 +416,10 @@ router.put("/:id", async (req, res) => {
 
     await product.update({
       name: name !== undefined ? name.trim() : product.name,
-
       barcode: barcode !== undefined ? barcode.trim() : product.barcode,
-
       price: price !== undefined ? Number(price) : product.price,
-
       stock: stock !== undefined ? Number(stock) : product.stock,
-
       category: category !== undefined ? category.trim() : product.category,
-
       status: status !== undefined ? status : product.status,
     });
 
