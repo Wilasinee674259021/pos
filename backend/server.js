@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -16,6 +15,8 @@ import "./models/StockMovement.js";
 import "./models/Member.js";
 import "./models/Promotion.js";
 import "./models/Branch.js";
+import "./models/Expense.js";
+import "./models/PurchaseOrder.js";
 
 // =========================
 // ROUTES
@@ -27,6 +28,7 @@ import memberRoutes from "./routes/memberRoutes.js";
 import promotionRoutes from "./routes/promotionRoutes.js";
 import stockRoutes from "./routes/stockRoutes.js";
 import branchRoutes from "./routes/branchRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 
 // =========================
 // CONFIG
@@ -49,6 +51,7 @@ app.use(
 );
 
 app.use(express.json());
+
 app.use(
   express.urlencoded({
     extended: true,
@@ -70,35 +73,19 @@ app.get("/", (req, res) => {
 // API ROUTES
 // =========================
 
-app.use(
-  "/api/products",
-  productRoutes
-);
+app.use("/api/products", productRoutes);
 
-app.use(
-  "/api/sales",
-  saleRoutes
-);
+app.use("/api/sales", saleRoutes);
 
-app.use(
-  "/api/members",
-  memberRoutes
-);
+app.use("/api/members", memberRoutes);
 
-app.use(
-  "/api/promotions",
-  promotionRoutes
-);
+app.use("/api/promotions", promotionRoutes);
 
-app.use(
-  "/api/stock",
-  stockRoutes
-);
+app.use("/api/stock", stockRoutes);
 
-app.use(
-  "/api/branches",
-  branchRoutes
-);
+app.use("/api/branches", branchRoutes);
+
+app.use("/api/dashboard", dashboardRoutes);
 
 // =========================
 // 404
@@ -124,27 +111,20 @@ const startServer = async () => {
 
     await sequelize.sync();
 
-    console.log(
-      "Database tables synchronized"
-    );
+    console.log("Database tables synchronized");
 
     app.listen(PORT, () => {
-      console.log(
-        "Convenience POS Backend"
-      );
+      console.log("Convenience POS Backend");
 
       console.log(
         `Server: http://localhost:${PORT}`
       );
     });
   } catch (error) {
-    console.error(
-      "Database connection failed:"
-    );
+    console.error("Database connection failed:");
 
     console.error(error);
   }
 };
 
 startServer();
-
