@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 const API_BASE =
@@ -18,13 +19,10 @@ export default function Products() {
     name: "",
     barcode: "",
     price: "",
+    cost: "",
     stock: "",
     category: "",
   });
-
-  // ======================================
-  // LOAD PRODUCTS
-  // ======================================
 
   const loadProducts = async () => {
     try {
@@ -81,7 +79,7 @@ export default function Products() {
   }, []);
 
   // ======================================
-  // ADD PRODUCT
+  // ADD FORM
   // ======================================
 
   const openAddForm = () => {
@@ -91,6 +89,7 @@ export default function Products() {
       name: "",
       barcode: "",
       price: "",
+      cost: "",
       stock: "",
       category: "",
     });
@@ -99,7 +98,7 @@ export default function Products() {
   };
 
   // ======================================
-  // EDIT PRODUCT
+  // EDIT FORM
   // ======================================
 
   const openEditForm = (product) => {
@@ -109,6 +108,7 @@ export default function Products() {
       name: product.name || "",
       barcode: product.barcode || "",
       price: product.price ?? "",
+      cost: product.cost ?? "",
       stock: product.stock ?? "",
       category: product.category || "",
     });
@@ -128,6 +128,7 @@ export default function Products() {
       name: "",
       barcode: "",
       price: "",
+      cost: "",
       stock: "",
       category: "",
     });
@@ -140,8 +141,15 @@ export default function Products() {
   const saveProduct = async () => {
     const name = form.name.trim();
     const barcode = form.barcode.trim();
+
     const price = Number(form.price);
-    const stock = Number(form.stock || 0);
+    const cost = Number(
+      form.cost === "" ? 0 : form.cost,
+    );
+
+    const stock = Number(
+      form.stock === "" ? 0 : form.stock,
+    );
 
     if (!name) {
       alert("กรุณากรอกชื่อสินค้า");
@@ -159,6 +167,19 @@ export default function Products() {
       price < 0
     ) {
       alert("กรุณากรอกราคาสินค้าให้ถูกต้อง");
+      return;
+    }
+
+    if (
+      Number.isNaN(cost) ||
+      cost < 0
+    ) {
+      alert("กรุณากรอกราคาทุนให้ถูกต้อง");
+      return;
+    }
+
+    if (cost > price) {
+      alert("ราคาทุนไม่ควรมากกว่าราคาขาย");
       return;
     }
 
@@ -190,6 +211,7 @@ export default function Products() {
           name,
           barcode,
           price,
+          cost,
           stock,
           category: form.category.trim(),
         }),
@@ -225,7 +247,10 @@ export default function Products() {
 
       await loadProducts();
     } catch (err) {
-      console.error("SAVE PRODUCT ERROR:", err);
+      console.error(
+        "SAVE PRODUCT ERROR:",
+        err,
+      );
 
       alert(
         `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`,
@@ -242,9 +267,7 @@ export default function Products() {
       "ต้องการลบสินค้านี้ใช่หรือไม่?",
     );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
       const response = await fetch(
@@ -281,7 +304,10 @@ export default function Products() {
 
       await loadProducts();
     } catch (err) {
-      console.error("DELETE PRODUCT ERROR:", err);
+      console.error(
+        "DELETE PRODUCT ERROR:",
+        err,
+      );
 
       alert(
         `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`,
@@ -290,18 +316,15 @@ export default function Products() {
   };
 
   // ======================================
-  // FILTER
+  // SEARCH
   // ======================================
 
-  const filteredProducts = products.filter(
-    (product) => {
-      const keyword = search
-        .toLowerCase()
-        .trim();
+  const filteredProducts =
+    products.filter((product) => {
+      const keyword =
+        search.toLowerCase().trim();
 
-      if (!keyword) {
-        return true;
-      }
+      if (!keyword) return true;
 
       return (
         String(product.name || "")
@@ -314,73 +337,56 @@ export default function Products() {
           .toLowerCase()
           .includes(keyword)
       );
-    },
-  );
+    });
 
   // ======================================
   // SUMMARY
   // ======================================
 
-  const totalProducts = products.length;
+  const totalProducts =
+    products.length;
 
-  const totalStock = products.reduce(
-    (sum, product) =>
-      sum + Number(product.stock || 0),
-    0,
-  );
+  const totalStock =
+    products.reduce(
+      (sum, product) =>
+        sum +
+        Number(product.stock || 0),
+      0,
+    );
 
-  const lowStock = products.filter(
-    (product) =>
-      Number(product.stock || 0) <= 5,
-  ).length;
-
-  // ======================================
-  // UI
-  // ======================================
+  const lowStock =
+    products.filter(
+      (product) =>
+        Number(product.stock || 0) <= 5,
+    ).length;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
-
       {/* HEADER */}
 
       <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">
             📦 สินค้า
           </h1>
 
           <p className="mt-1 text-sm text-slate-500 sm:text-base">
-            จัดการสินค้าและสต๊อก
+            จัดการสินค้า ราคาทุน ราคาขาย และสต๊อก
           </p>
         </div>
 
         <button
           onClick={openAddForm}
-          className="
-            h-10
-            w-full
-            rounded-lg
-            bg-blue-600
-            px-5
-            text-sm
-            font-bold
-            text-white
-            transition
-            hover:bg-blue-700
-            sm:w-auto
-          "
+          className="h-10 w-full rounded-lg bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 sm:w-auto"
         >
           ＋ เพิ่มสินค้า
         </button>
-
       </div>
 
       {/* ERROR */}
 
       {error && (
         <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 sm:mb-6">
-
           <p className="font-bold">
             โหลดข้อมูลสินค้าไม่สำเร็จ
           </p>
@@ -391,30 +397,17 @@ export default function Products() {
 
           <button
             onClick={loadProducts}
-            className="
-              mt-3
-              h-9
-              rounded-lg
-              bg-red-600
-              px-4
-              text-sm
-              font-bold
-              text-white
-              hover:bg-red-700
-            "
+            className="mt-3 h-9 rounded-lg bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700"
           >
             🔄 ลองใหม่
           </button>
-
         </div>
       )}
 
       {/* SUMMARY */}
 
       <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-3 sm:gap-4">
-
         <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
-
           <p className="text-sm text-slate-500 sm:text-base">
             สินค้าทั้งหมด
           </p>
@@ -422,11 +415,9 @@ export default function Products() {
           <p className="mt-2 text-2xl font-bold sm:text-3xl">
             {totalProducts}
           </p>
-
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
-
           <p className="text-sm text-slate-500 sm:text-base">
             Stock รวม
           </p>
@@ -434,11 +425,9 @@ export default function Products() {
           <p className="mt-2 text-2xl font-bold text-blue-600 sm:text-3xl">
             {totalStock.toLocaleString("th-TH")}
           </p>
-
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
-
           <p className="text-sm text-slate-500 sm:text-base">
             สินค้าใกล้หมด
           </p>
@@ -446,35 +435,19 @@ export default function Products() {
           <p className="mt-2 text-2xl font-bold text-red-600 sm:text-3xl">
             {lowStock}
           </p>
-
         </div>
-
       </div>
 
       {/* SEARCH */}
 
       <div className="mb-5 rounded-xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
-
         <input
           value={search}
           onChange={(e) =>
             setSearch(e.target.value)
           }
           placeholder="🔍 ค้นหาชื่อสินค้า / Barcode / หมวดหมู่"
-          className="
-            h-10
-            w-full
-            rounded-lg
-            border
-            border-slate-300
-            px-4
-            text-sm
-            outline-none
-            transition
-            focus:border-blue-500
-            focus:ring-2
-            focus:ring-blue-500
-          "
+          className="h-10 w-full rounded-lg border border-slate-300 px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
         />
 
         {search && (
@@ -482,37 +455,27 @@ export default function Products() {
             พบ {filteredProducts.length} รายการ
           </div>
         )}
-
       </div>
 
-      {/* TABLE */}
+      {/* PRODUCT TABLE */}
 
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-
         <div className="border-b p-4 sm:p-5">
-
           <div className="flex items-center justify-between gap-3">
-
-            <h2 className="font-bold text-lg">
+            <h2 className="text-lg font-bold">
               รายการสินค้า
             </h2>
 
             <span className="text-sm text-slate-400">
               {filteredProducts.length} รายการ
             </span>
-
           </div>
-
         </div>
 
         <div className="overflow-x-auto">
-
-          <table className="w-full min-w-[850px]">
-
+          <table className="w-full min-w-[1000px]">
             <thead className="bg-slate-100">
-
               <tr>
-
                 <th className="whitespace-nowrap p-4 text-left">
                   รหัส
                 </th>
@@ -530,7 +493,11 @@ export default function Products() {
                 </th>
 
                 <th className="whitespace-nowrap p-4 text-right">
-                  ราคา
+                  ราคาทุน
+                </th>
+
+                <th className="whitespace-nowrap p-4 text-right">
+                  ราคาขาย
                 </th>
 
                 <th className="whitespace-nowrap p-4 text-center">
@@ -540,23 +507,17 @@ export default function Products() {
                 <th className="whitespace-nowrap p-4 text-center">
                   จัดการ
                 </th>
-
               </tr>
-
             </thead>
 
             <tbody>
-
               {loading ? (
-
                 <tr>
-
                   <td
-                    colSpan="7"
+                    colSpan="8"
                     className="p-10 text-center text-slate-500"
                   >
                     <div className="flex flex-col items-center gap-2">
-
                       <div className="text-2xl">
                         ⏳
                       </div>
@@ -564,18 +525,14 @@ export default function Products() {
                       <div>
                         กำลังโหลดข้อมูลสินค้า...
                       </div>
-
                     </div>
                   </td>
-
                 </tr>
-
-              ) : filteredProducts.length === 0 ? (
-
+              ) : filteredProducts.length ===
+                0 ? (
                 <tr>
-
                   <td
-                    colSpan="7"
+                    colSpan="8"
                     className="p-10 text-center text-slate-400"
                   >
                     <div className="mb-2 text-3xl">
@@ -587,21 +544,15 @@ export default function Products() {
                         ? "ไม่พบสินค้าที่ค้นหา"
                         : "ยังไม่มีสินค้า"}
                     </div>
-
                   </td>
-
                 </tr>
-
               ) : (
-
                 filteredProducts.map(
                   (product) => (
-
                     <tr
                       key={product.id}
                       className="border-t transition hover:bg-slate-50"
                     >
-
                       {/* ID */}
 
                       <td className="whitespace-nowrap p-4 font-bold">
@@ -628,11 +579,24 @@ export default function Products() {
                       {/* CATEGORY */}
 
                       <td className="p-4">
-
                         <span className="inline-block max-w-[160px] truncate">
-                          {product.category || "-"}
+                          {product.category ||
+                            "-"}
                         </span>
+                      </td>
 
+                      {/* COST */}
+
+                      <td className="whitespace-nowrap p-4 text-right font-bold text-orange-600">
+                        ฿
+                        {Number(
+                          product.cost || 0,
+                        ).toLocaleString(
+                          "th-TH",
+                          {
+                            minimumFractionDigits: 2,
+                          },
+                        )}
                       </td>
 
                       {/* PRICE */}
@@ -652,7 +616,6 @@ export default function Products() {
                       {/* STOCK */}
 
                       <td className="p-4 text-center">
-
                         <span
                           className={`inline-block min-w-[55px] rounded-full px-3 py-1 text-sm font-bold ${
                             Number(
@@ -664,42 +627,23 @@ export default function Products() {
                         >
                           {product.stock}
                         </span>
-
                       </td>
 
                       {/* ACTION */}
 
                       <td className="p-4">
-
                         <div className="flex justify-center gap-1.5">
-
-                          {/* EDIT */}
-
                           <button
                             onClick={() =>
                               openEditForm(
                                 product,
                               )
                             }
-                            className="
-                              flex
-                              h-8
-                              w-8
-                              items-center
-                              justify-center
-                              rounded-md
-                              bg-blue-100
-                              text-sm
-                              text-blue-600
-                              transition
-                              hover:bg-blue-200
-                            "
+                            className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100 text-sm text-blue-600 transition hover:bg-blue-200"
                             title="แก้ไข"
                           >
                             ✏️
                           </button>
-
-                          {/* DELETE */}
 
                           <button
                             onClick={() =>
@@ -707,55 +651,30 @@ export default function Products() {
                                 product.id,
                               )
                             }
-                            className="
-                              flex
-                              h-8
-                              w-8
-                              items-center
-                              justify-center
-                              rounded-md
-                              bg-red-100
-                              text-sm
-                              text-red-600
-                              transition
-                              hover:bg-red-200
-                            "
+                            className="flex h-8 w-8 items-center justify-center rounded-md bg-red-100 text-sm text-red-600 transition hover:bg-red-200"
                             title="ลบ"
                           >
                             🗑️
                           </button>
-
                         </div>
-
                       </td>
-
                     </tr>
-
                   ),
                 )
-
               )}
-
             </tbody>
-
           </table>
-
         </div>
-
       </div>
 
-      {/* ADD / EDIT MODAL */}
+      {/* MODAL */}
 
       {showForm && (
-
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
-
           <div className="max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6 lg:p-7">
-
             {/* MODAL HEADER */}
 
             <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
-
               <h2 className="text-xl font-bold sm:text-2xl">
                 {editingProduct
                   ? "✏️ แก้ไขสินค้า"
@@ -764,30 +683,15 @@ export default function Products() {
 
               <button
                 onClick={closeForm}
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-lg
-                  text-lg
-                  text-slate-500
-                  transition
-                  hover:bg-slate-100
-                  hover:text-slate-800
-                "
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
               >
                 ✕
               </button>
-
             </div>
 
             {/* NAME */}
 
             <div className="mb-4">
-
               <label className="mb-2 block font-medium">
                 ชื่อสินค้า
               </label>
@@ -801,24 +705,13 @@ export default function Products() {
                   })
                 }
                 placeholder="เช่น น้ำดื่ม 600ml"
-                className="
-                  w-full
-                  rounded-lg
-                  border
-                  border-slate-300
-                  p-3
-                  outline-none
-                  focus:ring-2
-                  focus:ring-blue-500
-                "
+                className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-
             </div>
 
             {/* BARCODE */}
 
             <div className="mb-4">
-
               <label className="mb-2 block font-medium">
                 Barcode
               </label>
@@ -837,26 +730,42 @@ export default function Products() {
                 }
                 placeholder="เช่น 8851234567890"
                 inputMode="numeric"
-                className="
-                  w-full
-                  rounded-lg
-                  border
-                  border-slate-300
-                  p-3
-                  outline-none
-                  focus:ring-2
-                  focus:ring-blue-500
-                "
+                className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* COST */}
+
+            <div className="mb-4">
+              <label className="mb-2 block font-medium">
+                ราคาทุน (บาท)
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.cost}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    cost: e.target.value,
+                  })
+                }
+                placeholder="0.00"
+                className="w-full rounded-lg border border-orange-300 p-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
               />
 
+              <p className="mt-1 text-xs text-slate-500">
+                ราคาที่ร้านซื้อสินค้ามา
+              </p>
             </div>
 
             {/* PRICE */}
 
             <div className="mb-4">
-
               <label className="mb-2 block font-medium">
-                ราคา (บาท)
+                ราคาขาย (บาท)
               </label>
 
               <input
@@ -871,24 +780,13 @@ export default function Products() {
                   })
                 }
                 placeholder="0.00"
-                className="
-                  w-full
-                  rounded-lg
-                  border
-                  border-slate-300
-                  p-3
-                  outline-none
-                  focus:ring-2
-                  focus:ring-blue-500
-                "
+                className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-
             </div>
 
             {/* STOCK */}
 
             <div className="mb-4">
-
               <label className="mb-2 block font-medium">
                 จำนวน Stock
               </label>
@@ -905,24 +803,13 @@ export default function Products() {
                   })
                 }
                 placeholder="0"
-                className="
-                  w-full
-                  rounded-lg
-                  border
-                  border-slate-300
-                  p-3
-                  outline-none
-                  focus:ring-2
-                  focus:ring-blue-500
-                "
+                className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-
             </div>
 
             {/* CATEGORY */}
 
             <div className="mb-6">
-
               <label className="mb-2 block font-medium">
                 หมวดหมู่
               </label>
@@ -932,70 +819,36 @@ export default function Products() {
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    category: e.target.value,
+                    category:
+                      e.target.value,
                   })
                 }
                 placeholder="เช่น เครื่องดื่ม"
-                className="
-                  w-full
-                  rounded-lg
-                  border
-                  border-slate-300
-                  p-3
-                  outline-none
-                  focus:ring-2
-                  focus:ring-blue-500
-                "
+                className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
-
             </div>
 
             {/* BUTTONS */}
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
-
               <button
                 onClick={closeForm}
-                className="
-                  h-10
-                  w-full
-                  rounded-lg
-                  border
-                  border-slate-300
-                  font-medium
-                  transition
-                  hover:bg-slate-50
-                  sm:flex-1
-                "
+                className="h-10 w-full rounded-lg border border-slate-300 font-medium transition hover:bg-slate-50 sm:flex-1"
               >
                 ยกเลิก
               </button>
 
               <button
                 onClick={saveProduct}
-                className="
-                  h-10
-                  w-full
-                  rounded-lg
-                  bg-blue-600
-                  font-bold
-                  text-white
-                  transition
-                  hover:bg-blue-700
-                  sm:flex-1
-                "
+                className="h-10 w-full rounded-lg bg-blue-600 font-bold text-white transition hover:bg-blue-700 sm:flex-1"
               >
                 💾 บันทึก
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
-
     </div>
   );
 }
+
