@@ -1,4 +1,3 @@
-
 import express from "express";
 import Product from "../models/Product.js";
 import { Op } from "sequelize";
@@ -15,7 +14,7 @@ const defaultProducts = [
     name: "น้ำดื่ม",
     barcode: "885000000001",
     price: 10,
-    cost: 0,
+    cost: 5,
     stock: 88,
     category: "เครื่องดื่ม",
     status: "active",
@@ -25,7 +24,7 @@ const defaultProducts = [
     name: "โค้ก 325ml",
     barcode: "885000000002",
     price: 15,
-    cost: 0,
+    cost: 9,
     stock: 42,
     category: "เครื่องดื่ม",
     status: "active",
@@ -35,7 +34,7 @@ const defaultProducts = [
     name: "นมสด 250ml",
     barcode: "885000000003",
     price: 13,
-    cost: 0,
+    cost: 8,
     stock: 38,
     category: "เครื่องดื่ม",
     status: "active",
@@ -45,7 +44,7 @@ const defaultProducts = [
     name: "มันฝรั่งทอด 50g",
     barcode: "885000000004",
     price: 20,
-    cost: 0,
+    cost: 12,
     stock: 34,
     category: "ขนม",
     status: "active",
@@ -55,7 +54,7 @@ const defaultProducts = [
     name: "ขนมปังไส้ครีม",
     barcode: "885000000006",
     price: 12,
-    cost: 0,
+    cost: 7,
     stock: 24,
     category: "ขนม",
     status: "active",
@@ -65,7 +64,7 @@ const defaultProducts = [
     name: "กาแฟกระป๋อง 180ml",
     barcode: "885000000007",
     price: 18,
-    cost: 0,
+    cost: 11,
     stock: 37,
     category: "เครื่องดื่ม",
     status: "active",
@@ -75,7 +74,7 @@ const defaultProducts = [
     name: "น้ำส้ม 100%",
     barcode: "885000000008",
     price: 25,
-    cost: 0,
+    cost: 15,
     stock: 18,
     category: "เครื่องดื่ม",
     status: "active",
@@ -85,7 +84,7 @@ const defaultProducts = [
     name: "ช็อกโกแลตนม 45g",
     barcode: "885000000009",
     price: 30,
-    cost: 0,
+    cost: 18,
     stock: 16,
     category: "ขนม",
     status: "active",
@@ -95,7 +94,7 @@ const defaultProducts = [
     name: "กระดาษทิชชู่ 6 ม้วน",
     barcode: "885000000010",
     price: 59,
-    cost: 0,
+    cost: 35,
     stock: 9,
     category: "ของใช้",
     status: "active",
@@ -105,7 +104,7 @@ const defaultProducts = [
     name: "สบู่ก้อน 100g",
     barcode: "885000000011",
     price: 35,
-    cost: 0,
+    cost: 20,
     stock: 6,
     category: "ของใช้",
     status: "active",
@@ -115,7 +114,7 @@ const defaultProducts = [
     name: "อาหารแมวเด็ก",
     barcode: "885000000876",
     price: 120,
-    cost: 0,
+    cost: 80,
     stock: 95,
     category: "สัตว์เลี้ยง",
     status: "active",
@@ -138,6 +137,10 @@ router.post("/seed", async (req, res) => {
           name: item.name,
           barcode: item.barcode,
           price: item.price,
+
+          // สำคัญ: อัปเดตต้นทุนด้วย
+          cost: item.cost,
+
           stock: item.stock,
           category: item.category,
           status: item.status,
@@ -146,6 +149,7 @@ router.post("/seed", async (req, res) => {
         results.push({
           id: item.id,
           action: "updated",
+          cost: item.cost,
         });
       } else {
         await Product.create(item);
@@ -153,6 +157,7 @@ router.post("/seed", async (req, res) => {
         results.push({
           id: item.id,
           action: "created",
+          cost: item.cost,
         });
       }
     }
@@ -163,7 +168,7 @@ router.post("/seed", async (req, res) => {
 
     res.json({
       success: true,
-      message: "ตั้งค่าสินค้าหลักเรียบร้อย",
+      message: "ตั้งค่าสินค้าหลักและราคาทุนเรียบร้อย",
       results,
       data: products,
     });
@@ -324,14 +329,20 @@ router.post("/", async (req, res) => {
     const productCost = Number(cost ?? 0);
     const productStock = Number(stock ?? 0);
 
-    if (Number.isNaN(productPrice) || productPrice < 0) {
+    if (
+      Number.isNaN(productPrice) ||
+      productPrice < 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "ราคาสินค้าต้องไม่ติดลบ",
       });
     }
 
-    if (Number.isNaN(productCost) || productCost < 0) {
+    if (
+      Number.isNaN(productCost) ||
+      productCost < 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "ราคาทุนต้องไม่ติดลบ",
@@ -371,7 +382,9 @@ router.post("/", async (req, res) => {
 
     const count = await Product.count();
 
-    const productId = "P" + String(count + 1).padStart(3, "0");
+    const productId =
+      "P" +
+      String(count + 1).padStart(3, "0");
 
     const product = await Product.create({
       id: productId,
@@ -426,22 +439,34 @@ router.put("/:id", async (req, res) => {
     } = req.body;
 
     const newPrice =
-      price !== undefined ? Number(price) : Number(product.price);
+      price !== undefined
+        ? Number(price)
+        : Number(product.price);
 
     const newCost =
-      cost !== undefined ? Number(cost) : Number(product.cost || 0);
+      cost !== undefined
+        ? Number(cost)
+        : Number(product.cost || 0);
 
     const newStock =
-      stock !== undefined ? Number(stock) : Number(product.stock);
+      stock !== undefined
+        ? Number(stock)
+        : Number(product.stock);
 
-    if (Number.isNaN(newPrice) || newPrice < 0) {
+    if (
+      Number.isNaN(newPrice) ||
+      newPrice < 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "ราคาสินค้าต้องไม่ติดลบ",
       });
     }
 
-    if (Number.isNaN(newCost) || newCost < 0) {
+    if (
+      Number.isNaN(newCost) ||
+      newCost < 0
+    ) {
       return res.status(400).json({
         success: false,
         message: "ราคาทุนต้องไม่ติดลบ",
@@ -466,14 +491,20 @@ router.put("/:id", async (req, res) => {
       });
     }
 
-    if (barcode && barcode !== product.barcode) {
+    if (
+      barcode &&
+      barcode !== product.barcode
+    ) {
       const duplicate = await Product.findOne({
         where: {
           barcode: barcode.trim(),
         },
       });
 
-      if (duplicate && duplicate.id !== product.id) {
+      if (
+        duplicate &&
+        duplicate.id !== product.id
+      ) {
         return res.status(409).json({
           success: false,
           message: "Barcode นี้มีอยู่แล้ว",
@@ -482,18 +513,25 @@ router.put("/:id", async (req, res) => {
     }
 
     await product.update({
-      name: name !== undefined ? name.trim() : product.name,
+      name:
+        name !== undefined
+          ? name.trim()
+          : product.name,
+
       barcode:
         barcode !== undefined
           ? barcode.trim()
           : product.barcode,
+
       price: newPrice,
       cost: newCost,
       stock: newStock,
+
       category:
         category !== undefined
           ? category.trim()
           : product.category,
+
       status:
         status !== undefined
           ? status
@@ -549,4 +587,3 @@ router.delete("/:id", async (req, res) => {
 });
 
 export default router;
-

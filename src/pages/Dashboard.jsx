@@ -163,17 +163,51 @@ export default function Dashboard() {
         );
       }
 
+      /*
+       * ============================================
+       * ป้องกัน lowStockProducts ไม่ใช่ Array
+       * ============================================
+       */
+      const safeLowStockProducts = Array.isArray(
+        result.data?.lowStockProducts
+      )
+        ? result.data.lowStockProducts
+        : [];
+
+      /*
+       * ============================================
+       * ป้องกัน recentBills ไม่ใช่ Array
+       * ============================================
+       */
+      const safeRecentBills = Array.isArray(
+        result.data?.recentBills
+      )
+        ? result.data.recentBills
+        : [];
+
+      /*
+       * ============================================
+       * ป้องกัน paymentSummary ไม่ใช่ Object
+       * ============================================
+       */
+      const safePaymentSummary =
+        result.data?.paymentSummary &&
+        typeof result.data.paymentSummary === "object"
+          ? result.data.paymentSummary
+          : {};
+
       setDashboard({
         ...emptyDashboard,
-        ...result.data,
+        ...(result.data || {}),
+
         paymentSummary: {
           ...emptyDashboard.paymentSummary,
-          ...(result.data?.paymentSummary || {}),
+          ...safePaymentSummary,
         },
-        lowStockProducts:
-          result.data?.lowStockProducts || [],
-        recentBills:
-          result.data?.recentBills || [],
+
+        lowStockProducts: safeLowStockProducts,
+
+        recentBills: safeRecentBills,
       });
     } catch (err) {
       console.error("DASHBOARD ERROR:", err);
@@ -335,7 +369,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* ปุ่มด้านขวาบน */}
             <button
               onClick={loadDashboard}
               disabled={loading}

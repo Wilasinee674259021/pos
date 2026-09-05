@@ -1,4 +1,6 @@
+
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
@@ -181,7 +183,6 @@ export default function Login({ onLogin }) {
 
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">
-                  👤
                 </span>
 
                 <input
@@ -223,8 +224,8 @@ export default function Login({ onLogin }) {
               </label>
 
               <div className="relative">
+
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">
-                  🔒
                 </span>
 
                 <input
@@ -257,6 +258,7 @@ export default function Login({ onLogin }) {
                   "
                 />
 
+                {/* PASSWORD EYE */}
                 <button
                   type="button"
                   onClick={() =>
@@ -278,14 +280,27 @@ export default function Login({ onLogin }) {
                     flex
                     items-center
                     justify-center
-                    text-lg
-                    hover:bg-slate-200
-                    active:bg-slate-300
-                    transition
+                    text-slate-400
+                    hover:text-slate-600
+                    hover:bg-slate-100
+                    active:bg-slate-200
+                    transition-all
+                    duration-200
                   "
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showPassword ? (
+                    <EyeOff
+                      size={20}
+                      strokeWidth={1.8}
+                    />
+                  ) : (
+                    <Eye
+                      size={20}
+                      strokeWidth={1.8}
+                    />
+                  )}
                 </button>
+
               </div>
             </div>
 
@@ -325,7 +340,6 @@ export default function Login({ onLogin }) {
               "
             >
               <span className="flex items-center justify-center gap-2">
-                <span>🔐</span>
                 <span>เข้าสู่ระบบ</span>
               </span>
             </button>

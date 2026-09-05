@@ -3,99 +3,82 @@ import { Op } from "sequelize";
 
 import Sale from "../models/Sale.js";
 import SaleItem from "../models/SaleItem.js";
+import Product from "../models/Product.js";
 import Expense from "../models/Expense.js";
 import PurchaseOrder from "../models/PurchaseOrder.js";
 import StockMovement from "../models/StockMovement.js";
-import Product from "../models/Product.js";
 
 const router = express.Router();
 
 // ======================================
-// DASHBOARD REPORT
+// THAILAND DATE HELPERS
+// ======================================
+
+function getThailandToday() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Bangkok",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function createThailandStartDate(dateString) {
+  return new Date(`${dateString}T00:00:00+07:00`);
+}
+
+function createThailandEndDate(dateString) {
+  const date = new Date(`${dateString}T00:00:00+07:00`);
+
+  date.setDate(date.getDate() + 1);
+
+  return date;
+}
+
+// ======================================
+// DASHBOARD
 // ======================================
 
 router.get("/", async (req, res) => {
   try {
-    const { startDate, endDate } = req.query;
-
     // ======================================
-    // DATE RANGE
+    // DATE FILTER
     // ======================================
 
-    let start;
-    let end;
+    const today = getThailandToday();
 
-    if (startDate && endDate) {
-      start = new Date(
-        startDate + "T00:00:00+07:00"
-      );
+    const startDate =
+      req.query.startDate || today;
 
-      end = new Date(
-        endDate + "T23:59:59.999+07:00"
-      );
-    } else {
-      const now = new Date();
+    const endDate =
+      req.query.endDate || today;
 
-      const thailandDate =
-        new Intl.DateTimeFormat("en-CA", {
-          timeZone: "Asia/Bangkok",
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        }).format(now);
+    const startOfPeriod =
+      createThailandStartDate(startDate);
 
-      start = new Date(
-        thailandDate + "T00:00:00+07:00"
-      );
+    const endOfPeriod =
+      createThailandEndDate(endDate);
 
-      end = new Date(
-        thailandDate + "T23:59:59.999+07:00"
-      );
-    }
-
-    const dateWhere = {
-      createdAt: {
-        [Op.between]: [start, end],
-      },
-    };
+    console.log(
+      "DASHBOARD DATE:",
+      startDate,
+      "TO",
+      endDate
+    );
 
     // ======================================
     // SALES
     // ======================================
 
     const sales = await Sale.findAll({
-      where: dateWhere,
+      where: {
+        createdAt: {
+          [Op.gte]: startOfPeriod,
+          [Op.lt]: endOfPeriod,
+        },
+      },
       order: [["createdAt", "DESC"]],
     });
-
-    // ======================================
-    // FUNCTION: EFFECTIVE NET TOTAL
-    // ======================================
-
-    const getSaleNetTotal = (sale) => {
-      const totalAmount = Number(
-        sale.totalAmount || 0
-      );
-
-      const discountAmount = Number(
-        sale.discountAmount || 0
-      );
-
-      const storedNetTotal = Number(
-        sale.netTotal || 0
-      );
-
-      // ถ้า netTotal > 0 ให้ใช้ netTotal
-      // ถ้า netTotal = 0 ให้คำนวณจาก totalAmount - discount
-      if (storedNetTotal > 0) {
-        return storedNetTotal;
-      }
-
-      return Math.max(
-        totalAmount - discountAmount,
-        0
-      );
-    };
 
     // ======================================
     // TOTAL SALES
@@ -103,10 +86,24 @@ router.get("/", async (req, res) => {
 
     const totalSales = sales.reduce(
       (sum, sale) => {
-        return (
-          sum +
-          getSaleNetTotal(sale)
-        );
+        const totalAmount =
+          Number(sale.totalAmount || 0);
+
+        const discountAmount =
+          Number(sale.discountAmount || 0);
+
+        const storedNetTotal =
+          Number(sale.netTotal || 0);
+
+        const netTotal =
+          storedNetTotal > 0
+            ? storedNetTotal
+            : Math.max(
+                totalAmount - discountAmount,
+                0
+              );
+
+        return sum + netTotal;
       },
       0
     );
@@ -114,12 +111,16 @@ router.get("/", async (req, res) => {
     const billCount = sales.length;
 
     // ======================================
-    // SALE COST
+    // SALE IDS
     // ======================================
 
     const saleIds = sales.map(
       (sale) => sale.id
     );
+
+    // ======================================
+    // TOTAL COST
+    // ======================================
 
     let totalCost = 0;
 
@@ -133,13 +134,80 @@ router.get("/", async (req, res) => {
           },
         });
 
+      // --------------------------------------
+      // PRODUCT IDS
+      // --------------------------------------
+
+      const productIds = [
+        ...new Set(
+          saleItems
+            .map(
+              (item) => item.productId
+            )
+            .filter(Boolean)
+        ),
+      ];
+
+      // --------------------------------------
+      // PRODUCTS
+      // --------------------------------------
+
+      const products =
+        productIds.length > 0
+          ? await Product.findAll({
+              where: {
+                id: {
+                  [Op.in]: productIds,
+                },
+              },
+            })
+          : [];
+
+      const productMap = new Map();
+
+      for (const product of products) {
+        productMap.set(
+          product.id,
+          product
+        );
+      }
+
+      // --------------------------------------
+      // CALCULATE COST
+      // --------------------------------------
+
       totalCost = saleItems.reduce(
         (sum, item) => {
-          return (
-            sum +
+          const quantity =
+            Number(item.quantity || 0);
+
+          // ต้นทุนที่บันทึกไว้ตอนขาย
+          const storedTotalCost =
             Number(
               item.totalCost || 0
-            )
+            );
+
+          if (storedTotalCost > 0) {
+            return (
+              sum + storedTotalCost
+            );
+          }
+
+          // ถ้า SaleItem ไม่มีต้นทุน
+          // ให้ใช้ต้นทุนจาก Product
+          const product =
+            productMap.get(
+              item.productId
+            );
+
+          const productCost =
+            Number(
+              product?.cost || 0
+            );
+
+          return (
+            sum +
+            productCost * quantity
           );
         },
         0
@@ -147,95 +215,180 @@ router.get("/", async (req, res) => {
     }
 
     // ======================================
-    // EXPENSES
+    // EXPENSE
     // ======================================
 
-    const expenses =
-      await Expense.findAll({
-        where: dateWhere,
-      });
+    let totalExpense = 0;
+    let expenseCount = 0;
 
-    const totalExpense =
-      expenses.reduce(
-        (sum, expense) => {
-          return (
-            sum +
-            Number(
-              expense.amount || 0
-            )
-          );
-        },
-        0
+    try {
+      const expenses =
+        await Expense.findAll({
+          where: {
+            createdAt: {
+              [Op.gte]: startOfPeriod,
+              [Op.lt]: endOfPeriod,
+            },
+          },
+        });
+
+      expenseCount = expenses.length;
+
+      totalExpense =
+        expenses.reduce(
+          (sum, expense) => {
+            return (
+              sum +
+              Number(
+                expense.amount || 0
+              )
+            );
+          },
+          0
+        );
+
+      console.log(
+        "EXPENSE:",
+        expenseCount,
+        totalExpense
+      );
+    } catch (error) {
+      console.log(
+        "EXPENSE LOAD ERROR:",
+        error.message
       );
 
+      totalExpense = 0;
+      expenseCount = 0;
+    }
+
     // ======================================
-    // PURCHASES
+    // PURCHASE ORDERS
     // ======================================
 
-    const purchases =
-      await PurchaseOrder.findAll({
-        where: dateWhere,
-      });
+    let purchaseTotal = 0;
+    let purchaseCount = 0;
 
-    const purchaseTotal =
-      purchases.reduce(
-        (sum, purchase) => {
-          return (
-            sum +
-            Number(
-              purchase.totalAmount || 0
-            )
-          );
-        },
-        0
+    try {
+      const purchases =
+        await PurchaseOrder.findAll({
+          where: {
+            createdAt: {
+              [Op.gte]: startOfPeriod,
+              [Op.lt]: endOfPeriod,
+            },
+            status: "received",
+          },
+        });
+
+      purchaseCount = purchases.length;
+
+      purchaseTotal =
+        purchases.reduce(
+          (sum, purchase) => {
+            return (
+              sum +
+              Number(
+                purchase.totalAmount || 0
+              )
+            );
+          },
+          0
+        );
+
+      console.log(
+        "PURCHASE:",
+        purchaseCount,
+        purchaseTotal
       );
+    } catch (error) {
+      console.log(
+        "PURCHASE LOAD ERROR:",
+        error.message
+      );
+
+      purchaseTotal = 0;
+      purchaseCount = 0;
+    }
 
     // ======================================
     // STOCK MOVEMENT
     // ======================================
 
-    const stockMovements =
-      await StockMovement.findAll({
-        where: dateWhere,
-      });
+    let stockIn = 0;
+    let stockOut = 0;
 
-    const stockIn =
-      stockMovements
-        .filter(
-          (movement) =>
-            movement.movementType ===
-            "in"
-        )
-        .reduce(
-          (sum, movement) => {
-            return (
-              sum +
-              Number(
-                movement.quantity || 0
-              )
-            );
+    try {
+      const movements =
+        await StockMovement.findAll({
+          where: {
+            createdAt: {
+              [Op.gte]: startOfPeriod,
+              [Op.lt]: endOfPeriod,
+            },
           },
-          0
-        );
+        });
 
-    const stockOut =
-      stockMovements
-        .filter(
-          (movement) =>
-            movement.movementType ===
-            "out"
-        )
-        .reduce(
-          (sum, movement) => {
-            return (
-              sum +
-              Number(
-                movement.quantity || 0
-              )
-            );
+      for (const movement of movements) {
+        const quantity =
+          Number(
+            movement.quantity || 0
+          );
+
+        if (
+          movement.movementType === "in"
+        ) {
+          stockIn += quantity;
+        }
+
+        if (
+          movement.movementType === "out"
+        ) {
+          stockOut += quantity;
+        }
+      }
+
+      console.log(
+        "STOCK:",
+        stockIn,
+        stockOut
+      );
+    } catch (error) {
+      console.log(
+        "STOCK MOVEMENT LOAD ERROR:",
+        error.message
+      );
+    }
+
+    // ======================================
+    // LOW STOCK PRODUCTS
+    // ======================================
+
+    let lowStockProducts = [];
+
+    try {
+      lowStockProducts =
+        await Product.findAll({
+          where: {
+            stock: {
+              [Op.lte]: 10,
+            },
           },
-          0
-        );
+          order: [
+            ["stock", "ASC"],
+          ],
+        });
+    } catch (error) {
+      console.log(
+        "LOW STOCK ERROR:",
+        error.message
+      );
+
+      lowStockProducts = [];
+    }
+
+    const lowStockCount =
+      lowStockProducts.length;
 
     // ======================================
     // PROFIT
@@ -248,76 +401,49 @@ router.get("/", async (req, res) => {
       grossProfit - totalExpense;
 
     // ======================================
-    // LOW STOCK
-    // ======================================
-
-    const lowStockProducts =
-      await Product.findAll({
-        where: {
-          stock: {
-            [Op.lte]: 10,
-          },
-        },
-        order: [["stock", "ASC"]],
-      });
-
-    // ======================================
     // PAYMENT SUMMARY
     // ======================================
 
-    const cashSales =
-      sales
-        .filter(
-          (sale) =>
-            sale.paymentMethod ===
-            "cash"
-        )
-        .reduce(
-          (sum, sale) => {
-            return (
-              sum +
-              getSaleNetTotal(sale)
-            );
-          },
+    let cashTotal = 0;
+    let qrTotal = 0;
+    let cardTotal = 0;
+
+    for (const sale of sales) {
+      const amount =
+        Number(
+          sale.netTotal || 0
+        ) ||
+        Math.max(
+          Number(
+            sale.totalAmount || 0
+          ) -
+            Number(
+              sale.discountAmount || 0
+            ),
           0
         );
 
-    const qrSales =
-      sales
-        .filter(
-          (sale) =>
-            sale.paymentMethod ===
-            "qr"
-        )
-        .reduce(
-          (sum, sale) => {
-            return (
-              sum +
-              getSaleNetTotal(sale)
-            );
-          },
-          0
-        );
+      if (
+        sale.paymentMethod === "cash"
+      ) {
+        cashTotal += amount;
+      }
 
-    const cardSales =
-      sales
-        .filter(
-          (sale) =>
-            sale.paymentMethod ===
-            "card"
-        )
-        .reduce(
-          (sum, sale) => {
-            return (
-              sum +
-              getSaleNetTotal(sale)
-            );
-          },
-          0
-        );
+      if (
+        sale.paymentMethod === "qr"
+      ) {
+        qrTotal += amount;
+      }
+
+      if (
+        sale.paymentMethod === "card"
+      ) {
+        cardTotal += amount;
+      }
+    }
 
     // ======================================
-    // RECENT SALES
+    // RECENT BILLS
     // ======================================
 
     const recentBills =
@@ -334,8 +460,19 @@ router.get("/", async (req, res) => {
               sale.discountAmount || 0
             );
 
+          const storedNetTotal =
+            Number(
+              sale.netTotal || 0
+            );
+
           const netTotal =
-            getSaleNetTotal(sale);
+            storedNetTotal > 0
+              ? storedNetTotal
+              : Math.max(
+                  totalAmount -
+                    discountAmount,
+                  0
+                );
 
           return {
             id: sale.id,
@@ -347,36 +484,30 @@ router.get("/", async (req, res) => {
             netTotal,
 
             paymentMethod:
-              sale.paymentMethod ||
-              "",
+              sale.paymentMethod || "",
 
             receivedAmount:
               Number(
-                sale.receivedAmount ||
-                  0
+                sale.receivedAmount || 0
               ),
 
             changeAmount:
               Number(
-                sale.changeAmount ||
-                  0
+                sale.changeAmount || 0
               ),
 
             earnedPoints:
               Number(
-                sale.earnedPoints ||
-                  0
+                sale.earnedPoints || 0
               ),
 
             usedPoints:
               Number(
-                sale.usedPoints ||
-                  0
+                sale.usedPoints || 0
               ),
 
             memberId:
-              sale.memberId ||
-              null,
+              sale.memberId || null,
 
             createdAt:
               sale.createdAt,
@@ -390,65 +521,84 @@ router.get("/", async (req, res) => {
     res.json({
       success: true,
 
-      filter: {
-        startDate,
-        endDate,
-        start,
-        end,
-      },
-
       data: {
+        // ----------------------------------
+        // SALES
+        // ----------------------------------
+
         totalSales,
         billCount,
 
+        // ----------------------------------
+        // COST / PROFIT
+        // ----------------------------------
+
         totalCost,
-
-        totalExpense,
-
         grossProfit,
-
         netProfit,
 
+        // รองรับชื่อเดิม
+        profit: grossProfit,
+
+        // ----------------------------------
+        // EXPENSE
+        // ----------------------------------
+
+        totalExpense,
+        expenseCount,
+
+        // ----------------------------------
+        // PURCHASE
+        // ----------------------------------
+
         purchaseTotal,
+        purchaseCount,
+
+        // ----------------------------------
+        // STOCK
+        // ----------------------------------
 
         stockIn,
-
         stockOut,
 
-        lowStockCount:
-          lowStockProducts.length,
+        // ----------------------------------
+        // LOW STOCK
+        // ----------------------------------
 
+        lowStockCount,
+
+        // สำคัญ:
+        // ต้องเป็น Array เพราะ Dashboard.jsx ใช้ .map()
         lowStockProducts,
 
+        // ----------------------------------
+        // PAYMENT
+        // ----------------------------------
+
         paymentSummary: {
-          cash: cashSales,
-          qr: qrSales,
-          card: cardSales,
+          cash: cashTotal,
+          qr: qrTotal,
+          card: cardTotal,
         },
 
+        // ----------------------------------
+        // RECENT BILLS
+        // ----------------------------------
+
         recentBills,
-
-        expenseCount:
-          expenses.length,
-
-        purchaseCount:
-          purchases.length,
       },
     });
   } catch (error) {
     console.error(
-      "DASHBOARD REPORT ERROR:",
+      "DASHBOARD ERROR:",
       error
     );
 
     res.status(500).json({
       success: false,
-
       message:
         "ไม่สามารถโหลดข้อมูล Dashboard ได้",
-
-      error:
-        error.message,
+      error: error.message,
     });
   }
 });
