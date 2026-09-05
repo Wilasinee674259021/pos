@@ -122,6 +122,82 @@ const defaultProducts = [
 ];
 
 // ======================================
+// GENERATE EAN-13 BARCODE
+// ======================================
+
+const generateBarcode = () => {
+  let base = "885";
+
+  for (let i = 0; i < 9; i++) {
+    base += Math.floor(Math.random() * 10);
+  }
+
+  const digits = base.split("").map(Number);
+
+  let sum = 0;
+
+  digits.forEach((digit, index) => {
+    sum += index % 2 === 0
+      ? digit
+      : digit * 3;
+  });
+
+  const checkDigit =
+    (10 - (sum % 10)) % 10;
+
+  return base + checkDigit;
+};
+
+// ======================================
+// GENERATE UNIQUE BARCODE
+// ======================================
+
+const generateUniqueBarcode = async () => {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const barcode = generateBarcode();
+
+    const existing = await Product.findOne({
+      where: {
+        barcode,
+      },
+    });
+
+    if (!existing) {
+      return barcode;
+    }
+  }
+
+  throw new Error(
+    "ไม่สามารถสร้าง Barcode ที่ไม่ซ้ำได้",
+  );
+};
+
+// ======================================
+// GENERATE PRODUCT ID
+// ======================================
+
+const generateProductId = async () => {
+  const products = await Product.findAll({
+    attributes: ["id"],
+    order: [["id", "ASC"]],
+  });
+
+  let number = 1;
+
+  while (
+    products.some(
+      (product) =>
+        product.id ===
+        `P${String(number).padStart(3, "0")}`,
+    )
+  ) {
+    number++;
+  }
+
+  return `P${String(number).padStart(3, "0")}`;
+};
+
+// ======================================
 // SEED / SYNC DEFAULT PRODUCTS
 // ======================================
 
@@ -130,17 +206,15 @@ router.post("/seed", async (req, res) => {
     const results = [];
 
     for (const item of defaultProducts) {
-      const existingProduct = await Product.findByPk(item.id);
+      const existingProduct =
+        await Product.findByPk(item.id);
 
       if (existingProduct) {
         await existingProduct.update({
           name: item.name,
           barcode: item.barcode,
           price: item.price,
-
-          // สำคัญ: อัปเดตต้นทุนด้วย
           cost: item.cost,
-
           stock: item.stock,
           category: item.category,
           status: item.status,
@@ -168,12 +242,16 @@ router.post("/seed", async (req, res) => {
 
     res.json({
       success: true,
-      message: "ตั้งค่าสินค้าหลักและราคาทุนเรียบร้อย",
+      message:
+        "ตั้งค่าสินค้าหลักและราคาทุนเรียบร้อย",
       results,
       data: products,
     });
   } catch (error) {
-    console.error("SEED PRODUCTS ERROR:", error);
+    console.error(
+      "SEED PRODUCTS ERROR:",
+      error,
+    );
 
     res.status(500).json({
       success: false,
@@ -198,7 +276,10 @@ router.get("/", async (req, res) => {
       data: products,
     });
   } catch (error) {
-    console.error("GET PRODUCTS ERROR:", error);
+    console.error(
+      "GET PRODUCTS ERROR:",
+      error,
+    );
 
     res.status(500).json({
       success: false,
@@ -209,12 +290,55 @@ router.get("/", async (req, res) => {
 });
 
 // ======================================
+// GET PRODUCT BY BARCODE
+// ======================================
+
+router.get(
+  "/barcode/:barcode",
+  async (req, res) => {
+    try {
+      const product =
+        await Product.findOne({
+          where: {
+            barcode: req.params.barcode,
+            status: "active",
+          },
+        });
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "ไม่พบสินค้านี้",
+        });
+      }
+
+      res.json({
+        success: true,
+        data: product,
+      });
+    } catch (error) {
+      console.error(
+        "BARCODE SEARCH ERROR:",
+        error,
+      );
+
+      res.status(500).json({
+        success: false,
+        message: "ค้นหาสินค้าไม่สำเร็จ",
+        error: error.message,
+      });
+    }
+  },
+);
+
+// ======================================
 // GET PRODUCT BY ID
 // ======================================
 
 router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product =
+      await Product.findByPk(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -237,71 +361,43 @@ router.get("/:id", async (req, res) => {
 });
 
 // ======================================
-// SEARCH BY BARCODE
-// ======================================
-
-router.get("/barcode/:barcode", async (req, res) => {
-  try {
-    const product = await Product.findOne({
-      where: {
-        barcode: req.params.barcode,
-        status: "active",
-      },
-    });
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "ไม่พบสินค้านี้",
-      });
-    }
-
-    res.json({
-      success: true,
-      data: product,
-    });
-  } catch (error) {
-    console.error("BARCODE SEARCH ERROR:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "ค้นหาสินค้าไม่สำเร็จ",
-      error: error.message,
-    });
-  }
-});
-
-// ======================================
 // SEARCH BY NAME
 // ======================================
 
-router.get("/search/:name", async (req, res) => {
-  try {
-    const name = req.params.name;
+router.get(
+  "/search/:name",
+  async (req, res) => {
+    try {
+      const name = req.params.name;
 
-    const products = await Product.findAll({
-      where: {
-        name: {
-          [Op.iLike]: `%${name}%`,
-        },
-        status: "active",
-      },
-    });
+      const products =
+        await Product.findAll({
+          where: {
+            name: {
+              [Op.iLike]: `%${name}%`,
+            },
+            status: "active",
+          },
+        });
 
-    res.json({
-      success: true,
-      data: products,
-    });
-  } catch (error) {
-    console.error("PRODUCT SEARCH ERROR:", error);
+      res.json({
+        success: true,
+        data: products,
+      });
+    } catch (error) {
+      console.error(
+        "PRODUCT SEARCH ERROR:",
+        error,
+      );
 
-    res.status(500).json({
-      success: false,
-      message: "ค้นหาสินค้าไม่สำเร็จ",
-      error: error.message,
-    });
-  }
-});
+      res.status(500).json({
+        success: false,
+        message: "ค้นหาสินค้าไม่สำเร็จ",
+        error: error.message,
+      });
+    }
+  },
+);
 
 // ======================================
 // CREATE PRODUCT
@@ -318,16 +414,23 @@ router.post("/", async (req, res) => {
       category,
     } = req.body;
 
-    if (!name || !barcode || price === undefined) {
+    if (!name || price === undefined) {
       return res.status(400).json({
         success: false,
-        message: "กรุณากรอกชื่อสินค้า Barcode และราคา",
+        message:
+          "กรุณากรอกชื่อสินค้าและราคา",
       });
     }
 
     const productPrice = Number(price);
-    const productCost = Number(cost ?? 0);
-    const productStock = Number(stock ?? 0);
+
+    const productCost = Number(
+      cost ?? 0,
+    );
+
+    const productStock = Number(
+      stock ?? 0,
+    );
 
     if (
       Number.isNaN(productPrice) ||
@@ -335,7 +438,8 @@ router.post("/", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "ราคาสินค้าต้องไม่ติดลบ",
+        message:
+          "ราคาสินค้าต้องไม่ติดลบ",
       });
     }
 
@@ -345,7 +449,8 @@ router.post("/", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "ราคาทุนต้องไม่ติดลบ",
+        message:
+          "ราคาทุนต้องไม่ติดลบ",
       });
     }
 
@@ -356,58 +461,85 @@ router.post("/", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "จำนวน Stock ไม่ถูกต้อง",
+        message:
+          "จำนวน Stock ไม่ถูกต้อง",
       });
     }
 
     if (productCost > productPrice) {
       return res.status(400).json({
         success: false,
-        message: "ราคาทุนไม่ควรมากกว่าราคาขาย",
+        message:
+          "ราคาทุนไม่ควรมากกว่าราคาขาย",
       });
     }
 
-    const existingProduct = await Product.findOne({
-      where: {
-        barcode: barcode.trim(),
-      },
-    });
+    // ==================================
+    // BARCODE
+    // ==================================
 
-    if (existingProduct) {
-      return res.status(409).json({
-        success: false,
-        message: "Barcode นี้มีอยู่แล้ว",
-      });
+    let finalBarcode =
+      barcode?.trim();
+
+    if (!finalBarcode) {
+      finalBarcode =
+        await generateUniqueBarcode();
+    } else {
+      const existingProduct =
+        await Product.findOne({
+          where: {
+            barcode: finalBarcode,
+          },
+        });
+
+      if (existingProduct) {
+        // ถ้า Barcode ซ้ำ
+        // สร้างใหม่ให้อัตโนมัติ
+        finalBarcode =
+          await generateUniqueBarcode();
+      }
     }
 
-    const count = await Product.count();
+    // ==================================
+    // PRODUCT ID
+    // ==================================
 
     const productId =
-      "P" +
-      String(count + 1).padStart(3, "0");
+      await generateProductId();
 
-    const product = await Product.create({
-      id: productId,
-      name: name.trim(),
-      barcode: barcode.trim(),
-      price: productPrice,
-      cost: productCost,
-      stock: productStock,
-      category: category?.trim() || null,
-      status: "active",
-    });
+    // ==================================
+    // CREATE
+    // ==================================
+
+    const product =
+      await Product.create({
+        id: productId,
+        name: name.trim(),
+        barcode: finalBarcode,
+        price: productPrice,
+        cost: productCost,
+        stock: productStock,
+        category:
+          category?.trim() || null,
+        status: "active",
+      });
 
     res.status(201).json({
       success: true,
-      message: "เพิ่มสินค้าเรียบร้อย",
+      message:
+        "เพิ่มสินค้าเรียบร้อย",
       data: product,
     });
   } catch (error) {
-    console.error("CREATE PRODUCT ERROR:", error);
+    console.error(
+      "CREATE PRODUCT ERROR:",
+      error,
+    );
 
     res.status(500).json({
       success: false,
-      message: "เพิ่มสินค้าไม่สำเร็จ",
+      message:
+        "เพิ่มสินค้าไม่สำเร็จ",
       error: error.message,
     });
   }
@@ -419,7 +551,10 @@ router.post("/", async (req, res) => {
 
 router.put("/:id", async (req, res) => {
   try {
-    const product = await Product.findByPk(req.params.id);
+    const product =
+      await Product.findByPk(
+        req.params.id,
+      );
 
     if (!product) {
       return res.status(404).json({
@@ -459,7 +594,8 @@ router.put("/:id", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "ราคาสินค้าต้องไม่ติดลบ",
+        message:
+          "ราคาสินค้าต้องไม่ติดลบ",
       });
     }
 
@@ -469,7 +605,8 @@ router.put("/:id", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "ราคาทุนต้องไม่ติดลบ",
+        message:
+          "ราคาทุนต้องไม่ติดลบ",
       });
     }
 
@@ -480,37 +617,58 @@ router.put("/:id", async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "จำนวน Stock ไม่ถูกต้อง",
+        message:
+          "จำนวน Stock ไม่ถูกต้อง",
       });
     }
 
     if (newCost > newPrice) {
       return res.status(400).json({
         success: false,
-        message: "ราคาทุนไม่ควรมากกว่าราคาขาย",
+        message:
+          "ราคาทุนไม่ควรมากกว่าราคาขาย",
       });
+    }
+
+    // ==================================
+    // BARCODE
+    // ==================================
+
+    let newBarcode =
+      barcode !== undefined
+        ? barcode.trim()
+        : product.barcode;
+
+    if (!newBarcode) {
+      newBarcode =
+        await generateUniqueBarcode();
     }
 
     if (
-      barcode &&
-      barcode !== product.barcode
+      newBarcode !== product.barcode
     ) {
-      const duplicate = await Product.findOne({
-        where: {
-          barcode: barcode.trim(),
-        },
-      });
+      const duplicate =
+        await Product.findOne({
+          where: {
+            barcode: newBarcode,
+            id: {
+              [Op.ne]: product.id,
+            },
+          },
+        });
 
-      if (
-        duplicate &&
-        duplicate.id !== product.id
-      ) {
+      if (duplicate) {
         return res.status(409).json({
           success: false,
-          message: "Barcode นี้มีอยู่แล้ว",
+          message:
+            "Barcode นี้มีอยู่แล้ว",
         });
       }
     }
+
+    // ==================================
+    // UPDATE
+    // ==================================
 
     await product.update({
       name:
@@ -518,13 +676,12 @@ router.put("/:id", async (req, res) => {
           ? name.trim()
           : product.name,
 
-      barcode:
-        barcode !== undefined
-          ? barcode.trim()
-          : product.barcode,
+      barcode: newBarcode,
 
       price: newPrice,
+
       cost: newCost,
+
       stock: newStock,
 
       category:
@@ -540,15 +697,20 @@ router.put("/:id", async (req, res) => {
 
     res.json({
       success: true,
-      message: "แก้ไขสินค้าเรียบร้อย",
+      message:
+        "แก้ไขสินค้าเรียบร้อย",
       data: product,
     });
   } catch (error) {
-    console.error("UPDATE PRODUCT ERROR:", error);
+    console.error(
+      "UPDATE PRODUCT ERROR:",
+      error,
+    );
 
     res.status(500).json({
       success: false,
-      message: "แก้ไขสินค้าไม่สำเร็จ",
+      message:
+        "แก้ไขสินค้าไม่สำเร็จ",
       error: error.message,
     });
   }
@@ -558,32 +720,43 @@ router.put("/:id", async (req, res) => {
 // DELETE PRODUCT
 // ======================================
 
-router.delete("/:id", async (req, res) => {
-  try {
-    const product = await Product.findByPk(req.params.id);
+router.delete(
+  "/:id",
+  async (req, res) => {
+    try {
+      const product =
+        await Product.findByPk(
+          req.params.id,
+        );
 
-    if (!product) {
-      return res.status(404).json({
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: "ไม่พบสินค้า",
+        });
+      }
+
+      await product.destroy();
+
+      res.json({
+        success: true,
+        message:
+          "ลบสินค้าเรียบร้อย",
+      });
+    } catch (error) {
+      console.error(
+        "DELETE PRODUCT ERROR:",
+        error,
+      );
+
+      res.status(500).json({
         success: false,
-        message: "ไม่พบสินค้า",
+        message:
+          "ลบสินค้าไม่สำเร็จ",
+        error: error.message,
       });
     }
-
-    await product.destroy();
-
-    res.json({
-      success: true,
-      message: "ลบสินค้าเรียบร้อย",
-    });
-  } catch (error) {
-    console.error("DELETE PRODUCT ERROR:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "ลบสินค้าไม่สำเร็จ",
-      error: error.message,
-    });
-  }
-});
+  },
+);
 
 export default router;

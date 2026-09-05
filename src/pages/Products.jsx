@@ -1,10 +1,36 @@
-
 import { useEffect, useState } from "react";
 
 const API_BASE =
   import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const API_URL = `${API_BASE}/api/products`;
+
+// ======================================
+// GENERATE EAN-13 BARCODE
+// ======================================
+
+const generateBarcode = () => {
+  // 885 = Thailand prefix
+  let base = "885";
+
+  // สุ่มเลขอีก 9 หลัก
+  for (let i = 0; i < 9; i++) {
+    base += Math.floor(Math.random() * 10);
+  }
+
+  // คำนวณ Check Digit ของ EAN-13
+  const digits = base.split("").map(Number);
+
+  let sum = 0;
+
+  digits.forEach((digit, index) => {
+    sum += index % 2 === 0 ? digit : digit * 3;
+  });
+
+  const checkDigit = (10 - (sum % 10)) % 10;
+
+  return base + checkDigit;
+};
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -15,14 +41,22 @@ export default function Products() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
 
+  const [costMode, setCostMode] = useState("manual");
+
   const [form, setForm] = useState({
     name: "",
     barcode: "",
     price: "",
     cost: "",
+    purchaseTotal: "",
+    purchaseQuantity: "",
     stock: "",
     category: "",
   });
+
+  // ======================================
+  // LOAD PRODUCTS
+  // ======================================
 
   const loadProducts = async () => {
     try {
@@ -65,6 +99,7 @@ export default function Products() {
       console.error("LOAD PRODUCTS ERROR:", err);
 
       setProducts([]);
+
       setError(
         err.message ||
           "ไม่สามารถโหลดข้อมูลสินค้าได้",
@@ -85,11 +120,15 @@ export default function Products() {
   const openAddForm = () => {
     setEditingProduct(null);
 
+    setCostMode("manual");
+
     setForm({
       name: "",
-      barcode: "",
+      barcode: generateBarcode(),
       price: "",
       cost: "",
+      purchaseTotal: "",
+      purchaseQuantity: "",
       stock: "",
       category: "",
     });
@@ -104,11 +143,15 @@ export default function Products() {
   const openEditForm = (product) => {
     setEditingProduct(product);
 
+    setCostMode("manual");
+
     setForm({
       name: product.name || "",
       barcode: product.barcode || "",
       price: product.price ?? "",
       cost: product.cost ?? "",
+      purchaseTotal: "",
+      purchaseQuantity: "",
       stock: product.stock ?? "",
       category: product.category || "",
     });
@@ -123,16 +166,52 @@ export default function Products() {
   const closeForm = () => {
     setShowForm(false);
     setEditingProduct(null);
+    setCostMode("manual");
 
     setForm({
       name: "",
       barcode: "",
       price: "",
       cost: "",
+      purchaseTotal: "",
+      purchaseQuantity: "",
       stock: "",
       category: "",
     });
   };
+
+  // ======================================
+  // CHANGE COST MODE
+  // ======================================
+
+  const changeCostMode = (mode) => {
+    setCostMode(mode);
+
+    if (mode === "manual") {
+      setForm((prev) => ({
+        ...prev,
+        purchaseTotal: "",
+        purchaseQuantity: "",
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        cost: "",
+      }));
+    }
+  };
+
+  // ======================================
+  // CALCULATE COST
+  // ======================================
+
+  const calculatedCost =
+    form.purchaseTotal !== "" &&
+    form.purchaseQuantity !== "" &&
+    Number(form.purchaseQuantity) > 0
+      ? Number(form.purchaseTotal) /
+        Number(form.purchaseQuantity)
+      : 0;
 
   // ======================================
   // SAVE PRODUCT
@@ -143,9 +222,16 @@ export default function Products() {
     const barcode = form.barcode.trim();
 
     const price = Number(form.price);
-    const cost = Number(
-      form.cost === "" ? 0 : form.cost,
-    );
+
+    let cost;
+
+    if (costMode === "calculate") {
+      cost = calculatedCost;
+    } else {
+      cost = Number(
+        form.cost === "" ? 0 : form.cost,
+      );
+    }
 
     const stock = Number(
       form.stock === "" ? 0 : form.stock,
@@ -157,7 +243,7 @@ export default function Products() {
     }
 
     if (!barcode) {
-      alert("กรุณากรอก Barcode");
+      alert("ไม่พบ Barcode กรุณาลองใหม่");
       return;
     }
 
@@ -168,6 +254,29 @@ export default function Products() {
     ) {
       alert("กรุณากรอกราคาสินค้าให้ถูกต้อง");
       return;
+    }
+
+    if (costMode === "calculate") {
+      if (
+        form.purchaseTotal === "" ||
+        Number(form.purchaseTotal) < 0
+      ) {
+        alert("กรุณากรอกราคาซื้อรวมให้ถูกต้อง");
+        return;
+      }
+
+      if (
+        form.purchaseQuantity === "" ||
+        Number(form.purchaseQuantity) <= 0
+      ) {
+        alert("กรุณากรอกจำนวนสินค้าที่ซื้อให้ถูกต้อง");
+        return;
+      }
+
+      if (!Number.isFinite(calculatedCost)) {
+        alert("ไม่สามารถคำนวณต้นทุนได้");
+        return;
+      }
     }
 
     if (
@@ -359,6 +468,10 @@ export default function Products() {
       (product) =>
         Number(product.stock || 0) <= 5,
     ).length;
+
+  // ======================================
+  // RENDER
+  // ======================================
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
@@ -572,7 +685,7 @@ export default function Products() {
 
                       {/* BARCODE */}
 
-                      <td className="whitespace-nowrap p-4">
+                      <td className="whitespace-nowrap p-4 font-mono text-sm">
                         {product.barcode}
                       </td>
 
@@ -716,50 +829,181 @@ export default function Products() {
                 Barcode
               </label>
 
-              <input
-                value={form.barcode}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    barcode:
-                      e.target.value.replace(
-                        /\D/g,
-                        "",
-                      ),
-                  })
-                }
-                placeholder="เช่น 8851234567890"
-                inputMode="numeric"
-                className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    value={form.barcode}
+                    readOnly
+                    className="w-full rounded-lg border border-slate-200 bg-slate-100 p-3 pr-12 font-mono text-sm text-slate-700 outline-none"
+                  />
+
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                    🔒
+                  </span>
+                </div>
+
+                {!editingProduct && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        barcode:
+                          generateBarcode(),
+                      })
+                    }
+                    className="shrink-0 rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-bold text-blue-600 transition hover:bg-blue-100"
+                    title="สร้าง Barcode ใหม่"
+                  >
+                    🔄
+                  </button>
+                )}
+              </div>
+
+              <p className="mt-1 text-xs text-slate-500">
+                ระบบสร้าง Barcode อัตโนมัติ
+              </p>
             </div>
 
-            {/* COST */}
+            {/* COST MODE */}
 
             <div className="mb-4">
               <label className="mb-2 block font-medium">
-                ราคาทุน (บาท)
+                วิธีระบุต้นทุน
               </label>
 
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.cost}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    cost: e.target.value,
-                  })
-                }
-                placeholder="0.00"
-                className="w-full rounded-lg border border-orange-300 p-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
-              />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    changeCostMode("manual")
+                  }
+                  className={`rounded-lg border p-3 text-sm font-semibold transition ${
+                    costMode === "manual"
+                      ? "border-orange-500 bg-orange-50 text-orange-700"
+                      : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  ✏️ กรอกต้นทุนเอง
+                </button>
 
-              <p className="mt-1 text-xs text-slate-500">
-                ราคาที่ร้านซื้อสินค้ามา
-              </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    changeCostMode("calculate")
+                  }
+                  className={`rounded-lg border p-3 text-sm font-semibold transition ${
+                    costMode === "calculate"
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  🧮 คำนวณต้นทุน
+                </button>
+              </div>
             </div>
+
+            {/* MANUAL COST */}
+
+            {costMode === "manual" && (
+              <div className="mb-4">
+                <label className="mb-2 block font-medium">
+                  ราคาทุนต่อชิ้น (บาท)
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.cost}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      cost: e.target.value,
+                    })
+                  }
+                  placeholder="0.00"
+                  className="w-full rounded-lg border border-orange-300 p-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
+                />
+
+                <p className="mt-1 text-xs text-slate-500">
+                  ราคาที่ร้านซื้อสินค้ามาต่อ 1 ชิ้น
+                </p>
+              </div>
+            )}
+
+            {/* CALCULATE COST */}
+
+            {costMode === "calculate" && (
+              <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <div className="mb-3">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    ราคาซื้อรวม (บาท)
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.purchaseTotal}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        purchaseTotal:
+                          e.target.value,
+                      })
+                    }
+                    placeholder="เช่น 500"
+                    className="w-full rounded-lg border border-slate-300 bg-white p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <label className="mb-2 block text-sm font-medium text-slate-700">
+                    จำนวนที่ซื้อ (ชิ้น)
+                  </label>
+
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={form.purchaseQuantity}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        purchaseQuantity:
+                          e.target.value,
+                      })
+                    }
+                    placeholder="เช่น 50"
+                    className="w-full rounded-lg border border-slate-300 bg-white p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="rounded-lg bg-white p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-slate-500">
+                      ต้นทุนต่อชิ้น
+                    </span>
+
+                    <span className="text-lg font-bold text-blue-600">
+                      ฿
+                      {calculatedCost.toLocaleString(
+                        "th-TH",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        },
+                      )}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    ราคาซื้อรวม ÷ จำนวนที่ซื้อ
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* PRICE */}
 
@@ -842,7 +1086,7 @@ export default function Products() {
                 onClick={saveProduct}
                 className="h-10 w-full rounded-lg bg-blue-600 font-bold text-white transition hover:bg-blue-700 sm:flex-1"
               >
-                💾 บันทึก
+                บันทึก
               </button>
             </div>
           </div>
@@ -851,4 +1095,3 @@ export default function Products() {
     </div>
   );
 }
-
