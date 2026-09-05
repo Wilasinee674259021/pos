@@ -637,6 +637,7 @@ export default function Promotions() {
                             </div>
                           </td>
 
+                          {/* STATUS - ปรับเฉพาะตรงนี้ */}
                           <td className="px-4 py-4 text-center align-middle">
                             <button
                               onClick={() =>
@@ -644,7 +645,7 @@ export default function Promotions() {
                                   promotion
                                 )
                               }
-                              className={`!min-h-0 inline-flex h-7 rounded-full px-2.5 text-xs font-semibold leading-7 ${
+                              className={`!min-h-0 inline-flex h-7 items-center justify-center whitespace-nowrap rounded-full px-2.5 text-xs font-semibold leading-none ${
                                 promotion.status ===
                                 "เปิดใช้งาน"
                                   ? "bg-green-100 text-green-700"
@@ -715,13 +716,14 @@ export default function Promotions() {
                           </h2>
                         </div>
 
+                        {/* STATUS - ปรับเฉพาะตรงนี้ */}
                         <button
                           onClick={() =>
                             toggleStatus(
                               promotion
                             )
                           }
-                          className={`!min-h-0 h-7 shrink-0 rounded-full px-2.5 text-xs font-semibold leading-7 ${
+                          className={`!min-h-0 h-7 shrink-0 whitespace-nowrap rounded-full px-2.5 text-xs font-semibold leading-none ${
                             promotion.status ===
                             "เปิดใช้งาน"
                               ? "bg-green-100 text-green-700"
