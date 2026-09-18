@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import useSalesStore from "../utils/salesStore"; // ดึง Store หลักของระบบมาใช้งาน
 
 export default function Purchasing() {
   const [showForm, setShowForm] = useState(false);
@@ -12,11 +13,9 @@ export default function Purchasing() {
   const [inputCost, setInputCost] = useState("");
   const [items, setItems] = useState([]);
 
-  // Mock สินค้าเลือกใน Modal
-  const products = [
-    { id: "1", name: "สินค้า A" },
-    { id: "2", name: "สินค้า B" },
-  ];
+  // ดึงข้อมูลสินค้าและฟังก์ชันอัปเดตสต็อกมาจาก Store จริง
+  const products = useSalesStore((state) => state.products) || [];
+  const updateStock = useSalesStore((state) => state.updateStock);
 
   // Mock ประวัติการรับสินค้าในหน้าหลัก
   const [purchases, setPurchases] = useState([
@@ -32,12 +31,14 @@ export default function Purchasing() {
   const handleAddItem = (e) => {
     if (e) e.preventDefault();
     if (!selectedProductId || !inputQty || !inputCost) return;
-    const prod = products.find((p) => p.id === selectedProductId);
+
+    // ค้นหาสินค้าจากสต็อกจริงด้วย ID
+    const prod = products.find((p) => String(p.id) === String(selectedProductId));
     setItems((prev) => [
       ...prev,
       {
         id: selectedProductId,
-        name: prod ? prod.name : "สินค้า",
+        name: prod ? (prod.name || prod.title) : "สินค้า",
         qty: Number(inputQty),
         cost: Number(inputCost),
       },
@@ -60,6 +61,15 @@ export default function Purchasing() {
     if (e) e.preventDefault();
     if (items.length === 0) return;
 
+    // 1. เพิ่มจำนวนสต็อกสินค้าจริงในระบบ
+    items.forEach((item) => {
+      if (updateStock) {
+        // เพิ่มจำนวนสินค้าตามที่ระบุในรับเข้าสต็อก
+        updateStock(item.id, item.qty);
+      }
+    });
+
+    // 2. บันทึกประวัติรับสินค้า
     setPurchases([
       {
         id: receiveNo,
@@ -96,7 +106,7 @@ export default function Purchasing() {
         </button>
       </div>
 
-      {/* Control Bar (ค้นหา + ตารางประวัติในหน้าหลัก) */}
+      {/* Control Bar */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between gap-4">
         <input
           type="text"
@@ -200,7 +210,7 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* ฟอร์มเลือกสินค้า + ปุ่ม + */}
+              {/* ฟอร์มเลือกสินค้า (ดึงข้อมูลจากสินค้าจริงใน Store) */}
               <div className="bg-slate-50 p-3 rounded-xl flex flex-col sm:flex-row gap-2 items-center">
                 <select
                   value={selectedProductId}
@@ -211,7 +221,7 @@ export default function Purchasing() {
                   <option value="">-- เลือกสินค้า --</option>
                   {products.map((item) => (
                     <option key={item.id} value={item.id}>
-                      {item.name}
+                      {item.name || item.title} {item.code ? `(${item.code})` : ''}
                     </option>
                   ))}
                 </select>
