@@ -589,40 +589,42 @@ export default function Purchasing() {
 
       {/* RECEIVE MODAL */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
-          <div className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:rounded-2xl">
-            <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* MODAL HEADER */}
+            <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold leading-tight text-gray-800 sm:text-xl">
                   🚚 รับสินค้าเข้า
                 </h2>
-                <p className="mt-1 hidden text-xs text-gray-400 sm:block">
+                <p className="mt-0.5 text-xs text-gray-400">
                   บันทึกข้อมูลสินค้าและเพิ่มจำนวนเข้าสู่สต๊อก
                 </p>
               </div>
               <button
                 onClick={closeForm}
-                className="!min-h-0 h-9 w-9 shrink-0 rounded-lg p-0 text-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                className="!min-h-0 h-8 w-8 shrink-0 rounded-lg p-0 text-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
               >
                 ✕
               </button>
             </div>
 
-            <div className="overflow-y-auto p-3 sm:p-5 md:p-6">
+            {/* MODAL BODY */}
+            <div className="overflow-y-auto p-4 sm:p-6">
               {/* BASIC INFO */}
               <div className="mb-5">
                 <h3 className="mb-3 text-sm font-bold text-gray-800">
                   ข้อมูลการรับสินค้า
                 </h3>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                    <label className="mb-1 block text-xs font-semibold text-gray-700">
                       Supplier
                     </label>
                     <select
                       value={selectedSupplier}
                       onChange={(e) => setSelectedSupplier(e.target.value)}
-                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
+                      className="!h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500"
                     >
                       <option value="">-- เลือก Supplier --</option>
                       {suppliers.map((supplier) => (
@@ -634,45 +636,42 @@ export default function Purchasing() {
                   </div>
 
                   <div>
-                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                    <label className="mb-1 block text-xs font-semibold text-gray-700">
                       เลขที่ใบรับสินค้า
                     </label>
                     <input
                       value={invoiceNumber}
                       onChange={(e) => setInvoiceNumber(e.target.value)}
                       placeholder="เช่น PO-2026-001"
-                      className="!h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
+                      className="!h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500"
                     />
                   </div>
 
-                  <div>
-                    <label className="mb-1.5 block text-sm font-semibold text-gray-700">
+                  <div className="sm:col-span-2">
+                    <label className="mb-1 block text-xs font-semibold text-gray-700">
                       วันที่รับสินค้า
                     </label>
                     <input
                       type="date"
                       value={purchaseDate}
                       onChange={(e) => setPurchaseDate(e.target.value)}
-                      className="!h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
+                      className="!h-10 w-full rounded-xl border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* ADD PRODUCT */}
-              <div className="mb-5 rounded-xl bg-gray-50 p-3 sm:rounded-2xl sm:p-4 md:p-5">
+              <div className="mb-5 rounded-2xl bg-gray-50 p-4">
                 <div className="mb-3">
                   <h3 className="text-sm font-bold text-gray-800">เพิ่มสินค้า</h3>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-0.5 text-xs text-gray-400">
                     เลือกสินค้า กรอกจำนวน และราคาทุนต่อชิ้น
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-                  <div className="md:col-span-5">
-                    <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
-                      สินค้า
-                    </label>
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-12">
+                  <div className="sm:col-span-5">
                     <select
                       value={selectedProduct}
                       onChange={(e) => {
@@ -683,12 +682,12 @@ export default function Purchasing() {
                           setCost(prod.cost);
                         }
                       }}
-                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
+                      className="!h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
                       disabled={loadingProducts}
                     >
                       <option value="">
                         {loadingProducts
-                          ? "กำลังโหลดรายการสินค้า..."
+                          ? "กำลังโหลด..."
                           : "-- เลือกสินค้า --"}
                       </option>
                       {stock.map((product) => (
@@ -699,39 +698,33 @@ export default function Purchasing() {
                     </select>
                   </div>
 
-                  <div className="md:col-span-3">
-                    <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
-                      จำนวน
-                    </label>
+                  <div className="sm:col-span-3">
                     <input
                       type="number"
                       min="1"
                       value={quantity}
                       onChange={(e) => setQuantity(e.target.value)}
                       placeholder="จำนวน"
-                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
+                      className="!h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
                     />
                   </div>
 
-                  <div className="md:col-span-3">
-                    <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
-                      ราคาทุน / ชิ้น
-                    </label>
+                  <div className="sm:col-span-3">
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       value={cost}
                       onChange={(e) => setCost(e.target.value)}
-                      placeholder="ราคาทุน / ชิ้น"
-                      className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
+                      placeholder="ราคาทุน/ชิ้น"
+                      className="!h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500"
                     />
                   </div>
 
-                  <div className="md:col-span-1">
+                  <div className="sm:col-span-1">
                     <button
                       onClick={addItem}
-                      className="!min-h-0 h-10 w-full rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 sm:rounded-xl"
+                      className="!min-h-0 h-10 w-full rounded-xl bg-blue-600 text-sm font-semibold text-white transition hover:bg-blue-700"
                     >
                       ＋
                     </button>
@@ -739,69 +732,47 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* ITEMS TABLE / CARDS */}
+              {/* ITEMS TABLE */}
               {items.length > 0 ? (
-                <div className="mb-5">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-gray-800">
-                        รายการสินค้า
-                      </h3>
-                      <p className="mt-1 text-xs text-gray-400">
-                        {items.length} รายการ
-                      </p>
-                    </div>
+                <div className="mb-2">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-gray-800">
+                      รายการสินค้า ({items.length})
+                    </h3>
                   </div>
 
-                  <div className="hidden overflow-hidden rounded-xl border border-gray-200 md:block">
+                  <div className="overflow-hidden rounded-xl border border-gray-200">
                     <div className="overflow-x-auto">
-                      <table className="w-full min-w-[700px]">
-                        <thead className="bg-gray-50">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-gray-50 text-xs text-gray-500">
                           <tr>
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
-                              สินค้า
-                            </th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
-                              จำนวน
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">
-                              ราคาทุน
-                            </th>
-                            <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">
-                              รวม
-                            </th>
-                            <th className="w-16 px-4 py-3"></th>
+                            <th className="px-3 py-2.5 font-semibold">สินค้า</th>
+                            <th className="px-3 py-2.5 text-center font-semibold">จำนวน</th>
+                            <th className="px-3 py-2.5 text-right font-semibold">ราคาทุน</th>
+                            <th className="px-3 py-2.5 text-right font-semibold">รวม</th>
+                            <th className="w-10 px-2 py-2.5"></th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-100">
                           {items.map((item) => (
-                            <tr
-                              key={item.id}
-                              className="border-t border-gray-100"
-                            >
-                              <td className="px-4 py-3">
-                                <div>
-                                  <p className="break-words text-sm font-semibold text-gray-800">
-                                    {item.name}
-                                  </p>
-                                  <p className="mt-1 font-mono text-xs text-gray-400">
-                                    {item.barcode}
-                                  </p>
-                                </div>
+                            <tr key={item.id} className="hover:bg-gray-50/50">
+                              <td className="px-3 py-2.5">
+                                <p className="font-semibold text-gray-800">{item.name}</p>
+                                <p className="text-xs font-mono text-gray-400">{item.barcode}</p>
                               </td>
-                              <td className="px-4 py-3 text-center text-sm text-gray-700">
+                              <td className="px-3 py-2.5 text-center text-gray-700">
                                 {item.quantity}
                               </td>
-                              <td className="px-4 py-3 text-right text-sm text-gray-700">
+                              <td className="px-3 py-2.5 text-right text-gray-700">
                                 ฿{item.cost.toLocaleString()}
                               </td>
-                              <td className="px-4 py-3 text-right text-sm font-bold text-gray-800">
+                              <td className="px-3 py-2.5 text-right font-bold text-gray-800">
                                 ฿{item.total.toLocaleString()}
                               </td>
-                              <td className="px-4 py-3 text-center">
+                              <td className="px-2 py-2.5 text-center">
                                 <button
                                   onClick={() => removeItem(item.id)}
-                                  className="!min-h-0 h-8 w-8 rounded-lg p-0 text-red-500 transition hover:bg-red-50"
+                                  className="!min-h-0 h-7 w-7 rounded-lg p-0 text-red-500 hover:bg-red-50"
                                 >
                                   🗑️
                                 </button>
@@ -813,69 +784,22 @@ export default function Purchasing() {
                     </div>
                   </div>
 
-                  <div className="space-y-3 md:hidden">
-                    {items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-xl border border-gray-200 bg-white p-3 sm:p-4"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="break-words text-sm font-semibold leading-5 text-gray-800">
-                              {item.name}
-                            </p>
-                            <p className="mt-1 font-mono text-xs text-gray-400">
-                              {item.barcode}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="!min-h-0 h-8 w-8 shrink-0 rounded-lg p-0 text-red-500 hover:bg-red-50"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-3 gap-2">
-                          <div className="rounded-lg bg-gray-50 p-2.5 sm:p-3">
-                            <p className="text-xs text-gray-400">จำนวน</p>
-                            <p className="mt-1 text-sm font-bold text-gray-800">
-                              {item.quantity}
-                            </p>
-                          </div>
-                          <div className="rounded-lg bg-gray-50 p-2.5 sm:p-3">
-                            <p className="text-xs text-gray-400">ราคาทุน</p>
-                            <p className="mt-1 break-all text-sm font-bold text-gray-800">
-                              ฿{item.cost.toLocaleString()}
-                            </p>
-                          </div>
-                          <div className="rounded-lg bg-green-50 p-2.5 sm:p-3">
-                            <p className="text-xs text-gray-400">รวม</p>
-                            <p className="mt-1 break-all text-sm font-bold text-green-600">
-                              ฿{item.total.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3 sm:mt-4 sm:p-4">
+                  <div className="mt-3 flex items-center justify-between rounded-xl bg-gray-50 p-3">
                     <span className="text-sm font-semibold text-gray-600">
                       รวมทั้งสิ้น
                     </span>
-                    <span className="break-all text-lg font-bold text-green-600 sm:text-xl">
+                    <span className="text-lg font-bold text-green-600">
                       ฿{currentFormTotal.toLocaleString()}
                     </span>
                   </div>
                 </div>
               ) : (
-                <div className="mb-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center sm:rounded-2xl sm:py-10">
-                  <div className="text-3xl">📦</div>
-                  <p className="mt-3 text-sm font-medium text-gray-600">
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center">
+                  <div className="text-2xl">📦</div>
+                  <p className="mt-2 text-xs font-medium text-gray-600">
                     ยังไม่มีสินค้าในรายการ
                   </p>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-0.5 text-[11px] text-gray-400">
                     เลือกสินค้าแล้วกดปุ่ม ＋ เพื่อเพิ่มรายการ
                   </p>
                 </div>
@@ -883,16 +807,16 @@ export default function Purchasing() {
             </div>
 
             {/* MODAL FOOTER */}
-            <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-3 sm:flex-row sm:justify-end sm:p-4 sm:px-6">
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 bg-gray-50 px-5 py-3">
               <button
                 onClick={closeForm}
-                className="!min-h-0 h-10 w-full rounded-lg border border-gray-200 bg-white px-5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 sm:w-auto sm:rounded-xl"
+                className="!min-h-0 h-9 rounded-xl border border-gray-200 bg-white px-4 text-xs font-medium text-gray-600 transition hover:bg-gray-100"
               >
                 ยกเลิก
               </button>
               <button
                 onClick={savePurchase}
-                className="!min-h-0 h-10 w-full rounded-lg bg-green-600 px-5 text-sm font-semibold text-white transition hover:bg-green-700 sm:w-auto sm:rounded-xl"
+                className="!min-h-0 h-9 rounded-xl bg-green-600 px-4 text-xs font-semibold text-white transition hover:bg-green-700"
               >
                 💾 ยืนยันรับสินค้า
               </button>
