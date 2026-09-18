@@ -11,17 +11,18 @@ export default function Purchasing() {
   const [inputCost, setInputCost] = useState("");
   const [items, setItems] = useState([]);
 
-  // Mock สินค้า
+  // Mock รายการสินค้า
   const products = [
     { id: "1", name: "สินค้า A" },
     { id: "2", name: "สินค้า B" },
   ];
 
-  const handleAddItem = () => {
+  const handleAddItem = (e) => {
+    if (e) e.preventDefault();
     if (!selectedProductId || !inputQty || !inputCost) return;
     const prod = products.find((p) => p.id === selectedProductId);
-    setItems([
-      ...items,
+    setItems((prev) => [
+      ...prev,
       {
         id: selectedProductId,
         name: prod ? prod.name : "สินค้า",
@@ -35,7 +36,7 @@ export default function Purchasing() {
   };
 
   const handleRemoveItem = (index) => {
-    setItems(items.filter((_, i) => i !== index));
+    setItems((prev) => prev.filter((_, i) => i !== index));
   };
 
   const totalAmount = items.reduce(
@@ -43,13 +44,13 @@ export default function Purchasing() {
     0
   );
 
-  const handleSubmit = () => {
-    // Logic บันทึกรับสินค้า
+  const handleSubmit = (e) => {
+    if (e) e.preventDefault();
     setShowForm(false);
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 relative">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
@@ -68,26 +69,32 @@ export default function Purchasing() {
         </button>
       </div>
 
-      {/* ================= MODAL รับสินค้าเข้าสต็อก ================= */}
+      {/* ================= MODAL รับสินค้าเข้าสต็อก (FIXED OVERLAY) ================= */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] my-auto">
+        <div 
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}
+          className="flex items-center justify-center bg-black/60 p-4"
+        >
+          <div 
+            style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh' }}
+            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
               <h2 className="text-lg font-bold text-slate-800">
                 จัดการการสั่งซื้อและรับสินค้าเข้าสต็อก
               </h2>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg transition-colors"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg text-xl leading-none"
               >
                 ✕
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-4">
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
               {/* เลขที่ใบรับสินค้า & วันที่ */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -114,7 +121,7 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* ฟอร์มเพิ่มสินค้า (ปุ่ม + ใส่ type="button" ป้องกัน Form Submit) */}
+              {/* ฟอร์มเพิ่มสินค้า */}
               <div className="bg-slate-50 p-3 rounded-xl flex flex-col sm:flex-row gap-2 items-center">
                 <select
                   value={selectedProductId}
@@ -217,7 +224,7 @@ export default function Purchasing() {
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50">
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
