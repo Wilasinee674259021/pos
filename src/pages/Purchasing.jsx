@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import useSalesStore from "../utils/salesStore"; // ดึง Store หลักของระบบมาใช้งาน
+import React, { useState } from "react";
+import { useSalesStore } from "../utils/salesStore"; // แก้จุดนี้เป็น Named Import ให้ตรงกับไฟล์ Store
 
 export default function Purchasing() {
   const [showForm, setShowForm] = useState(false);
@@ -13,7 +13,7 @@ export default function Purchasing() {
   const [inputCost, setInputCost] = useState("");
   const [items, setItems] = useState([]);
 
-  // ดึงข้อมูลสินค้าและฟังก์ชันอัปเดตสต็อกมาจาก Store จริง
+  // ดึงข้อมูลสินค้าและฟังก์ชันอัปเดตสต็อกมาจาก Store
   const products = useSalesStore((state) => state.products) || [];
   const updateStock = useSalesStore((state) => state.updateStock);
 
@@ -32,7 +32,6 @@ export default function Purchasing() {
     if (e) e.preventDefault();
     if (!selectedProductId || !inputQty || !inputCost) return;
 
-    // ค้นหาสินค้าจากสต็อกจริงด้วย ID
     const prod = products.find((p) => String(p.id) === String(selectedProductId));
     setItems((prev) => [
       ...prev,
@@ -61,15 +60,14 @@ export default function Purchasing() {
     if (e) e.preventDefault();
     if (items.length === 0) return;
 
-    // 1. เพิ่มจำนวนสต็อกสินค้าจริงในระบบ
+    // เพิ่มสต็อกจริงในระบบ
     items.forEach((item) => {
       if (updateStock) {
-        // เพิ่มจำนวนสินค้าตามที่ระบุในรับเข้าสต็อก
         updateStock(item.id, item.qty);
       }
     });
 
-    // 2. บันทึกประวัติรับสินค้า
+    // บันทึกประวัติ
     setPurchases([
       {
         id: receiveNo,
@@ -210,7 +208,7 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* ฟอร์มเลือกสินค้า (ดึงข้อมูลจากสินค้าจริงใน Store) */}
+              {/* ฟอร์มเลือกสินค้า */}
               <div className="bg-slate-50 p-3 rounded-xl flex flex-col sm:flex-row gap-2 items-center">
                 <select
                   value={selectedProductId}
