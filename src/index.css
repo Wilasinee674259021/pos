@@ -235,7 +235,6 @@ main {
 
 /* =========================================
    STANDARD TOP PAGE INPUT
-   ใช้กับช่องค้นหา/ข้อความด้านบน
 ========================================= */
 
 .top-page-input {
@@ -287,7 +286,6 @@ main {
 
 /* =========================================
    STANDARD TOP CONTROL
-   ปุ่ม/Select ด้านบนให้สูงเท่ากัน
 ========================================= */
 
 .top-page-control {
@@ -350,44 +348,30 @@ main {
     padding-top: 60px;
   }
 
-  /* -------------------------
-     Mobile Topbar
-  ------------------------- */
-
+  /* Mobile Topbar */
   .mobile-topbar {
     display: flex;
-
     position: fixed;
-
     top: 0;
     left: 0;
     right: 0;
-
     height: 60px;
-
     z-index: 90;
-
     background: #0f172a;
     color: white;
-
     align-items: center;
-
     padding: 8px 12px;
-
     box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
   }
 
   .mobile-menu-button {
     width: 44px;
     height: 44px;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
     border: 0;
     border-radius: 8px;
-
     background: transparent;
     color: white;
   }
@@ -403,10 +387,8 @@ main {
 
   .mobile-title h1 {
     margin: 0;
-
     font-size: 16px;
     font-weight: 700;
-
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -414,39 +396,26 @@ main {
 
   .mobile-title span {
     display: block;
-
     margin-top: 1px;
-
     color: #94a3b8;
-
     font-size: 12px;
-
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  /* -------------------------
-     Mobile Sidebar
-  ------------------------- */
-
+  /* Mobile Sidebar */
   .sidebar {
     position: fixed;
-
     top: 0;
     left: 0;
-
     width: 280px;
     min-width: 280px;
     height: 100vh;
     min-height: 100vh;
-
     z-index: 200;
-
     transform: translateX(-100%);
-
     transition: transform 0.25s ease;
-
     box-shadow: 4px 0 20px rgb(0 0 0 / 0.2);
   }
 
@@ -456,18 +425,13 @@ main {
 
   .sidebar-close-button {
     display: flex;
-
     width: 38px;
     height: 38px;
-
     flex-shrink: 0;
-
     align-items: center;
     justify-content: center;
-
     border: 0;
     border-radius: 8px;
-
     background: transparent;
     color: #cbd5e1;
   }
@@ -477,31 +441,19 @@ main {
     color: white;
   }
 
-  /* -------------------------
-     Overlay
-  ------------------------- */
-
+  /* Overlay */
   .sidebar-overlay {
     display: block;
-
     position: fixed;
-
     inset: 0;
-
     z-index: 150;
-
     width: 100%;
     height: 100%;
-
     border: 0;
-
     background: rgb(0 0 0 / 0.5);
   }
 
-  /* -------------------------
-     Page Padding
-  ------------------------- */
-
+  /* Page Padding */
   .min-h-screen.p-8,
   .min-h-screen.p-7,
   .min-h-screen.p-6,
@@ -513,10 +465,7 @@ main {
     padding: 12px !important;
   }
 
-  /* -------------------------
-     Typography
-  ------------------------- */
-
+  /* Typography */
   h1.text-3xl,
   .text-3xl {
     font-size: 1.5rem !important;
@@ -535,20 +484,13 @@ main {
     font-size: 1.15rem !important;
   }
 
-  /* -------------------------
-     Inputs
-  ------------------------- */
-
+  /* Inputs */
   input,
   select,
   textarea {
     max-width: 100%;
     font-size: 16px !important;
   }
-
-  /* -------------------------
-     Standard Top Inputs Mobile
-  ------------------------- */
 
   .top-page-input-wrapper {
     width: 100%;
@@ -562,18 +504,12 @@ main {
     height: 38px;
   }
 
-  /* -------------------------
-     Buttons
-  ------------------------- */
-
+  /* Buttons */
   button {
     min-height: 40px;
   }
 
-  /* -------------------------
-     Flex
-  ------------------------- */
-
+  /* Flex */
   .flex.justify-between.items-center {
     gap: 10px;
   }
@@ -582,10 +518,7 @@ main {
     gap: 8px;
   }
 
-  /* -------------------------
-     Grid
-  ------------------------- */
-
+  /* Grid */
   .grid.grid-cols-4 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
@@ -598,15 +531,10 @@ main {
     grid-column: span 1 / span 1 !important;
   }
 
-  /* -------------------------
-     Forms / Modals
-  ------------------------- */
-
+  /* Forms / Modals on Mobile */
   .fixed.inset-0 {
-    padding: 12px !important;
-
+    padding: 12px;
     overflow-y: auto;
-
     -webkit-overflow-scrolling: touch;
   }
 
@@ -614,28 +542,13 @@ main {
     grid-template-columns: 1fr !important;
   }
 
-  [class*="w-[550px]"],
-  [class*="w-[650px]"],
-  [class*="w-[850px]"] {
-    width: 100% !important;
-    max-width: 100% !important;
-
-    max-height: calc(100vh - 24px) !important;
-
-    overflow-y: auto !important;
-  }
-
   .fixed.inset-0 h2 {
     font-size: 1.2rem !important;
   }
 
-  /* -------------------------
-     Tables
-  ------------------------- */
-
+  /* Tables */
   .overflow-hidden:has(table) {
     overflow-x: auto !important;
-
     -webkit-overflow-scrolling: touch;
   }
 
@@ -643,10 +556,7 @@ main {
     min-width: 650px;
   }
 
-  /* -------------------------
-     Long text
-  ------------------------- */
-
+  /* Long text */
   td,
   th,
   p,
@@ -683,7 +593,6 @@ main {
     grid-template-columns: 1fr !important;
   }
 
-  /* POS product grid ยังคง 2 ช่อง */
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -696,10 +605,6 @@ main {
     min-height: 42px;
   }
 
-  /* -------------------------
-     Top Inputs Small Mobile
-  ------------------------- */
-
   .top-page-input,
   .top-page-input-wrapper input,
   .top-page-input-wrapper select,
@@ -708,12 +613,6 @@ main {
   }
 
   .fixed.inset-0 {
-    padding: 8px !important;
-  }
-
-  [class*="w-[550px]"],
-  [class*="w-[650px]"],
-  [class*="w-[850px]"] {
-    border-radius: 14px !important;
+    padding: 8px;
   }
 }
