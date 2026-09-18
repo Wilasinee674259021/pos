@@ -1,20 +1,3 @@
-import React, { useState, useEffect } from "react";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const API_URL = `${API_BASE}/api/products`;
-
-export default function Purchasing() {
-  const [showForm, setShowForm] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [receiveNo, setReceiveNo] = useState("SG-2026-002");
-  const [receiveDate, setReceiveDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [selectedProductId, setSelectedProductId] = useState("");
-  const [inputQty, setInputQty] = useState("");
-  const [inputCost, setInputCost] = useState("");
-  const [items, setItems] = useState([]);
-  const [products, setProducts] = useState([]);
 import { useEffect, useState } from "react";
 
 const API_BASE =
@@ -37,7 +20,6 @@ const generateBarcode = () => {
 
   // คำนวณ Check Digit ของ EAN-13
   const digits = base.split("").map(Number);
-
   let sum = 0;
 
   digits.forEach((digit, index) => {
@@ -45,7 +27,6 @@ const generateBarcode = () => {
   });
 
   const checkDigit = (10 - (sum % 10)) % 10;
-
   return base + checkDigit;
 };
 
@@ -80,8 +61,6 @@ export default function Products() {
       setLoading(true);
       setError("");
 
-      console.log("Loading products from:", API_URL);
-
       const response = await fetch(API_URL, {
         method: "GET",
         headers: {
@@ -90,9 +69,6 @@ export default function Products() {
       });
 
       const text = await response.text();
-
-      console.log("Products API response:", text);
-
       let result;
 
       try {
@@ -103,25 +79,20 @@ export default function Products() {
 
       if (!response.ok || !result.success) {
         throw new Error(
-          result.message || "โหลดข้อมูลสินค้าไม่สำเร็จ",
+          result.message || "โหลดข้อมูลสินค้าไม่สำเร็จ"
         );
       }
 
       setProducts(
-        Array.isArray(result.data)
-          ? result.data
-          : [],
+        Array.isArray(result.data) ? result.data : []
       );
     } catch (err) {
       console.error("LOAD PRODUCTS ERROR:", err);
-
       setProducts([]);
-
       setError(
-        err.message ||
-          "ไม่สามารถโหลดข้อมูลสินค้าได้",
+        err.message || "ไม่สามารถโหลดข้อมูลสินค้าได้"
       );
-    } finally {
+    } fontally {
       setLoading(false);
     }
   };
@@ -136,9 +107,7 @@ export default function Products() {
 
   const openAddForm = () => {
     setEditingProduct(null);
-
     setCostMode("manual");
-
     setForm({
       name: "",
       barcode: generateBarcode(),
@@ -149,7 +118,6 @@ export default function Products() {
       stock: "",
       category: "",
     });
-
     setShowForm(true);
   };
 
@@ -159,9 +127,7 @@ export default function Products() {
 
   const openEditForm = (product) => {
     setEditingProduct(product);
-
     setCostMode("manual");
-
     setForm({
       name: product.name || "",
       barcode: product.barcode || "",
@@ -172,7 +138,6 @@ export default function Products() {
       stock: product.stock ?? "",
       category: product.category || "",
     });
-
     setShowForm(true);
   };
 
@@ -184,7 +149,6 @@ export default function Products() {
     setShowForm(false);
     setEditingProduct(null);
     setCostMode("manual");
-
     setForm({
       name: "",
       barcode: "",
@@ -203,7 +167,6 @@ export default function Products() {
 
   const changeCostMode = (mode) => {
     setCostMode(mode);
-
     if (mode === "manual") {
       setForm((prev) => ({
         ...prev,
@@ -226,8 +189,7 @@ export default function Products() {
     form.purchaseTotal !== "" &&
     form.purchaseQuantity !== "" &&
     Number(form.purchaseQuantity) > 0
-      ? Number(form.purchaseTotal) /
-        Number(form.purchaseQuantity)
+      ? Number(form.purchaseTotal) / Number(form.purchaseQuantity)
       : 0;
 
   // ======================================
@@ -237,95 +199,28 @@ export default function Products() {
   const saveProduct = async () => {
     const name = form.name.trim();
     const barcode = form.barcode.trim();
-
     const price = Number(form.price);
 
-    let cost;
+    let cost = costMode === "calculate" ? calculatedCost : Number(form.cost === "" ? 0 : form.cost);
+    const stock = Number(form.stock === "" ? 0 : form.stock);
+
+    if (!name) return alert("กรุณากรอกชื่อสินค้า");
+    if (!barcode) return alert("ไม่พบ Barcode กรุณาลองใหม่");
+    if (form.price === "" || Number.isNaN(price) || price < 0) return alert("กรุณากรอกราคาสินค้าให้ถูกต้อง");
 
     if (costMode === "calculate") {
-      cost = calculatedCost;
-    } else {
-      cost = Number(
-        form.cost === "" ? 0 : form.cost,
-      );
+      if (form.purchaseTotal === "" || Number(form.purchaseTotal) < 0) return alert("กรุณากรอกราคาซื้อรวมให้ถูกต้อง");
+      if (form.purchaseQuantity === "" || Number(form.purchaseQuantity) <= 0) return alert("กรุณากรอกจำนวนสินค้าที่ซื้อให้ถูกต้อง");
+      if (!Number.isFinite(calculatedCost)) return alert("ไม่สามารถคำนวณต้นทุนได้");
     }
 
-    const stock = Number(
-      form.stock === "" ? 0 : form.stock,
-    );
-
-    if (!name) {
-      alert("กรุณากรอกชื่อสินค้า");
-      return;
-    }
-
-    if (!barcode) {
-      alert("ไม่พบ Barcode กรุณาลองใหม่");
-      return;
-    }
-
-    if (
-      form.price === "" ||
-      Number.isNaN(price) ||
-      price < 0
-    ) {
-      alert("กรุณากรอกราคาสินค้าให้ถูกต้อง");
-      return;
-    }
-
-    if (costMode === "calculate") {
-      if (
-        form.purchaseTotal === "" ||
-        Number(form.purchaseTotal) < 0
-      ) {
-        alert("กรุณากรอกราคาซื้อรวมให้ถูกต้อง");
-        return;
-      }
-
-      if (
-        form.purchaseQuantity === "" ||
-        Number(form.purchaseQuantity) <= 0
-      ) {
-        alert("กรุณากรอกจำนวนสินค้าที่ซื้อให้ถูกต้อง");
-        return;
-      }
-
-      if (!Number.isFinite(calculatedCost)) {
-        alert("ไม่สามารถคำนวณต้นทุนได้");
-        return;
-      }
-    }
-
-    if (
-      Number.isNaN(cost) ||
-      cost < 0
-    ) {
-      alert("กรุณากรอกราคาทุนให้ถูกต้อง");
-      return;
-    }
-
-    if (cost > price) {
-      alert("ราคาทุนไม่ควรมากกว่าราคาขาย");
-      return;
-    }
-
-    if (
-      Number.isNaN(stock) ||
-      stock < 0 ||
-      !Number.isInteger(stock)
-    ) {
-      alert("กรุณากรอก Stock เป็นจำนวนเต็ม");
-      return;
-    }
+    if (Number.isNaN(cost) || cost < 0) return alert("กรุณากรอกราคาทุนให้ถูกต้อง");
+    if (cost > price) return alert("ราคาทุนไม่ควรมากกว่าราคาขาย");
+    if (Number.isNaN(stock) || stock < 0 || !Number.isInteger(stock)) return alert("กรุณากรอก Stock เป็นจำนวนเต็ม");
 
     try {
-      const url = editingProduct
-        ? `${API_URL}/${editingProduct.id}`
-        : API_URL;
-
-      const method = editingProduct
-        ? "PUT"
-        : "POST";
+      const url = editingProduct ? `${API_URL}/${editingProduct.id}` : API_URL;
+      const method = editingProduct ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
@@ -344,43 +239,25 @@ export default function Products() {
       });
 
       const text = await response.text();
-
       let result;
 
       try {
         result = JSON.parse(text);
       } catch {
-        throw new Error(
-          "Backend ส่งข้อมูลไม่ใช่ JSON",
-        );
+        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
       }
 
       if (!response.ok || !result.success) {
-        alert(
-          result.message ||
-            "บันทึกสินค้าไม่สำเร็จ",
-        );
+        alert(result.message || "บันทึกสินค้าไม่สำเร็จ");
         return;
       }
 
-      alert(
-        editingProduct
-          ? "แก้ไขสินค้าเรียบร้อย"
-          : "เพิ่มสินค้าเรียบร้อย",
-      );
-
+      alert(editingProduct ? "แก้ไขสินค้าเรียบร้อย" : "เพิ่มสินค้าเรียบร้อย");
       closeForm();
-
       await loadProducts();
     } catch (err) {
-      console.error(
-        "SAVE PRODUCT ERROR:",
-        err,
-      );
-
-      alert(
-        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`,
-      );
+      console.error("SAVE PRODUCT ERROR:", err);
+      alert(`ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`);
     }
   };
 
@@ -389,55 +266,34 @@ export default function Products() {
   // ======================================
 
   const deleteProduct = async (id) => {
-    const confirmed = window.confirm(
-      "ต้องการลบสินค้านี้ใช่หรือไม่?",
-    );
-
+    const confirmed = window.confirm("ต้องการลบสินค้านี้ใช่หรือไม่?");
     if (!confirmed) return;
 
     try {
-      const response = await fetch(
-        `${API_URL}/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-      );
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: { Accept: "application/json" },
+      });
 
       const text = await response.text();
-
       let result;
 
       try {
         result = JSON.parse(text);
       } catch {
-        throw new Error(
-          "Backend ส่งข้อมูลไม่ใช่ JSON",
-        );
+        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
       }
 
       if (!response.ok || !result.success) {
-        alert(
-          result.message ||
-            "ลบสินค้าไม่สำเร็จ",
-        );
+        alert(result.message || "ลบสินค้าไม่สำเร็จ");
         return;
       }
 
       alert("ลบสินค้าเรียบร้อย");
-
       await loadProducts();
     } catch (err) {
-      console.error(
-        "DELETE PRODUCT ERROR:",
-        err,
-      );
-
-      alert(
-        `ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`,
-      );
+      console.error("DELETE PRODUCT ERROR:", err);
+      alert(`ไม่สามารถเชื่อมต่อ Backend ได้\n${err.message}`);
     }
   };
 
@@ -445,64 +301,28 @@ export default function Products() {
   // SEARCH
   // ======================================
 
-  const filteredProducts =
-    products.filter((product) => {
-      const keyword =
-        search.toLowerCase().trim();
+  const filteredProducts = products.filter((product) => {
+    const keyword = search.toLowerCase().trim();
+    if (!keyword) return true;
 
-      if (!keyword) return true;
-
-      return (
-        String(product.name || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        String(product.barcode || "")
-          .toLowerCase()
-          .includes(keyword) ||
-        String(product.category || "")
-          .toLowerCase()
-          .includes(keyword)
-      );
-    });
-
-  // ======================================
-  // SUMMARY
-  // ======================================
-
-  const totalProducts =
-    products.length;
-
-  const totalStock =
-    products.reduce(
-      (sum, product) =>
-        sum +
-        Number(product.stock || 0),
-      0,
+    return (
+      String(product.name || "").toLowerCase().includes(keyword) ||
+      String(product.barcode || "").toLowerCase().includes(keyword) ||
+      String(product.category || "").toLowerCase().includes(keyword)
     );
+  });
 
-  const lowStock =
-    products.filter(
-      (product) =>
-        Number(product.stock || 0) <= 5,
-    ).length;
-
-  // ======================================
-  // RENDER
-  // ======================================
+  const totalProducts = products.length;
+  const totalStock = products.reduce((sum, product) => sum + Number(product.stock || 0), 0);
+  const lowStock = products.filter((product) => Number(product.stock || 0) <= 5).length;
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 sm:p-5 lg:p-8">
       {/* HEADER */}
-
       <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">
-            📦 สินค้า
-          </h1>
-
-          <p className="mt-1 text-sm text-slate-500 sm:text-base">
-            จัดการสินค้า ราคาทุน ราคาขาย และสต๊อก
-          </p>
+          <h1 className="text-2xl font-bold text-slate-800 sm:text-3xl">📦 สินค้า</h1>
+          <p className="mt-1 text-sm text-slate-500 sm:text-base">จัดการสินค้า ราคาทุน ราคาขาย และสต๊อก</p>
         </div>
 
         <button
@@ -514,17 +334,10 @@ export default function Products() {
       </div>
 
       {/* ERROR */}
-
       {error && (
         <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700 sm:mb-6">
-          <p className="font-bold">
-            โหลดข้อมูลสินค้าไม่สำเร็จ
-          </p>
-
-          <p className="mt-1 break-words text-sm">
-            {error}
-          </p>
-
+          <p className="font-bold">โหลดข้อมูลสินค้าไม่สำเร็จ</p>
+          <p className="mt-1 break-words text-sm">{error}</p>
           <button
             onClick={loadProducts}
             className="mt-3 h-9 rounded-lg bg-red-600 px-4 text-sm font-bold text-white hover:bg-red-700"
@@ -535,70 +348,42 @@ export default function Products() {
       )}
 
       {/* SUMMARY */}
-
       <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-3 sm:gap-4">
         <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-sm text-slate-500 sm:text-base">
-            สินค้าทั้งหมด
-          </p>
-
-          <p className="mt-2 text-2xl font-bold sm:text-3xl">
-            {totalProducts}
-          </p>
+          <p className="text-sm text-slate-500 sm:text-base">สินค้าทั้งหมด</p>
+          <p className="mt-2 text-2xl font-bold sm:text-3xl">{totalProducts}</p>
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-sm text-slate-500 sm:text-base">
-            Stock รวม
-          </p>
-
+          <p className="text-sm text-slate-500 sm:text-base">Stock รวม</p>
           <p className="mt-2 text-2xl font-bold text-blue-600 sm:text-3xl">
             {totalStock.toLocaleString("th-TH")}
           </p>
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow-sm sm:p-5">
-          <p className="text-sm text-slate-500 sm:text-base">
-            สินค้าใกล้หมด
-          </p>
-
-          <p className="mt-2 text-2xl font-bold text-red-600 sm:text-3xl">
-            {lowStock}
-          </p>
+          <p className="text-sm text-slate-500 sm:text-base">สินค้าใกล้หมด</p>
+          <p className="mt-2 text-2xl font-bold text-red-600 sm:text-3xl">{lowStock}</p>
         </div>
       </div>
 
       {/* SEARCH */}
-
       <div className="mb-5 rounded-xl bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
         <input
           value={search}
-          onChange={(e) =>
-            setSearch(e.target.value)
-          }
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="🔍 ค้นหาชื่อสินค้า / Barcode / หมวดหมู่"
           className="h-10 w-full rounded-lg border border-slate-300 px-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
         />
-
-        {search && (
-          <div className="mt-2 text-sm text-slate-500">
-            พบ {filteredProducts.length} รายการ
-          </div>
-        )}
+        {search && <div className="mt-2 text-sm text-slate-500">พบ {filteredProducts.length} รายการ</div>}
       </div>
 
       {/* PRODUCT TABLE */}
-
       <div className="overflow-hidden rounded-xl bg-white shadow-sm">
         <div className="border-b p-4 sm:p-5">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-bold">
-              รายการสินค้า
-            </h2>
-
-            <span className="text-sm text-slate-400">
-              {filteredProducts.length} รายการ
-            </span>
+            <h2 className="text-lg font-bold">รายการสินค้า</h2>
+            <span className="text-sm text-slate-400">{filteredProducts.length} รายการ</span>
           </div>
         </div>
 
@@ -606,191 +391,77 @@ export default function Products() {
           <table className="w-full min-w-[1000px]">
             <thead className="bg-slate-100">
               <tr>
-                <th className="whitespace-nowrap p-4 text-left">
-                  รหัส
-                </th>
-
-                <th className="whitespace-nowrap p-4 text-left">
-                  สินค้า
-                </th>
-
-                <th className="whitespace-nowrap p-4 text-left">
-                  Barcode
-                </th>
-
-                <th className="whitespace-nowrap p-4 text-left">
-                  หมวดหมู่
-                </th>
-
-                <th className="whitespace-nowrap p-4 text-right">
-                  ราคาทุน
-                </th>
-
-                <th className="whitespace-nowrap p-4 text-right">
-                  ราคาขาย
-                </th>
-
-                <th className="whitespace-nowrap p-4 text-center">
-                  Stock
-                </th>
-
-                <th className="whitespace-nowrap p-4 text-center">
-                  จัดการ
-                </th>
+                <th className="whitespace-nowrap p-4 text-left">รหัส</th>
+                <th className="whitespace-nowrap p-4 text-left">สินค้า</th>
+                <th className="whitespace-nowrap p-4 text-left">Barcode</th>
+                <th className="whitespace-nowrap p-4 text-left">หมวดหมู่</th>
+                <th className="whitespace-nowrap p-4 text-right">ราคาทุน</th>
+                <th className="whitespace-nowrap p-4 text-right">ราคาขาย</th>
+                <th className="whitespace-nowrap p-4 text-center">Stock</th>
+                <th className="whitespace-nowrap p-4 text-center">จัดการ</th>
               </tr>
             </thead>
-
             <tbody>
               {loading ? (
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="p-10 text-center text-slate-500"
-                  >
+                  <td colSpan="8" className="p-10 text-center text-slate-500">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="text-2xl">
-                        ⏳
-                      </div>
-
-                      <div>
-                        กำลังโหลดข้อมูลสินค้า...
-                      </div>
+                      <div className="text-2xl">⏳</div>
+                      <div>กำลังโหลดข้อมูลสินค้า...</div>
                     </div>
                   </td>
                 </tr>
-              ) : filteredProducts.length ===
-                0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="8"
-                    className="p-10 text-center text-slate-400"
-                  >
-                    <div className="mb-2 text-3xl">
-                      📦
-                    </div>
-
-                    <div>
-                      {search
-                        ? "ไม่พบสินค้าที่ค้นหา"
-                        : "ยังไม่มีสินค้า"}
-                    </div>
+                  <td colSpan="8" className="p-10 text-center text-slate-400">
+                    <div className="mb-2 text-3xl">📦</div>
+                    <div>{search ? "ไม่พบสินค้าที่ค้นหา" : "ยังไม่มีสินค้า"}</div>
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map(
-                  (product) => (
-                    <tr
-                      key={product.id}
-                      className="border-t transition hover:bg-slate-50"
-                    >
-                      {/* ID */}
-
-                      <td className="whitespace-nowrap p-4 font-bold">
-                        {product.id}
-                      </td>
-
-                      {/* NAME */}
-
-                      <td className="max-w-[220px] p-4 font-medium">
-                        <div
-                          className="truncate"
-                          title={product.name}
+                filteredProducts.map((product) => (
+                  <tr key={product.id} className="border-t transition hover:bg-slate-50">
+                    <td className="whitespace-nowrap p-4 font-bold">{product.id}</td>
+                    <td className="max-w-[220px] p-4 font-medium">
+                      <div className="truncate" title={product.name}>{product.name}</div>
+                    </td>
+                    <td className="whitespace-nowrap p-4 font-mono text-sm">{product.barcode}</td>
+                    <td className="p-4">
+                      <span className="inline-block max-w-[160px] truncate">{product.category || "-"}</span>
+                    </td>
+                    <td className="whitespace-nowrap p-4 text-right font-bold text-orange-600">
+                      ฿{Number(product.cost || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="whitespace-nowrap p-4 text-right font-bold">
+                      ฿{Number(product.price || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="p-4 text-center">
+                      <span className={`inline-block min-w-[55px] rounded-full px-3 py-1 text-sm font-bold ${
+                        Number(product.stock || 0) <= 5 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                      }`}>
+                        {product.stock}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex justify-center gap-1.5">
+                        <button
+                          onClick={() => openEditForm(product)}
+                          className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100 text-sm text-blue-600 transition hover:bg-blue-200"
+                          title="แก้ไข"
                         >
-                          {product.name}
-                        </div>
-                      </td>
-
-                      {/* BARCODE */}
-
-                      <td className="whitespace-nowrap p-4 font-mono text-sm">
-                        {product.barcode}
-                      </td>
-
-                      {/* CATEGORY */}
-
-                      <td className="p-4">
-                        <span className="inline-block max-w-[160px] truncate">
-                          {product.category ||
-                            "-"}
-                        </span>
-                      </td>
-
-                      {/* COST */}
-
-                      <td className="whitespace-nowrap p-4 text-right font-bold text-orange-600">
-                        ฿
-                        {Number(
-                          product.cost || 0,
-                        ).toLocaleString(
-                          "th-TH",
-                          {
-                            minimumFractionDigits: 2,
-                          },
-                        )}
-                      </td>
-
-                      {/* PRICE */}
-
-                      <td className="whitespace-nowrap p-4 text-right font-bold">
-                        ฿
-                        {Number(
-                          product.price || 0,
-                        ).toLocaleString(
-                          "th-TH",
-                          {
-                            minimumFractionDigits: 2,
-                          },
-                        )}
-                      </td>
-
-                      {/* STOCK */}
-
-                      <td className="p-4 text-center">
-                        <span
-                          className={`inline-block min-w-[55px] rounded-full px-3 py-1 text-sm font-bold ${
-                            Number(
-                              product.stock || 0,
-                            ) <= 5
-                              ? "bg-red-100 text-red-700"
-                              : "bg-green-100 text-green-700"
-                          }`}
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteProduct(product.id)}
+                          className="flex h-8 w-8 items-center justify-center rounded-md bg-red-100 text-sm text-red-600 transition hover:bg-red-200"
+                          title="ลบ"
                         >
-                          {product.stock}
-                        </span>
-                      </td>
-
-                      {/* ACTION */}
-
-                      <td className="p-4">
-                        <div className="flex justify-center gap-1.5">
-                          <button
-                            onClick={() =>
-                              openEditForm(
-                                product,
-                              )
-                            }
-                            className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-100 text-sm text-blue-600 transition hover:bg-blue-200"
-                            title="แก้ไข"
-                          >
-                            ✏️
-                          </button>
-
-                          <button
-                            onClick={() =>
-                              deleteProduct(
-                                product.id,
-                              )
-                            }
-                            className="flex h-8 w-8 items-center justify-center rounded-md bg-red-100 text-sm text-red-600 transition hover:bg-red-200"
-                            title="ลบ"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ),
-                )
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -798,54 +469,30 @@ export default function Products() {
       </div>
 
       {/* MODAL */}
-
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
           <div className="max-h-[95vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6 lg:p-7">
-            {/* MODAL HEADER */}
-
             <div className="mb-5 flex items-center justify-between gap-3 sm:mb-6">
               <h2 className="text-xl font-bold sm:text-2xl">
-                {editingProduct
-                  ? "✏️ แก้ไขสินค้า"
-                  : "➕ เพิ่มสินค้า"}
+                {editingProduct ? "✏️ แก้ไขสินค้า" : "➕ เพิ่มสินค้า"}
               </h2>
-
-              <button
-                onClick={closeForm}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
-              >
+              <button onClick={closeForm} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
                 ✕
               </button>
             </div>
 
-            {/* NAME */}
-
             <div className="mb-4">
-              <label className="mb-2 block font-medium">
-                ชื่อสินค้า
-              </label>
-
+              <label className="mb-2 block font-medium">ชื่อสินค้า</label>
               <input
                 value={form.name}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    name: e.target.value,
-                  })
-                }
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="เช่น น้ำดื่ม 600ml"
                 className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* BARCODE */}
-
             <div className="mb-4">
-              <label className="mb-2 block font-medium">
-                Barcode
-              </label>
-
+              <label className="mb-2 block font-medium">Barcode</label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
                   <input
@@ -853,22 +500,12 @@ export default function Products() {
                     readOnly
                     className="w-full rounded-lg border border-slate-200 bg-slate-100 p-3 pr-12 font-mono text-sm text-slate-700 outline-none"
                   />
-
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
-                    🔒
-                  </span>
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">🔒</span>
                 </div>
-
                 {!editingProduct && (
                   <button
                     type="button"
-                    onClick={() =>
-                      setForm({
-                        ...form,
-                        barcode:
-                          generateBarcode(),
-                      })
-                    }
+                    onClick={() => setForm({ ...form, barcode: generateBarcode() })}
                     className="shrink-0 rounded-lg border border-blue-200 bg-blue-50 px-3 text-sm font-bold text-blue-600 transition hover:bg-blue-100"
                     title="สร้าง Barcode ใหม่"
                   >
@@ -876,43 +513,26 @@ export default function Products() {
                   </button>
                 )}
               </div>
-
-              <p className="mt-1 text-xs text-slate-500">
-                ระบบสร้าง Barcode อัตโนมัติ
-              </p>
+              <p className="mt-1 text-xs text-slate-500">ระบบสร้าง Barcode อัตโนมัติ</p>
             </div>
 
-            {/* COST MODE */}
-
             <div className="mb-4">
-              <label className="mb-2 block font-medium">
-                วิธีระบุต้นทุน
-              </label>
-
+              <label className="mb-2 block font-medium">วิธีระบุต้นทุน</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    changeCostMode("manual")
-                  }
+                  onClick={() => changeCostMode("manual")}
                   className={`rounded-lg border p-3 text-sm font-semibold transition ${
-                    costMode === "manual"
-                      ? "border-orange-500 bg-orange-50 text-orange-700"
-                      : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                    costMode === "manual" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   ✏️ กรอกต้นทุนเอง
                 </button>
-
                 <button
                   type="button"
-                  onClick={() =>
-                    changeCostMode("calculate")
-                  }
+                  onClick={() => changeCostMode("calculate")}
                   className={`rounded-lg border p-3 text-sm font-semibold transition ${
-                    costMode === "calculate"
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
+                    costMode === "calculate" ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   🧮 คำนวณต้นทุน
@@ -920,176 +540,95 @@ export default function Products() {
               </div>
             </div>
 
-            {/* MANUAL COST */}
-
             {costMode === "manual" && (
               <div className="mb-4">
-                <label className="mb-2 block font-medium">
-                  ราคาทุนต่อชิ้น (บาท)
-                </label>
-
+                <label className="mb-2 block font-medium">ราคาทุนต่อชิ้น (บาท)</label>
                 <input
                   type="number"
                   min="0"
                   step="0.01"
                   value={form.cost}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      cost: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setForm({ ...form, cost: e.target.value })}
                   placeholder="0.00"
                   className="w-full rounded-lg border border-orange-300 p-3 outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500"
                 />
-
-                <p className="mt-1 text-xs text-slate-500">
-                  ราคาที่ร้านซื้อสินค้ามาต่อ 1 ชิ้น
-                </p>
+                <p className="mt-1 text-xs text-slate-500">ราคาที่ร้านซื้อสินค้ามาต่อ 1 ชิ้น</p>
               </div>
             )}
-
-            {/* CALCULATE COST */}
 
             {costMode === "calculate" && (
               <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
                 <div className="mb-3">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    ราคาซื้อรวม (บาท)
-                  </label>
-
+                  <label className="mb-2 block text-sm font-medium text-slate-700">ราคาซื้อรวม (บาท)</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={form.purchaseTotal}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        purchaseTotal:
-                          e.target.value,
-                      })
-                    }
+                    onChange={(e) => setForm({ ...form, purchaseTotal: e.target.value })}
                     placeholder="เช่น 500"
                     className="w-full rounded-lg border border-slate-300 bg-white p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-
                 <div className="mb-3">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    จำนวนที่ซื้อ (ชิ้น)
-                  </label>
-
+                  <label className="mb-2 block text-sm font-medium text-slate-700">จำนวนที่ซื้อ (ชิ้น)</label>
                   <input
                     type="number"
                     min="1"
                     step="1"
                     value={form.purchaseQuantity}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        purchaseQuantity:
-                          e.target.value,
-                      })
-                    }
+                    onChange={(e) => setForm({ ...form, purchaseQuantity: e.target.value })}
                     placeholder="เช่น 50"
                     className="w-full rounded-lg border border-slate-300 bg-white p-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-
                 <div className="rounded-lg bg-white p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm text-slate-500">
-                      ต้นทุนต่อชิ้น
-                    </span>
-
+                    <span className="text-sm text-slate-500">ต้นทุนต่อชิ้น</span>
                     <span className="text-lg font-bold text-blue-600">
-                      ฿
-                      {calculatedCost.toLocaleString(
-                        "th-TH",
-                        {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        },
-                      )}
+                      ฿{calculatedCost.toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   </div>
-
-                  <p className="mt-1 text-xs text-slate-400">
-                    ราคาซื้อรวม ÷ จำนวนที่ซื้อ
-                  </p>
+                  <p className="mt-1 text-xs text-slate-400">ราคาซื้อรวม ÷ จำนวนที่ซื้อ</p>
                 </div>
               </div>
             )}
 
-            {/* PRICE */}
-
             <div className="mb-4">
-              <label className="mb-2 block font-medium">
-                ราคาขาย (บาท)
-              </label>
-
+              <label className="mb-2 block font-medium">ราคาขาย (บาท)</label>
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 value={form.price}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    price: e.target.value,
-                  })
-                }
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
                 placeholder="0.00"
                 className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* STOCK */}
-
             <div className="mb-4">
-              <label className="mb-2 block font-medium">
-                จำนวน Stock
-              </label>
-
+              <label className="mb-2 block font-medium">จำนวน Stock</label>
               <input
                 type="number"
                 min="0"
                 step="1"
                 value={form.stock}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    stock: e.target.value,
-                  })
-                }
+                onChange={(e) => setForm({ ...form, stock: e.target.value })}
                 placeholder="0"
                 className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            {/* CATEGORY */}
-
             <div className="mb-6">
-              <label className="mb-2 block font-medium">
-                หมวดหมู่
-              </label>
-
+              <label className="mb-2 block font-medium">หมวดหมู่</label>
               <input
                 value={form.category}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    category:
-                      e.target.value,
-                  })
-                }
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
                 placeholder="เช่น เครื่องดื่ม"
                 className="w-full rounded-lg border border-slate-300 p-3 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-
-            {/* BUTTONS */}
 
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:gap-3">
               <button
@@ -1098,398 +637,11 @@ export default function Products() {
               >
                 ยกเลิก
               </button>
-
               <button
                 onClick={saveProduct}
                 className="h-10 w-full rounded-lg bg-blue-600 font-bold text-white transition hover:bg-blue-700 sm:flex-1"
               >
                 บันทึก
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-  // Mock ประวัติการรับสินค้าในหน้าหลัก
-  const [purchases, setPurchases] = useState([
-    {
-      id: "SG-2026-001",
-      date: "2026-09-15",
-      itemsCount: 3,
-      total: 4500,
-      status: "สำเร็จ",
-    },
-  ]);
-
-  // ดึงข้อมูลสินค้าจาก Backend API เดียวกันกับหน้า Products
-  const loadProducts = async () => {
-    try {
-      const response = await fetch(API_URL, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-      });
-      const text = await response.text();
-      let result;
-      try {
-        result = JSON.parse(text);
-      } catch {
-        result = {};
-      }
-
-      if (response.ok && result.success && Array.isArray(result.data)) {
-        setProducts(result.data);
-      } else {
-        // Fallback จาก LocalStorage หากเชื่อม Backend ไม่ได้
-        const local = localStorage.getItem("pos_products") || localStorage.getItem("products");
-        if (local) setProducts(JSON.parse(local));
-      }
-    } catch (err) {
-      console.error("Purchasing load products error:", err);
-      // Fallback จาก LocalStorage
-      const local = localStorage.getItem("pos_products") || localStorage.getItem("products");
-      if (local) setProducts(JSON.parse(local));
-    }
-  };
-
-  useEffect(() => {
-    loadProducts();
-  }, [showForm]);
-
-  // เมื่อเลือกสินค้าใน Dropdown จะ auto fill ราคาทุนให้อัตโนมัติ
-  const handleSelectProduct = (e) => {
-    const pId = e.target.value;
-    setSelectedProductId(pId);
-    const prod = products.find((p) => String(p.id) === String(pId));
-    if (prod && (prod.cost || prod.costPrice)) {
-      setInputCost(prod.cost || prod.costPrice);
-    }
-  };
-
-  const handleAddItem = (e) => {
-    if (e) e.preventDefault();
-    if (!selectedProductId || !inputQty || !inputCost) return;
-
-    const prod = products.find((p) => String(p.id) === String(selectedProductId));
-    setItems((prev) => [
-      ...prev,
-      {
-        id: selectedProductId,
-        name: prod ? (prod.name || prod.title) : "สินค้า",
-        qty: Number(inputQty),
-        cost: Number(inputCost),
-      },
-    ]);
-    setSelectedProductId("");
-    setInputQty("");
-    setInputCost("");
-  };
-
-  const handleRemoveItem = (index) => {
-    setItems((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const totalAmount = items.reduce(
-    (sum, item) => sum + item.qty * item.cost,
-    0
-  );
-
-  const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
-    if (items.length === 0) return;
-
-    // อัปเดตสต็อกไปยัง Backend / LocalStorage
-    for (const item of items) {
-      const targetProd = products.find((p) => String(p.id) === String(item.id));
-      if (targetProd) {
-        const newStock = Number(targetProd.stock || 0) + Number(item.qty);
-        try {
-          // ยิงอัปเดตสต็อกเข้า API
-          await fetch(`${API_URL}/${item.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
-            body: JSON.stringify({
-              ...targetProd,
-              cost: Number(item.cost), // อัปเดตราคาทุนใหม่ตามใบรับ
-              stock: newStock,
-            }),
-          });
-        } catch (err) {
-          console.error("Update stock error:", err);
-        }
-      }
-    }
-
-    // บันทึกประวัติหน้า Purchasing
-    setPurchases([
-      {
-        id: receiveNo,
-        date: receiveDate,
-        itemsCount: items.length,
-        total: totalAmount,
-        status: "สำเร็จ",
-      },
-      ...purchases,
-    ]);
-
-    setItems([]);
-    setShowForm(false);
-    await loadProducts(); // รีโหลดข้อมูลสินค้าล่าสุด
-  };
-
-  const filteredPurchases = purchases.filter((p) =>
-    p.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  return (
-    <div className="p-6 relative space-y-6">
-      {/* Header หน้าหลัก */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">
-            การสั่งซื้อและรับสินค้า
-          </h1>
-          <p className="text-slate-500 text-sm">
-            จัดการรายการสั่งซื้อและรับสินค้าเข้าสต็อก
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-colors flex items-center gap-2"
-        >
-          <span>+</span> รับสินค้าเข้าสต็อก
-        </button>
-      </div>
-
-      {/* Control Bar */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between gap-4">
-        <input
-          type="text"
-          placeholder="ค้นหาเลขที่ใบรับสินค้า..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full sm:w-72 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
-        />
-      </div>
-
-      {/* ตารางประวัติการรับสินค้า หน้าหลัก */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
-            <tr>
-              <th className="py-3.5 px-4">เลขที่ใบรับสินค้า</th>
-              <th className="py-3.5 px-4">วันที่รับ</th>
-              <th className="py-3.5 px-4 text-center">จำนวนรายการ</th>
-              <th className="py-3.5 px-4 text-right">ยอดรวม</th>
-              <th className="py-3.5 px-4 text-center">สถานะ</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {filteredPurchases.length > 0 ? (
-              filteredPurchases.map((row, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/50">
-                  <td className="py-3.5 px-4 font-medium text-slate-800">
-                    {row.id}
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-600">{row.date}</td>
-                  <td className="py-3.5 px-4 text-center">{row.itemsCount}</td>
-                  <td className="py-3.5 px-4 text-right font-bold text-slate-800">
-                    ฿{row.total.toLocaleString()}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-semibold">
-                      {row.status}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="py-8 text-center text-slate-400">
-                  ไม่พบประวัติการรับสินค้า
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ================= MODAL รับสินค้าเข้าสต็อก ================= */}
-      {showForm && (
-        <div 
-          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}
-          className="flex items-center justify-center bg-black/60 p-4"
-        >
-          <div 
-            style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh' }}
-            className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-          >
-            {/* Header Modal */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
-              <h2 className="text-lg font-bold text-slate-800">
-                จัดการการสั่งซื้อและรับสินค้าเข้าสต็อก
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg text-xl leading-none"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Body Modal */}
-            <div className="p-6 overflow-y-auto space-y-4 flex-1">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1 text-center">
-                    เลขที่ใบรับสินค้า
-                  </label>
-                  <input
-                    type="text"
-                    value={receiveNo}
-                    onChange={(e) => setReceiveNo(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 p-2.5 text-center font-medium bg-slate-50 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1 text-center">
-                    วันที่รับสินค้า
-                  </label>
-                  <input
-                    type="date"
-                    value={receiveDate}
-                    onChange={(e) => setReceiveDate(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 p-2.5 text-center outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* ฟอร์มเลือกสินค้า (เชื่อมกับ API / Backend) */}
-              <div className="bg-slate-50 p-3 rounded-xl flex flex-col sm:flex-row gap-2 items-center">
-                <select
-                  value={selectedProductId}
-                  onChange={handleSelectProduct}
-                  style={{ width: '100%', minWidth: '200px' }}
-                  className="rounded-lg border border-slate-300 p-2 text-sm outline-none flex-1 bg-white"
-                >
-                  <option value="">-- เลือกสินค้า --</option>
-                  {products.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} {item.barcode ? `(${item.barcode})` : ''}
-                    </option>
-                  ))}
-                </select>
-
-                <input
-                  type="number"
-                  placeholder="จำนวน"
-                  value={inputQty}
-                  onChange={(e) => setInputQty(e.target.value)}
-                  style={{ width: '120px' }}
-                  className="rounded-lg border border-slate-300 p-2 text-sm text-center outline-none shrink-0 bg-white"
-                />
-
-                <input
-                  type="number"
-                  placeholder="ราคาทุน/ชิ้น"
-                  value={inputCost}
-                  onChange={(e) => setInputCost(e.target.value)}
-                  style={{ width: '140px' }}
-                  className="rounded-lg border border-slate-300 p-2 text-sm text-center outline-none shrink-0 bg-white"
-                />
-
-                <button
-                  type="button"
-                  onClick={handleAddItem}
-                  className="w-full sm:w-auto px-5 h-[38px] bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex items-center justify-center shrink-0 transition-colors"
-                >
-                  +
-                </button>
-              </div>
-
-              {/* ตารางสินค้าใน Modal */}
-              <div className="border border-slate-100 rounded-xl overflow-hidden">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
-                    <tr>
-                      <th className="py-3 px-4">รายการสินค้า</th>
-                      <th className="py-3 px-4 text-center">จำนวน</th>
-                      <th className="py-3 px-4 text-center">ราคาทุน</th>
-                      <th className="py-3 px-4 text-right">รวม</th>
-                      <th className="py-3 px-4 w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {items.length > 0 ? (
-                      items.map((item, index) => (
-                        <tr key={index} className="hover:bg-slate-50/50">
-                          <td className="py-3 px-4 font-medium text-slate-800">
-                            {item.name}
-                          </td>
-                          <td className="py-3 px-4 text-center">{item.qty}</td>
-                          <td className="py-3 px-4 text-center">
-                            ฿{Number(item.cost).toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4 text-right font-bold text-slate-800">
-                            ฿{(item.qty * item.cost).toLocaleString()}
-                          </td>
-                          <td className="py-3 px-4 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItem(index)}
-                              className="text-slate-400 hover:text-red-500 transition-colors"
-                            >
-                              🗑️
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td
-                          colSpan={5}
-                          className="py-6 text-center text-slate-400"
-                        >
-                          ยังไม่มีรายการสินค้า
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* สรุปรวมเงิน */}
-              <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center">
-                <span className="font-semibold text-slate-600">
-                  ราคารวมทั้งหมด
-                </span>
-                <span className="text-2xl font-black text-emerald-600">
-                  ฿{Number(totalAmount).toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            {/* Footer Modal */}
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200/60 rounded-lg transition-colors"
-              >
-                ยกเลิก
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                className="px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center gap-1.5 transition-colors shadow-sm"
-              >
-                💾 ยืนยันรับสินค้า
               </button>
             </div>
           </div>
