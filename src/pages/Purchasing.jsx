@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { useSalesStore } from "../utils/salesStore"; // แก้จุดนี้เป็น Named Import ให้ตรงกับไฟล์ Store
+import React, { useState, useEffect } from "react";
 
 export default function Purchasing() {
   const [showForm, setShowForm] = useState(false);
@@ -12,10 +11,7 @@ export default function Purchasing() {
   const [inputQty, setInputQty] = useState("");
   const [inputCost, setInputCost] = useState("");
   const [items, setItems] = useState([]);
-
-  // ดึงข้อมูลสินค้าและฟังก์ชันอัปเดตสต็อกมาจาก Store
-  const products = useSalesStore((state) => state.products) || [];
-  const updateStock = useSalesStore((state) => state.updateStock);
+  const [products, setProducts] = useState([]);
 
   // Mock ประวัติการรับสินค้าในหน้าหลัก
   const [purchases, setPurchases] = useState([
@@ -27,6 +23,25 @@ export default function Purchasing() {
       status: "สำเร็จ",
     },
   ]);
+
+  // ดึงข้อมูลสินค้าจาก LocalStorage / System State
+  useEffect(() => {
+    const loadProducts = () => {
+      try {
+        const localProducts = localStorage.getItem("pos_products");
+        if (localProducts) {
+          setProducts(JSON.parse(localProducts));
+        } else {
+          // หากไม่มี keypos_products ให้ลองดึงจาก key ทั่วไป
+          const altProducts = localStorage.getItem("products");
+          if (altProducts) setProducts(JSON.parse(altProducts));
+        }
+      } catch (err) {
+        console.error("Error loading products:", err);
+      }
+    };
+    loadProducts();
+  }, [showForm]);
 
   const handleAddItem = (e) => {
     if (e) e.preventDefault();
@@ -60,12 +75,27 @@ export default function Purchasing() {
     if (e) e.preventDefault();
     if (items.length === 0) return;
 
-    // เพิ่มสต็อกจริงในระบบ
-    items.forEach((item) => {
-      if (updateStock) {
-        updateStock(item.id, item.qty);
-      }
-    });
+    // อัปเดตสต็อกสินค้าลงใน LocalStorage
+    try {
+      const updatedProducts = products.map((prod) => {
+        const itemInReceipt = items.find((it) => String(it.id) === String(prod.id));
+        if (itemInReceipt) {
+          const currentStock = Number(prod.stock || prod.quantity || 0);
+          return {
+            ...prod,
+            stock: currentStock + Number(itemInReceipt.qty),
+            quantity: currentStock + Number(itemInReceipt.qty),
+          };
+        }
+        return prod;
+      });
+
+      setProducts(updatedProducts);
+      localStorage.setItem("pos_products", JSON.stringify(updatedProducts));
+      localStorage.setItem("products", JSON.stringify(updatedProducts));
+    } catch (err) {
+      console.error("Error updating stock:", err);
+    }
 
     // บันทึกประวัติ
     setPurchases([
@@ -208,7 +238,7 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* ฟอร์มเลือกสินค้า */}
+              {/* ฟอร์มเลือกสินค้า (เชื่อมต่อสินค้าจากสต็อกเรียบร้อย) */}
               <div className="bg-slate-50 p-3 rounded-xl flex flex-col sm:flex-row gap-2 items-center">
                 <select
                   value={selectedProductId}
