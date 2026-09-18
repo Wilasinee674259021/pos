@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 export default function Purchasing() {
   const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [receiveNo, setReceiveNo] = useState("SG-2026-002");
   const [receiveDate, setReceiveDate] = useState(
     new Date().toISOString().split("T")[0]
@@ -11,11 +12,22 @@ export default function Purchasing() {
   const [inputCost, setInputCost] = useState("");
   const [items, setItems] = useState([]);
 
-  // Mock รายการสินค้า
+  // Mock สินค้าเลือกใน Modal
   const products = [
     { id: "1", name: "สินค้า A" },
     { id: "2", name: "สินค้า B" },
   ];
+
+  // Mock ประวัติการรับสินค้าในหน้าหลัก
+  const [purchases, setPurchases] = useState([
+    {
+      id: "SG-2026-001",
+      date: "2026-09-15",
+      itemsCount: 3,
+      total: 4500,
+      status: "สำเร็จ",
+    },
+  ]);
 
   const handleAddItem = (e) => {
     if (e) e.preventDefault();
@@ -46,12 +58,27 @@ export default function Purchasing() {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
+    if (items.length === 0) return;
+
+    setPurchases([
+      {
+        id: receiveNo,
+        date: receiveDate,
+        itemsCount: items.length,
+        total: totalAmount,
+        status: "สำเร็จ",
+      },
+      ...purchases,
+    ]);
+
+    setItems([]);
     setShowForm(false);
   };
 
   return (
-    <div className="p-6 relative">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 relative space-y-6">
+      {/* Header หน้าหลัก */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
             การสั่งซื้อและรับสินค้า
@@ -63,13 +90,66 @@ export default function Purchasing() {
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-medium shadow-sm transition-colors flex items-center gap-2"
         >
-          + รับสินค้าเข้าสต็อก
+          <span>+</span> รับสินค้าเข้าสต็อก
         </button>
       </div>
 
-      {/* ================= MODAL รับสินค้าเข้าสต็อก (FIXED OVERLAY) ================= */}
+      {/* Control Bar (ค้นหา + ตารางประวัติในหน้าหลัก) */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between gap-4">
+        <input
+          type="text"
+          placeholder="ค้นหาเลขที่ใบรับสินค้า..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="top-page-input w-full sm:w-72"
+        />
+      </div>
+
+      {/* ตารางประวัติการรับสินค้า หน้าหลัก */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+            <tr>
+              <th className="py-3.5 px-4">เลขที่ใบรับสินค้า</th>
+              <th className="py-3.5 px-4">วันที่รับ</th>
+              <th className="py-3.5 px-4 text-center">จำนวนรายการ</th>
+              <th className="py-3.5 px-4 text-right">ยอดรวม</th>
+              <th className="py-3.5 px-4 text-center">สถานะ</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {purchases.length > 0 ? (
+              purchases.map((row, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/50">
+                  <td className="py-3.5 px-4 font-medium text-slate-800">
+                    {row.id}
+                  </td>
+                  <td className="py-3.5 px-4 text-slate-600">{row.date}</td>
+                  <td className="py-3.5 px-4 text-center">{row.itemsCount}</td>
+                  <td className="py-3.5 px-4 text-right font-bold text-slate-800">
+                    ฿{row.total.toLocaleString()}
+                  </td>
+                  <td className="py-3.5 px-4 text-center">
+                    <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-semibold">
+                      {row.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-slate-400">
+                  ไม่พบประวัติการรับสินค้า
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ================= MODAL รับสินค้าเข้าสต็อก ================= */}
       {showForm && (
         <div 
           style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}
@@ -79,7 +159,7 @@ export default function Purchasing() {
             style={{ width: '100%', maxWidth: '800px', maxHeight: '90vh' }}
             className="bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
           >
-            {/* Header */}
+            {/* Header Modal */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
               <h2 className="text-lg font-bold text-slate-800">
                 จัดการการสั่งซื้อและรับสินค้าเข้าสต็อก
@@ -93,9 +173,8 @@ export default function Purchasing() {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {/* Body Modal */}
             <div className="p-6 overflow-y-auto space-y-4 flex-1">
-              {/* เลขที่ใบรับสินค้า & วันที่ */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1 text-center">
@@ -121,11 +200,12 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* ฟอร์มเพิ่มสินค้า */}
+              {/* ฟอร์มเลือกสินค้า + ปุ่ม + */}
               <div className="bg-slate-50 p-3 rounded-xl flex flex-col sm:flex-row gap-2 items-center">
                 <select
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
+                  style={{ width: '100%', minWidth: '200px' }}
                   className="top-page-input flex-1"
                 >
                   <option value="">-- เลือกสินค้า --</option>
@@ -141,7 +221,8 @@ export default function Purchasing() {
                   placeholder="จำนวน"
                   value={inputQty}
                   onChange={(e) => setInputQty(e.target.value)}
-                  className="top-page-input sm:w-28 text-center"
+                  style={{ width: '120px' }}
+                  className="top-page-input text-center shrink-0"
                 />
 
                 <input
@@ -149,7 +230,8 @@ export default function Purchasing() {
                   placeholder="ราคาทุน/ชิ้น"
                   value={inputCost}
                   onChange={(e) => setInputCost(e.target.value)}
-                  className="top-page-input sm:w-32 text-center"
+                  style={{ width: '140px' }}
+                  className="top-page-input text-center shrink-0"
                 />
 
                 <button
@@ -161,7 +243,7 @@ export default function Purchasing() {
                 </button>
               </div>
 
-              {/* ตารางรายการสินค้า */}
+              {/* ตารางสินค้าใน Modal */}
               <div className="border border-slate-100 rounded-xl overflow-hidden">
                 <table className="w-full text-sm text-left">
                   <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
@@ -212,7 +294,7 @@ export default function Purchasing() {
                 </table>
               </div>
 
-              {/* ราคารวม */}
+              {/* สรุปรวมเงิน */}
               <div className="bg-slate-50 p-4 rounded-xl flex justify-between items-center">
                 <span className="font-semibold text-slate-600">
                   ราคารวมทั้งหมด
@@ -223,7 +305,7 @@ export default function Purchasing() {
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer Modal */}
             <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50">
               <button
                 type="button"
