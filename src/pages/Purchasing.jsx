@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 
+const API_BASE =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_PRODUCTS_URL = `${API_BASE}/api/products`;
+
 const defaultSuppliers = [
   {
     id: 1,
@@ -26,10 +31,8 @@ export default function Purchasing() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [stock, setStock] = useState(() => {
-    const saved = localStorage.getItem("pos_stock");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [stock, setStock] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
 
@@ -48,6 +51,42 @@ export default function Purchasing() {
 
   const [search, setSearch] = useState("");
 
+  // =========================
+  // LOAD PRODUCTS FROM BACKEND
+  // =========================
+  const loadProducts = async () => {
+    try {
+      setLoadingProducts(true);
+      const response = await fetch(API_PRODUCTS_URL, {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      });
+
+      const text = await response.text();
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error("Backend ส่งข้อมูลไม่ใช่ JSON");
+      }
+
+      if (response.ok && result.success && Array.isArray(result.data)) {
+        setStock(result.data);
+      } else {
+        setStock([]);
+      }
+    } catch (err) {
+      console.error("LOAD PRODUCTS ERROR IN PURCHASING:", err);
+      setStock([]);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("pos_purchases", JSON.stringify(purchases));
   }, [purchases]);
@@ -59,17 +98,17 @@ export default function Purchasing() {
   const totalPurchases = purchases.length;
 
   const totalItems = purchases.reduce(
-    (sum, purchase) => sum + Number(purchase.totalItems),
+    (sum, purchase) => sum + Number(purchase.totalItems || 0),
     0
   );
 
   const totalCost = purchases.reduce(
-    (sum, purchase) => sum + Number(purchase.totalCost),
+    (sum, purchase) => sum + Number(purchase.totalCost || 0),
     0
   );
 
   const currentFormTotal = items.reduce(
-    (sum, item) => sum + Number(item.total),
+    (sum, item) => sum + Number(item.total || 0),
     0
   );
 
@@ -94,22 +133,25 @@ export default function Purchasing() {
     }
 
     const product = stock.find(
-      (item) => item.id === Number(selectedProduct)
+      (item) => String(item.id) === String(selectedProduct)
     );
 
     if (!product) {
-      alert("ไม่พบสินค้านี้ในสต๊อก");
+      alert("ไม่พบสินค้านี้ในระบบ");
       return;
     }
 
     const newItem = {
       id: Date.now(),
       productId: product.id,
-      code: product.code,
+      barcode: product.barcode,
       name: product.name,
       quantity: Number(quantity),
       cost: Number(cost),
       total: Number(quantity) * Number(cost),
+      currentStock: Number(product.stock || 0),
+      currentPrice: Number(product.price || 0),
+      category: product.category || "",
     };
 
     setItems((prev) => [...prev, newItem]);
@@ -131,13 +173,13 @@ export default function Purchasing() {
       SAVE PURCHASE
   ========================= */
 
-  const savePurchase = () => {
+  const savePurchase = async () => {
     if (!selectedSupplier) {
       alert("กรุณาเลือก Supplier");
       return;
     }
 
-    if (!invoiceNumber) {
+    if (!invoiceNumber.trim()) {
       alert("กรุณากรอกเลขที่ใบรับสินค้า");
       return;
     }
@@ -162,57 +204,59 @@ export default function Purchasing() {
     );
 
     /* =========================
-        UPDATE STOCK
+        UPDATE BACKEND STOCK & COST
     ========================= */
 
-    const updatedStock = stock.map((product) => {
-      const purchaseItems = items.filter(
-        (item) => item.productId === product.id
-      );
+    try {
+      for (const item of items) {
+        const newStock = item.currentStock + item.quantity;
+        const newCost = item.cost;
 
-      if (purchaseItems.length === 0) {
-        return product;
+        const response = await fetch(`${API_PRODUCTS_URL}/${item.productId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            name: item.name,
+            barcode: item.barcode,
+            price: item.currentPrice,
+            cost: newCost,
+            stock: newStock,
+            category: item.category,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`อัปเดตสินค้า ${item.name} ไม่สำเร็จ`);
+        }
       }
 
-      const addedQuantity = purchaseItems.reduce(
-        (sum, item) => sum + Number(item.quantity),
-        0
-      );
+      /* =========================
+          CREATE PURCHASE
+      ========================= */
 
-      return {
-        ...product,
-        stock: Number(product.stock) + addedQuantity,
+      const newPurchase = {
+        id: Date.now(),
+        invoiceNumber,
+        supplier: supplier?.name || "-",
+        date: purchaseDate,
+        totalItems: purchaseTotalItems,
+        totalCost: purchaseTotalCost,
+        items,
       };
-    });
 
-    setStock(updatedStock);
+      setPurchases((prev) => [newPurchase, ...prev]);
 
-    localStorage.setItem(
-      "pos_stock",
-      JSON.stringify(updatedStock)
-    );
+      alert("บันทึกการรับสินค้าเรียบร้อย\nสต๊อกและต้นทุนสินค้าถูกอัปเดตเข้าระบบแล้ว");
 
-    /* =========================
-        CREATE PURCHASE
-    ========================= */
-
-    const newPurchase = {
-      id: Date.now(),
-      invoiceNumber,
-      supplier: supplier?.name || "-",
-      date: purchaseDate,
-      totalItems: purchaseTotalItems,
-      totalCost: purchaseTotalCost,
-      items,
-    };
-
-    setPurchases((prev) => [newPurchase, ...prev]);
-
-    alert(
-      "บันทึกการรับสินค้าเรียบร้อย\nสินค้าได้ถูกเพิ่มเข้าสู่สต๊อกแล้ว"
-    );
-
-    closeForm();
+      await loadProducts();
+      closeForm();
+    } catch (err) {
+      console.error("SAVE PURCHASE ERROR:", err);
+      alert(`เกิดข้อผิดพลาดในการอัปเดตสต๊อกไปยัง Backend:\n${err.message}`);
+    }
   };
 
   /* =========================
@@ -243,10 +287,10 @@ export default function Purchasing() {
     const keyword = search.toLowerCase().trim();
 
     return (
-      purchase.invoiceNumber
+      (purchase.invoiceNumber || "")
         .toLowerCase()
         .includes(keyword) ||
-      purchase.supplier
+      (purchase.supplier || "")
         .toLowerCase()
         .includes(keyword)
     );
@@ -278,7 +322,7 @@ export default function Purchasing() {
       purchase.items
         .map(
           (item) =>
-            `${item.code || ""} ${item.name} × ${item.quantity} ชิ้น`
+            `${item.barcode || ""} ${item.name} × ${item.quantity} ชิ้น`
         )
         .join("\n")
     );
@@ -286,10 +330,7 @@ export default function Purchasing() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 sm:p-4 md:p-6 lg:p-8">
-      {/* =========================
-          HEADER
-      ========================= */}
-
+      {/* HEADER */}
       <div className="mb-5 sm:mb-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
@@ -303,7 +344,10 @@ export default function Purchasing() {
           </div>
 
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              loadProducts();
+              setShowForm(true);
+            }}
             className="!min-h-0 h-10 w-full rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:w-auto sm:px-5"
           >
             ＋ รับสินค้าเข้า
@@ -311,74 +355,53 @@ export default function Purchasing() {
         </div>
       </div>
 
-      {/* =========================
-          SUMMARY
-      ========================= */}
-
+      {/* SUMMARY */}
       <div className="mb-5 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-3 sm:gap-4">
-        {/* TOTAL PURCHASE */}
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:rounded-2xl">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-gray-500 sm:text-sm">
                 รายการรับสินค้าทั้งหมด
               </p>
-
               <p className="mt-2 text-2xl font-bold text-gray-800 sm:text-3xl">
                 {totalPurchases}
               </p>
-
-              <p className="mt-1 text-xs text-gray-400">
-                รายการ
-              </p>
+              <p className="mt-1 text-xs text-gray-400">รายการ</p>
             </div>
-
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg sm:h-11 sm:w-11 sm:rounded-xl sm:text-xl">
               🚚
             </div>
           </div>
         </div>
 
-        {/* TOTAL ITEMS */}
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:rounded-2xl">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-gray-500 sm:text-sm">
                 จำนวนสินค้าที่รับเข้า
               </p>
-
               <p className="mt-2 text-2xl font-bold text-blue-600 sm:text-3xl">
                 {totalItems}
               </p>
-
-              <p className="mt-1 text-xs text-gray-400">
-                ชิ้น
-              </p>
+              <p className="mt-1 text-xs text-gray-400">ชิ้น</p>
             </div>
-
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-lg sm:h-11 sm:w-11 sm:rounded-xl sm:text-xl">
               📦
             </div>
           </div>
         </div>
 
-        {/* TOTAL COST */}
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:rounded-2xl">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-medium text-gray-500 sm:text-sm">
                 มูลค่าการจัดซื้อ
               </p>
-
               <p className="mt-2 break-all text-2xl font-bold text-green-600 sm:text-3xl">
                 ฿{totalCost.toLocaleString()}
               </p>
-
-              <p className="mt-1 text-xs text-gray-400">
-                บาท
-              </p>
+              <p className="mt-1 text-xs text-gray-400">บาท</p>
             </div>
-
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-lg sm:h-11 sm:w-11 sm:rounded-xl sm:text-xl">
               💰
             </div>
@@ -386,10 +409,7 @@ export default function Purchasing() {
         </div>
       </div>
 
-      {/* =========================
-          SEARCH
-      ========================= */}
-
+      {/* SEARCH */}
       <div className="mb-4 rounded-xl border border-gray-100 bg-white p-3 shadow-sm sm:mb-5 sm:rounded-2xl sm:p-4">
         <div className="relative">
           <input
@@ -398,17 +418,13 @@ export default function Purchasing() {
             placeholder="ค้นหาเลขที่ใบรับสินค้า / Supplier"
             className="!h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 pr-10 text-sm text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:bg-white sm:rounded-xl sm:px-4"
           />
-
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 sm:right-4">
             🔍
           </span>
         </div>
       </div>
 
-      {/* =========================
-          DESKTOP TABLE
-      ========================= */}
-
+      {/* DESKTOP TABLE */}
       <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block md:rounded-2xl">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[950px] table-fixed">
@@ -420,35 +436,28 @@ export default function Purchasing() {
               <col className="w-[15%]" />
               <col className="w-[13%]" />
             </colgroup>
-
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 lg:px-5">
                   เลขที่ใบรับสินค้า
                 </th>
-
                 <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 lg:px-4">
                   Supplier
                 </th>
-
                 <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 lg:px-4">
                   วันที่
                 </th>
-
                 <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 lg:px-4">
                   จำนวน
                 </th>
-
                 <th className="px-3 py-3 text-right text-xs font-semibold text-gray-500 lg:px-4">
                   มูลค่า
                 </th>
-
                 <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 lg:px-4">
                   รายละเอียด
                 </th>
               </tr>
             </thead>
-
             <tbody>
               {filteredPurchases.length > 0 ? (
                 filteredPurchases.map((purchase) => (
@@ -456,48 +465,34 @@ export default function Purchasing() {
                     key={purchase.id}
                     className="border-b border-gray-100 last:border-0 hover:bg-gray-50"
                   >
-                    {/* INVOICE */}
                     <td className="px-4 py-4 align-middle lg:px-5">
                       <span className="inline-flex max-w-full break-all rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-700">
                         {purchase.invoiceNumber}
                       </span>
                     </td>
-
-                    {/* SUPPLIER */}
                     <td className="px-3 py-4 align-middle lg:px-4">
                       <p className="break-words text-sm font-semibold leading-5 text-gray-800">
                         {purchase.supplier}
                       </p>
                     </td>
-
-                    {/* DATE */}
                     <td className="px-3 py-4 text-center align-middle lg:px-4">
                       <span className="text-sm text-gray-600">
                         {formatDate(purchase.date)}
                       </span>
                     </td>
-
-                    {/* ITEMS */}
                     <td className="px-3 py-4 text-center align-middle lg:px-4">
                       <div className="flex flex-col items-center">
                         <span className="text-sm font-bold text-gray-800">
                           {purchase.totalItems}
                         </span>
-
-                        <span className="text-xs text-gray-400">
-                          ชิ้น
-                        </span>
+                        <span className="text-xs text-gray-400">ชิ้น</span>
                       </div>
                     </td>
-
-                    {/* COST */}
                     <td className="px-3 py-4 text-right align-middle lg:px-4">
                       <span className="text-sm font-bold text-green-600">
                         ฿{Number(purchase.totalCost).toLocaleString()}
                       </span>
                     </td>
-
-                    {/* DETAIL */}
                     <td className="px-3 py-4 text-center align-middle lg:px-4">
                       <button
                         onClick={() => viewItems(purchase)}
@@ -523,10 +518,7 @@ export default function Purchasing() {
         </div>
       </div>
 
-      {/* =========================
-          MOBILE CARDS
-      ========================= */}
-
+      {/* MOBILE CARDS */}
       <div className="space-y-3 md:hidden">
         {filteredPurchases.length > 0 ? (
           filteredPurchases.map((purchase) => (
@@ -534,24 +526,18 @@ export default function Purchasing() {
               key={purchase.id}
               className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
             >
-              {/* CARD HEADER */}
               <div className="border-b border-gray-100 p-3 sm:p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="mb-1.5 text-xs text-gray-400">
                       เลขที่ใบรับสินค้า
                     </p>
-
                     <span className="inline-flex max-w-full break-all rounded-md bg-gray-100 px-2.5 py-1.5 font-mono text-xs font-semibold text-gray-700">
                       {purchase.invoiceNumber}
                     </span>
                   </div>
-
                   <div className="shrink-0 text-right">
-                    <p className="text-xs text-gray-400">
-                      วันที่
-                    </p>
-
+                    <p className="text-xs text-gray-400">วันที่</p>
                     <p className="mt-1 text-xs font-medium text-gray-700 sm:text-sm">
                       {formatDate(purchase.date)}
                     </p>
@@ -559,24 +545,16 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* SUPPLIER */}
               <div className="border-b border-gray-100 p-3 sm:p-4">
-                <p className="text-xs text-gray-400">
-                  Supplier
-                </p>
-
+                <p className="text-xs text-gray-400">Supplier</p>
                 <p className="mt-1 break-words text-sm font-semibold leading-5 text-gray-800">
                   {purchase.supplier}
                 </p>
               </div>
 
-              {/* INFO */}
               <div className="grid grid-cols-2 gap-px bg-gray-100">
                 <div className="bg-white p-3 sm:p-4">
-                  <p className="text-xs text-gray-400">
-                    จำนวนสินค้า
-                  </p>
-
+                  <p className="text-xs text-gray-400">จำนวนสินค้า</p>
                   <p className="mt-1 text-base font-bold text-gray-800 sm:text-lg">
                     {purchase.totalItems}
                     <span className="ml-1 text-xs font-normal text-gray-400">
@@ -584,19 +562,14 @@ export default function Purchasing() {
                     </span>
                   </p>
                 </div>
-
                 <div className="bg-white p-3 sm:p-4">
-                  <p className="text-xs text-gray-400">
-                    มูลค่ารวม
-                  </p>
-
+                  <p className="text-xs text-gray-400">มูลค่ารวม</p>
                   <p className="mt-1 break-all text-base font-bold text-green-600 sm:text-lg">
                     ฿{Number(purchase.totalCost).toLocaleString()}
                   </p>
                 </div>
               </div>
 
-              {/* ACTION */}
               <div className="border-t border-gray-100 p-3 sm:p-4">
                 <button
                   onClick={() => viewItems(purchase)}
@@ -614,25 +587,19 @@ export default function Purchasing() {
         )}
       </div>
 
-      {/* =========================
-          RECEIVE MODAL
-      ========================= */}
-
+      {/* RECEIVE MODAL */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
           <div className="flex max-h-[95vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl sm:rounded-2xl">
-            {/* MODAL HEADER */}
             <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 sm:px-6 sm:py-4">
               <div className="min-w-0">
                 <h2 className="text-lg font-bold leading-tight text-gray-800 sm:text-xl">
                   🚚 รับสินค้าเข้า
                 </h2>
-
                 <p className="mt-1 hidden text-xs text-gray-400 sm:block">
                   บันทึกข้อมูลสินค้าและเพิ่มจำนวนเข้าสู่สต๊อก
                 </p>
               </div>
-
               <button
                 onClick={closeForm}
                 className="!min-h-0 h-9 w-9 shrink-0 rounded-lg p-0 text-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
@@ -641,161 +608,126 @@ export default function Purchasing() {
               </button>
             </div>
 
-            {/* MODAL BODY */}
             <div className="overflow-y-auto p-3 sm:p-5 md:p-6">
-              {/* =========================
-                  BASIC INFO
-              ========================= */}
-
+              {/* BASIC INFO */}
               <div className="mb-5">
                 <h3 className="mb-3 text-sm font-bold text-gray-800">
                   ข้อมูลการรับสินค้า
                 </h3>
-
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {/* SUPPLIER */}
                   <div>
                     <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                       Supplier
                     </label>
-
                     <select
                       value={selectedSupplier}
-                      onChange={(e) =>
-                        setSelectedSupplier(e.target.value)
-                      }
+                      onChange={(e) => setSelectedSupplier(e.target.value)}
                       className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
                     >
-                      <option value="">
-                        -- เลือก Supplier --
-                      </option>
-
+                      <option value="">-- เลือก Supplier --</option>
                       {suppliers.map((supplier) => (
-                        <option
-                          key={supplier.id}
-                          value={supplier.id}
-                        >
+                        <option key={supplier.id} value={supplier.id}>
                           {supplier.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* INVOICE */}
                   <div>
                     <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                       เลขที่ใบรับสินค้า
                     </label>
-
                     <input
                       value={invoiceNumber}
-                      onChange={(e) =>
-                        setInvoiceNumber(e.target.value)
-                      }
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
                       placeholder="เช่น PO-2026-001"
                       className="!h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
 
-                  {/* DATE */}
                   <div>
                     <label className="mb-1.5 block text-sm font-semibold text-gray-700">
                       วันที่รับสินค้า
                     </label>
-
                     <input
                       type="date"
                       value={purchaseDate}
-                      onChange={(e) =>
-                        setPurchaseDate(e.target.value)
-                      }
+                      onChange={(e) => setPurchaseDate(e.target.value)}
                       className="!h-10 w-full rounded-lg border border-gray-200 px-3 text-sm outline-none transition focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* =========================
-                  ADD PRODUCT
-              ========================= */}
-
+              {/* ADD PRODUCT */}
               <div className="mb-5 rounded-xl bg-gray-50 p-3 sm:rounded-2xl sm:p-4 md:p-5">
                 <div className="mb-3">
-                  <h3 className="text-sm font-bold text-gray-800">
-                    เพิ่มสินค้า
-                  </h3>
-
+                  <h3 className="text-sm font-bold text-gray-800">เพิ่มสินค้า</h3>
                   <p className="mt-1 text-xs text-gray-400">
                     เลือกสินค้า กรอกจำนวน และราคาทุนต่อชิ้น
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-                  {/* PRODUCT */}
                   <div className="md:col-span-5">
                     <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
                       สินค้า
                     </label>
-
                     <select
                       value={selectedProduct}
-                      onChange={(e) =>
-                        setSelectedProduct(e.target.value)
-                      }
+                      onChange={(e) => {
+                        const prodId = e.target.value;
+                        setSelectedProduct(prodId);
+                        const prod = stock.find((p) => String(p.id) === String(prodId));
+                        if (prod && prod.cost !== undefined) {
+                          setCost(prod.cost);
+                        }
+                      }}
                       className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
+                      disabled={loadingProducts}
                     >
                       <option value="">
-                        -- เลือกสินค้า --
+                        {loadingProducts
+                          ? "กำลังโหลดรายการสินค้า..."
+                          : "-- เลือกสินค้า --"}
                       </option>
-
                       {stock.map((product) => (
-                        <option
-                          key={product.id}
-                          value={product.id}
-                        >
-                          {product.code} - {product.name}
+                        <option key={product.id} value={product.id}>
+                          {product.barcode || product.id} - {product.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {/* QUANTITY */}
                   <div className="md:col-span-3">
                     <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
                       จำนวน
                     </label>
-
                     <input
                       type="number"
                       min="1"
                       value={quantity}
-                      onChange={(e) =>
-                        setQuantity(e.target.value)
-                      }
+                      onChange={(e) => setQuantity(e.target.value)}
                       placeholder="จำนวน"
                       className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
 
-                  {/* COST */}
                   <div className="md:col-span-3">
                     <label className="mb-1.5 block text-xs font-medium text-gray-500 md:hidden">
                       ราคาทุน / ชิ้น
                     </label>
-
                     <input
                       type="number"
                       min="0"
+                      step="0.01"
                       value={cost}
-                      onChange={(e) =>
-                        setCost(e.target.value)
-                      }
+                      onChange={(e) => setCost(e.target.value)}
                       placeholder="ราคาทุน / ชิ้น"
                       className="!h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm outline-none focus:border-blue-500 sm:rounded-xl sm:px-4"
                     />
                   </div>
 
-                  {/* ADD */}
                   <div className="md:col-span-1">
                     <button
                       onClick={addItem}
@@ -807,10 +739,7 @@ export default function Purchasing() {
                 </div>
               </div>
 
-              {/* =========================
-                  ITEMS
-              ========================= */}
-
+              {/* ITEMS TABLE / CARDS */}
               {items.length > 0 ? (
                 <div className="mb-5">
                   <div className="mb-3 flex items-center justify-between">
@@ -818,14 +747,12 @@ export default function Purchasing() {
                       <h3 className="text-sm font-bold text-gray-800">
                         รายการสินค้า
                       </h3>
-
                       <p className="mt-1 text-xs text-gray-400">
                         {items.length} รายการ
                       </p>
                     </div>
                   </div>
 
-                  {/* DESKTOP ITEMS TABLE */}
                   <div className="hidden overflow-hidden rounded-xl border border-gray-200 md:block">
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[700px]">
@@ -834,23 +761,18 @@ export default function Purchasing() {
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500">
                               สินค้า
                             </th>
-
                             <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500">
                               จำนวน
                             </th>
-
                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">
                               ราคาทุน
                             </th>
-
                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500">
                               รวม
                             </th>
-
                             <th className="w-16 px-4 py-3"></th>
                           </tr>
                         </thead>
-
                         <tbody>
                           {items.map((item) => (
                             <tr
@@ -862,30 +784,23 @@ export default function Purchasing() {
                                   <p className="break-words text-sm font-semibold text-gray-800">
                                     {item.name}
                                   </p>
-
-                                  <p className="mt-1 text-xs text-gray-400">
-                                    {item.code}
+                                  <p className="mt-1 font-mono text-xs text-gray-400">
+                                    {item.barcode}
                                   </p>
                                 </div>
                               </td>
-
                               <td className="px-4 py-3 text-center text-sm text-gray-700">
                                 {item.quantity}
                               </td>
-
                               <td className="px-4 py-3 text-right text-sm text-gray-700">
                                 ฿{item.cost.toLocaleString()}
                               </td>
-
                               <td className="px-4 py-3 text-right text-sm font-bold text-gray-800">
                                 ฿{item.total.toLocaleString()}
                               </td>
-
                               <td className="px-4 py-3 text-center">
                                 <button
-                                  onClick={() =>
-                                    removeItem(item.id)
-                                  }
+                                  onClick={() => removeItem(item.id)}
                                   className="!min-h-0 h-8 w-8 rounded-lg p-0 text-red-500 transition hover:bg-red-50"
                                 >
                                   🗑️
@@ -898,7 +813,6 @@ export default function Purchasing() {
                     </div>
                   </div>
 
-                  {/* MOBILE ITEMS CARDS */}
                   <div className="space-y-3 md:hidden">
                     {items.map((item) => (
                       <div
@@ -910,16 +824,12 @@ export default function Purchasing() {
                             <p className="break-words text-sm font-semibold leading-5 text-gray-800">
                               {item.name}
                             </p>
-
-                            <p className="mt-1 text-xs text-gray-400">
-                              {item.code}
+                            <p className="mt-1 font-mono text-xs text-gray-400">
+                              {item.barcode}
                             </p>
                           </div>
-
                           <button
-                            onClick={() =>
-                              removeItem(item.id)
-                            }
+                            onClick={() => removeItem(item.id)}
                             className="!min-h-0 h-8 w-8 shrink-0 rounded-lg p-0 text-red-500 hover:bg-red-50"
                           >
                             🗑️
@@ -928,30 +838,19 @@ export default function Purchasing() {
 
                         <div className="mt-3 grid grid-cols-3 gap-2">
                           <div className="rounded-lg bg-gray-50 p-2.5 sm:p-3">
-                            <p className="text-xs text-gray-400">
-                              จำนวน
-                            </p>
-
+                            <p className="text-xs text-gray-400">จำนวน</p>
                             <p className="mt-1 text-sm font-bold text-gray-800">
                               {item.quantity}
                             </p>
                           </div>
-
                           <div className="rounded-lg bg-gray-50 p-2.5 sm:p-3">
-                            <p className="text-xs text-gray-400">
-                              ราคาทุน
-                            </p>
-
+                            <p className="text-xs text-gray-400">ราคาทุน</p>
                             <p className="mt-1 break-all text-sm font-bold text-gray-800">
                               ฿{item.cost.toLocaleString()}
                             </p>
                           </div>
-
                           <div className="rounded-lg bg-green-50 p-2.5 sm:p-3">
-                            <p className="text-xs text-gray-400">
-                              รวม
-                            </p>
-
+                            <p className="text-xs text-gray-400">รวม</p>
                             <p className="mt-1 break-all text-sm font-bold text-green-600">
                               ฿{item.total.toLocaleString()}
                             </p>
@@ -961,12 +860,10 @@ export default function Purchasing() {
                     ))}
                   </div>
 
-                  {/* TOTAL */}
                   <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-gray-50 p-3 sm:mt-4 sm:p-4">
                     <span className="text-sm font-semibold text-gray-600">
                       รวมทั้งสิ้น
                     </span>
-
                     <span className="break-all text-lg font-bold text-green-600 sm:text-xl">
                       ฿{currentFormTotal.toLocaleString()}
                     </span>
@@ -975,11 +872,9 @@ export default function Purchasing() {
               ) : (
                 <div className="mb-5 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center sm:rounded-2xl sm:py-10">
                   <div className="text-3xl">📦</div>
-
                   <p className="mt-3 text-sm font-medium text-gray-600">
                     ยังไม่มีสินค้าในรายการ
                   </p>
-
                   <p className="mt-1 text-xs text-gray-400">
                     เลือกสินค้าแล้วกดปุ่ม ＋ เพื่อเพิ่มรายการ
                   </p>
@@ -987,10 +882,7 @@ export default function Purchasing() {
               )}
             </div>
 
-            {/* =========================
-                MODAL FOOTER
-            ========================= */}
-
+            {/* MODAL FOOTER */}
             <div className="flex flex-col-reverse gap-2 border-t border-gray-100 bg-gray-50 p-3 sm:flex-row sm:justify-end sm:p-4 sm:px-6">
               <button
                 onClick={closeForm}
@@ -998,7 +890,6 @@ export default function Purchasing() {
               >
                 ยกเลิก
               </button>
-
               <button
                 onClick={savePurchase}
                 className="!min-h-0 h-10 w-full rounded-lg bg-green-600 px-5 text-sm font-semibold text-white transition hover:bg-green-700 sm:w-auto sm:rounded-xl"
