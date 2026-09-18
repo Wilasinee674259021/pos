@@ -92,7 +92,7 @@ export default function Products() {
       setError(
         err.message || "ไม่สามารถโหลดข้อมูลสินค้าได้"
       );
-    } fontally {
+    } finally {
       setLoading(false);
     }
   };
